@@ -941,8 +941,19 @@ body.inb main{padding:0 10px 16px}
 <div id="title"><div class="tbg"></div><div class="tlogo"><img class="tlimg" src="img/logo.webp" alt="Mythbeast Realm"><span class="t3">Seri 1 · Elementler</span></div>
 <button class="sndb tsnd" id="tsnd" aria-label="Ses"></button><div class="tbtm"><button class="tgo" id="tgo" aria-label="Oyna"><img src="img/btn_play.webp" alt="Oyna"></button><p class="tinfo" id="tinfo"></p></div></div>
 
+<script src="rules.js?v=1"></script>
 <script>
 {
+// Ortak kurallar (rules.js): kart verisi ve ekonomi. Oyun ve sunucu aynı dosyayı kullanır.
+const {ELS,round5,round10,RAR,TYPE_HP,TYPE_RET,DMG,ATK,FXV,FX,atkDmg,PACK,XP,ECON,RAW,E1,E2,CARDS,BY,rootOf,N,pad,setOf,setCards,cno,setN,
+  EXA,EXCOST,EXD,EXC,exOf,EZA,EZDR,EZC,POOL,POOLS,EVO_NEED,STAGE_W,cw,SHINY,LEAGUES,lgOf,TROPHY,STREAK,strkB,CHEST,GIFT,DQP,DQB,srnd,SUPK,
+  ADV_CH,ADV_RULE,ADV_N,advStage,advStageX,TUT,fresh}=MR;
+// paket simülasyonu ve görünüm için yardımcılar (asıl paket açma sunucuda)
+let packSet=1;
+const roll=o=>MR.roll(o,Math.random),drawCard=r=>MR.drawCard(r,packSet,Math.random),rollPack=pity=>MR.rollPack(pity,packSet,Math.random);
+const copies=c=>MR.copies(S,c);function canEvo(t){return MR.canEvo(S,t)}
+{const DQTX={pack:'2 paket aç',battle:'3 savaş oyna (arena ya da macera)',win:'2 savaş kazan',weak:'5 etkili vuruş yap (zayıf noktaya)',ko:'8 rakip kart yen',adv:'1 macera bölümü kazan'};
+ DQP.forEach(D=>{D.x=D.t==='hit'?e=>`${T[e].n} kartlarınla ${D.n} vuruş yap`:()=>DQTX[D.t]})}
 /* =====================================================================
    1. SİSTEM AYARLARI — oyunun bütün matematiği burada. Sayı değiştirince
       kartlar, paketler, savaş ve Kurallar sekmesi birlikte güncellenir.
@@ -958,7 +969,6 @@ const T={
   light:{n:'Işık',h:48,s:95,l:70,b1:'#fff6c8',b2:'#b88a1a',col:'#f2c230',ic:'<circle cx="12" cy="12" r="5" fill="#fff"/><path d="M12 1v4M12 19v4M1 12h4M19 12h4M4.2 4.2l2.8 2.8M17 17l2.8 2.8M4.2 19.8L7 17M17 7l2.8-2.8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>'},
   shadow:{n:'Gölge',h:270,s:35,l:30,b1:'#5a3f86',b2:'#120a22',col:'#6d4aa8',ic:'<path d="M15 3a9 9 0 100 18 7.5 7.5 0 010-18z" fill="#fff"/>'}
 };
-const ELS=['fire','water','earth','air','light','shadow','metal','poison'];   // 12'ye çıkacak: yeni türü T'ye ve TYPES'a eklemek yeterli
 // TÜR TABLOSU — her tür için: weak = bu türlerden ×2 hasar alır, res = bu türlerden −20 hasar alır, imm = bu türlerden hiç hasar almaz
 const TYPES={
   fire:  {weak:['water','earth'], res:['fire'],  imm:[]},
@@ -977,162 +987,17 @@ const strongVs=t=>ELS.filter(d=>TYPES[d].weak.includes(t));
 // saldıran türün savunan türe etkisi: 'w' ×2, 'r' −20, 'i' bağışık, '' normal
 const rel=(atk,def)=>TYPES[def].imm.includes(atk)?'i':TYPES[def].weak.includes(atk)?'w':TYPES[def].res.includes(atk)?'r':'';
 const WEAK=1.5;   // zayıflık çarpanı
-const round5=x=>Math.max(5,Math.round(x/5)*5);
 function applyRel(d,atk,def){const k=rel(atk,def);return k==='i'?0:k==='w'?round5(d*WEAK):k==='r'?Math.max(10,d-20):d}
-const RAR=[
-  {n:'Yaygın',  sym:'●',hp:100,mult:1.00,team:2,ret:1,dust:5,  craft:40},
-  {n:'Nadir',   sym:'◆',hp:140,mult:1.15,team:3,ret:1,dust:20, craft:150},
-  {n:'Destansı',sym:'★',hp:185,mult:1.30,team:4,ret:2,dust:80, craft:500},
-  {n:'Efsanevi',sym:'★',hp:225,mult:1.40,team:5,ret:2,dust:300,craft:1600}
-];
-const TYPE_HP={fire:0,water:0,earth:15,air:-15,light:0,shadow:-15,metal:15,poison:-5,blood:0};   // Toprak dayanıklı, Hava kırılgan
-const TYPE_RET={fire:0,water:0,earth:1,air:-1,light:0,shadow:-1,metal:1,poison:0,blood:0};    // Toprak ağır, Hava hafif
-const DMG=[0,20,45,75,110];                        // (eski enerji eğrisi, artık kullanılmıyor)
-// SALDIRI DEĞERLERİ: [normal, dolu] × nadirlik (Yaygın, Nadir, Destansı, Efsanevi)
-const ATK=[[30,40,50,60],[55,70,90,110]];
-const FXV={burn:20,splash:20,heal:30,coin:20,recoil:30};   // efekt büyüklükleri
-const FX={
-  burn:  {cost:5,  t:'Vurulan kart yanar: sahibinin sonraki 2 turunun başında 20 hasar alır.'},
-  splash:{cost:5,  t:'Rakibin sahadaki diğer kartlarına da 20 hasar.'},
-  heal:  {cost:5,  t:'Bu kart 30 can yeniler.'},
-  coin:  {cost:5,  t:'Yazı-tura at. Tura gelirse +20 hasar.'},
-  recoil:{cost:-15,t:'Bu kart kendine 30 hasar verir.'}
-};
-const round10=x=>Math.max(10,Math.round(x/10)*10);
-const atkDmg=(r,i,fx)=>Math.max(10,round5(ATK[i][r]-(fx?FX[fx].cost:0)));
-const PACK={cost:100,pity:60,
-  slots:[[85,13,2,0],[85,13,2,0],[85,13,2,0],[0,82.4,17,0.6],[0,66.5,32,1.5]]};  // her slot: Yaygın/Nadir/Destansı/Efsanevi %
-const XP={card:[2,5,12,30],newMult:2,need:l=>50+(l-1)*25,reward:{free:1,gold:50}};  // seviye sistemi
-const ECON={startGold:700,freePacks:5,win:60,loss:20,teamMax:10};
 
 /* =====================================================================
    2. KARTLAR — sadece kimlik verisi; can ve hasar formülden gelir.
    [no, ad, element, nadirlik, evre(0 Temel,1 Evrim 1,2 Evrim 2), önceki no, can ayarı, gövde, özellikler, saldırılar[[enerji, ad, efekt]], açıklama]
    ===================================================================== */
-const RAW=[
- [1,'Korkuyruk','fire',0,0,0,0,1,'tl',[[1,'Kıvılcım'],[2,'Alev Kuyruk']],'Kuyruğundaki kor sönerse hemen uykuya dalar.'],
- [2,'Alevpençe','fire',1,1,1,0,1,'tlsh',[[2,'Pençe Darbesi'],[3,'Yakıcı Hamle','burn']],'Pençelerinin değdiği taş kıpkırmızı kesilir.'],
- [3,'Volkanor','fire',2,2,2,10,2,'tshw',[[2,'Lav Tükürüğü','burn'],[4,'Patlama','recoil']],'Öfkelendiğinde sırtındaki kraterler bir bir patlar.'],
- [4,'Kıvılcık','fire',0,0,0,-10,0,'c',[[1,'Atılma','coin'],[2,'Ateş Topu']],'Mutlu olunca etrafa kıvılcım saçar.'],
- [5,'Kıvılkurt','fire',1,1,4,0,1,'lct',[[1,'Isırık'],[3,'Ateş Çemberi','splash']],'Sürü halinde avlanır, geçtiği yerde iz kalır.'],
- [6,'Kül Böceği','fire',0,0,0,0,0,'sl',[[2,'Kül Bulutu','burn']],'Sönmüş volkanların içinde yaşar.'],
- [7,'Anka','fire',3,0,0,0,0,'wkct',[[2,'Kanat Rüzgârı'],[4,'Küllerden Doğuş','heal']],'Her yüz yılda bir yanar ve küllerinden yeniden doğar.'],
- [8,'Damlacık','water',0,0,0,0,0,'f',[[1,'Su Fışkırtma'],[2,'Dalga']],'Yağmurlu günlerde su birikintilerinde oynar.'],
- [9,'Dalgakuyruk','water',1,1,8,0,1,'ft',[[2,'Su Kırbacı'],[3,'Gelgit','heal']],'Kuyruğunu çarpınca küçük dalgalar yaratır.'],
- [10,'Derinyüzgeç','water',2,2,9,0,1,'fts',[[3,'Girdap'],[4,'Tsunami','splash']],'Okyanusun en karanlık yerinde nöbet tutar.'],
- [11,'Kabukçuk','water',0,0,0,10,1,'sl',[[1,'Kıskaç'],[2,'Kabuk Kalkanı','heal']],'Korkunca kabuğuna çekilip saatlerce çıkmaz.'],
- [12,'Mercankale','water',1,1,11,20,0,'slh',[[2,'Sıkıştır'],[3,'Mercan Çarpması']],'Sırtındaki mercanlarda küçük balıklar yaşar.'],
- [13,'Köpük Balığı','water',0,0,0,-10,1,'f',[[2,'Kabarcık Yağmuru','coin']],'Şişince iki katı büyüklüğe ulaşır.'],
- [14,'Okyanus Ejderi','water',3,0,0,10,1,'fhst',[[3,'Su Topu'],[4,'Derinlerin Gazabı']],'Denizciler onu yalnızca fırtınalı gecelerde görür.'],
- [15,'Filizcik','earth',0,0,0,0,0,'c',[[1,'Yaprak'],[2,'Kök Kırbacı']],'Güneşli bir köşede saatlerce hareketsiz durur.'],
- [16,'Dalbaşı','earth',1,1,15,0,2,'ch',[[2,'Diken Atışı'],[3,'Ağaç Darbe']],'Başındaki dallar her bahar yeniden çiçek açar.'],
- [17,'Ormanyürek','earth',2,2,16,0,2,'hcs',[[3,'Kök Ağı','heal'],[4,'Orman Gazabı']],'Kökleri bütün ormanın altına uzanır.'],
- [18,'Taşkirpi','earth',0,0,0,0,0,'sl',[[1,'Yuvarlan'],[2,'Dikenler','coin']],'Top gibi yuvarlanıp yokuş aşağı iner.'],
- [19,'Kayakabuk','earth',1,1,18,10,0,'slh',[[2,'Sertleş','heal'],[3,'Kaya Çarpması']],'Kabuğu kayalardan bile serttir.'],
- [20,'Yosun Ayısı','earth',0,0,0,10,2,'lc',[[2,'Yumruk']],'Kış uykusunda üstünü yosun kaplar.'],
- [21,'Dağ Devi','earth',3,0,0,10,2,'sh',[[3,'Deprem','splash'],[4,'Dağ Yumruğu']],'Uyuduğunda insanlar onu bir tepe sanır.'],
- [22,'Serçecik','air',0,0,0,0,0,'wk',[[1,'Gagala'],[2,'Kanat Vuruşu']],'Sabahları ilk ötüşüyle rüzgârı uyandırır.'],
- [23,'Rüzgârkanat','air',1,1,22,0,0,'wkt',[[1,'Hızlı Dalış'],[3,'Hortum','splash']],'Bulutların üstünde günlerce süzülebilir.'],
- [24,'Fırtınagöz','air',2,2,23,0,0,'wktc',[[2,'Şimşek','coin'],[4,'Kasırga']],'Gözlerini açtığında gökyüzü kararır.'],
- [25,'Bulutçuk','air',0,0,0,0,0,'l',[[1,'Pofuduk','heal'],[2,'Esinti']],'Dokunanlar onu pamuk sanar.'],
- [26,'Bulutkoyun','air',1,1,25,0,0,'lc',[[2,'Yumuşak Çarpma','heal'],[3,'Gök Gürültüsü']],'Yünü yağmur bulutuna dönüşebilir.'],
- [27,'Esinti Yarasası','air',0,0,0,0,0,'w',[[1,'Ultrason','coin'],[2,'Kanat Kesiği']],'Karanlıkta sesleriyle yolunu bulur.'],
- [28,'Gök Ejderi','air',3,0,0,0,1,'whst',[[2,'Rüzgâr Kesiği'],[4,'Gökyüzü Öfkesi','coin']],'Kanat çırptığında kıtalar arası rüzgâr eser.'],
- [29,'Işıltık','light',0,0,0,0,0,'c',[[1,'Parıltı'],[2,'Işık Oku']],'Karanlık odalarda küçük bir yıldız gibi parlar.'],
- [30,'Şafakkanat','light',1,1,29,0,0,'wc',[[2,'Şafak Rüzgârı'],[3,'Kutsal Işın','heal']],'Her sabah güneşle birlikte gökyüzüne yükselir.'],
- [31,'Güneşmuhafız','light',2,2,30,10,2,'whc',[[2,'Işık Kalkanı','heal'],[4,'Güneş Patlaması','splash']],'Tapınakların kapısında yüzyıllardır nöbet tutar.'],
- [32,'Fenerböceği','light',0,0,0,-10,0,'wl',[[1,'Göz Kamaştır','coin'],[2,'Işık Topu']],'Kayıp yolculara geceleri yol gösterir.'],
- [33,'Şafak Geyiği','light',3,0,0,0,1,'hl',[[3,'Kuzey Işığı'],[4,'Göksel Hüküm','heal']],'Boynuzlarından süzülen ışık kuzey göğünü boyar.'],
- [34,'Gölgecik','shadow',0,0,0,0,0,'c',[[1,'Gizlen','coin'],[2,'Karanlık Pençe']],'Sadece göz ucuyla bakınca görülebilir.'],
- [35,'Gecekedi','shadow',1,1,34,0,1,'tlc',[[2,'Sinsi Atak'],[3,'Gölge Darbesi','coin']],'Ay ışığında adım sesi bile çıkarmadan dolaşır.'],
- [36,'Gecehükmü','shadow',2,2,35,10,2,'hwt',[[3,'Kâbus','splash'],[4,'Karanlık Dalga','recoil']],'Uyuyanların rüyalarına girip kâbusa çevirir.'],
- [37,'Sisruh','shadow',0,0,0,0,2,'c',[[1,'Ürküt'],[2,'Sis Perdesi','heal']],'Sisli gecelerde mezarlıkların üstünde süzülür.'],
- [38,'Tutulma Kurdu','shadow',3,0,0,0,1,'lth',[[2,'Ay Işığı Isırığı'],[4,'Tam Tutulma','coin']],'Uluduğunda ay bir anlığına kararır.'],
- [39,'Közkuzu','fire',0,0,0,10,0,'lc',[[1,'Sıcak Toslama'],[2,'Kor Yünü','burn']],'Yünü kışın bütün köyü ısıtır.'],
- [40,'Lavkoç','fire',1,1,39,10,0,'lh',[[2,'Boynuz Darbesi'],[3,'Lav Hücumu','recoil']],'Boynuzlarından damlayan lav taşları eritir.'],
- [41,'Kıvılcım Yılanı','fire',0,0,0,-10,1,'t',[[1,'Isırık'],[2,'Alev Dili','burn']],'Kumların altında sıcak bir iz bırakarak süzülür.'],
- [42,'Mürekkepçik','water',0,0,0,0,0,'f',[[1,'Mürekkep Püskürt','coin'],[2,'Dokunaç']],'Korkunca mavi mürekkep bulutunun içinde kaybolur.'],
- [43,'Derinkol','water',1,1,42,10,0,'ft',[[2,'Sıkıştır'],[3,'Derin Girdap','splash']],'Kolları gemileri sarabilecek kadar uzundur.'],
- [44,'Kar Foku','water',0,0,0,10,1,'f',[[1,'Kaydır'],[2,'Buz Nefesi']],'Buzulların üstünde karnı üstünde kayarak oynar.'],
- [45,'Mantarcık','earth',0,0,0,0,2,'c',[[1,'Spor Bulutu','heal'],[2,'Kafa Atma']],'Yağmurdan sonra bir gecede ortaya çıkar.'],
- [46,'Mantarbey','earth',1,1,45,10,2,'cl',[[2,'Zehirli Spor','burn'],[3,'Mantar Yumruğu']],'Ormanın en yaşlı ağaçlarının dibinde yaşar.'],
- [47,'Mantar Kral','earth',2,2,46,10,2,'chl',[[2,'Kraliyet Sporu','heal'],[4,'Orman Hükmü','splash']],'Kabuğunun üstünde koca bir mantar ormanı taşır.'],
- [48,'Toprakkazan','earth',0,0,0,10,1,'l',[[1,'Kaz'],[2,'Tünel Saldırısı','coin']],'Bir gecede tepenin altından tünel açabilir.'],
- [49,'Tüycük','air',0,0,0,-10,0,'c',[[1,'Uçuş'],[2,'Esinti','heal']],'Rüzgâr nereye eserse oraya gider.'],
- [50,'Gökdenizanası','air',1,1,49,0,2,'c',[[2,'Hava Akımı'],[3,'Dokunaç Rüzgârı','coin']],'Bulutların arasında denizdeymiş gibi süzülür.'],
- [51,'Fırtına Denizanası','air',2,2,50,0,2,'ch',[[2,'Şimşek Dokunacı'],[4,'Fırtına Çağrısı','splash']],'Dokunaçlarından yere şimşekler iner.'],
- [52,'Süzülen Sincap','air',0,0,0,0,0,'tl',[[1,'Atlayış'],[2,'Süzülme Darbesi']],'Ağaçtan ağaca kanatsız süzülür.'],
- [53,'Kristalcik','light',0,0,0,0,0,'s',[[1,'Parıldama'],[2,'Kristal Oku']],'İçinden geçen ışığı yedi renge böler.'],
- [54,'Kristal Kanat','light',1,1,53,0,0,'ws',[[2,'Kırılan Işık'],[3,'Prizma Işını','coin']],'Kanatları gün ışığında gökkuşağı saçar.'],
- [55,'Prizma Ejderi','light',2,2,54,10,1,'wsh',[[2,'Işık Kalkanı','heal'],[4,'Gökkuşağı Nefesi','splash']],'Nefesi karanlık mağaraları gün gibi aydınlatır.'],
- [56,'Mumcuk','light',0,0,0,-10,2,'c',[[1,'Titrek Alev'],[2,'Sıcak Işık','heal']],'Rüzgârda sönmeyen tek mum onun başındakidir.'],
- [57,'Işıkbalığı','light',0,0,0,0,1,'f',[[1,'Işık Yanıp Sönme'],[2,'Parlak Dalga']],'Gece denizinde parlayan iz bırakır.'],
- [58,'Prizmabalığı','light',1,1,57,0,1,'fs',[[2,'Pul Yağmuru'],[3,'Işık Dalgası','splash']],'Pulları güneşte binlerce renge döner.'],
- [59,'Ağcık','shadow',0,0,0,0,0,'l',[[1,'Ağ At'],[2,'Zehirli Isırık','burn']],'Köşelerde görünmez ağlar örer.'],
- [60,'Gece Örümceği','shadow',1,1,59,0,0,'ls',[[2,'Ağ Tuzağı'],[3,'Gölge Ağı','splash']],'Ağları ay ışığında bile görünmez.'],
- [61,'Kâbus Örümceği','shadow',2,2,60,10,2,'lsh',[[2,'Korku Ağı','burn'],[4,'Kâbus Isırığı','recoil']],'Ağına düşen rüyasında bile kaçamaz.'],
- [62,'Gece Baykuşu','shadow',0,0,0,0,0,'wk',[[1,'Sessiz Pençe'],[2,'Gece Bakışı','coin']],'Gözleri karanlıkta iki ay gibi parlar.'],
- [63,'Hilal Baykuşu','shadow',1,1,62,0,0,'wkc',[[2,'Hilal Kanat'],[3,'Ay Tutulması','burn']],'Kanatlarını açtığında gökyüzünde hilal belirir.'],
- [64,'Kuzgun Ruhu','shadow',0,0,0,-10,0,'wk',[[1,'Gaga Darbesi'],[2,'Uğursuz Çığlık','coin']],'Ortaya çıktığı yerde ışıklar titrer.'],
- // ---- Seri 1 tamamlama: tek aşamalı Yaygın kartların evrimleri (Nadir) ----
- [71,'Magmakanat','fire',1,1,6,10,0,'wsl',[[1,'Kor Kanat'],[3,'Magma Boynuzu','burn']],'Kabuğu açılınca lav rengi kanatları gökyüzünü aydınlatır.'],
- [72,'Dalgadiken','water',1,1,13,0,1,'fs',[[1,'Diken Fırlat'],[3,'Girdap Kalkanı','coin']],'Etrafında dönen akıntılar onu zırh gibi korur.'],
- [73,'Kökpençe','earth',1,1,20,20,2,'lc',[[2,'Kök Yumruğu'],[3,'Orman Gazabı','heal']],'Sırtındaki fidan her bahar biraz daha büyür.'],
- [74,'Yankıkanat','air',1,1,27,-10,0,'w',[[1,'Ses Dalgası'],[3,'Yankı Fırtınası','splash']],'Çığlığı kristal mağaraların duvarlarını titretir.'],
- [75,'Yıldızfener','light',1,1,32,0,0,'wl',[[1,'Işık Huzmesi'],[3,'Yıldız Patlaması','splash']],'Geceleri kuyruğu bir yıldız gibi parlar.'],
- [76,'Siskral','shadow',1,1,37,0,0,'c',[[1,'Sis Pençesi'],[3,'Pus Hükmü','burn']],'Kristal tacı sisli mezarlığın kralı olduğunu gösterir.'],
- [77,'Korkobra','fire',1,1,41,0,1,'t',[[1,'Kor Isırık'],[3,'Alev Nefesi','burn']],'Başlığını açtığında çöl gecesi bile ısınır.'],
- [78,'Buzdişi','water',1,1,44,20,1,'f',[[2,'Buz Dişi'],[3,'Kuzey Fırtınası','recoil']],'Buz kristali dişleri hiç erimez.'],
- [79,'Kazmapençe','earth',1,1,48,10,0,'lc',[[1,'Kazı'],[3,'Kristal Kazma','coin']],'Kaskındaki kristal ışığıyla yerin altını aydınlatır.'],
- [80,'Bulutsüzen','air',1,1,52,-10,0,'wt',[[1,'Rüzgâr Süzülüşü'],[3,'Bulut Kasırgası','coin']],'Boynundaki bulut atkısıyla saatlerce süzülür.'],
- [81,'Şamdanruh','light',1,1,56,0,2,'c',[[1,'Mum Işığı'],[3,'Üçlü Alev','heal']],'Üç alevi asla aynı anda sönmez.'],
- [82,'Gölgekuzgun','shadow',1,1,64,-10,0,'wk',[[1,'Gölge Gaga'],[3,'Ay Tutulması Çığlığı','splash']],'Kanat çırptığında tüyleri dumana dönüşür.'],
- // ===================== SERİ 2: METAL ve ZEHİR =====================
- [86,'Pasçık','metal',0,0,0,0,0,'s',[[1,'Diken Batır'],[2,'Pas Yuvarlanması','coin']],'Paslı dikenlerini her sabah demirci ateşinde ısıtır.'],
- [87,'Demirkirpi','metal',1,1,86,0,0,'sl',[[1,'Çivi Yağmuru'],[3,'Kıvılcım Topu','splash']],'Dikenlerinin arasında mavi kıvılcımlar çakar.'],
- [88,'Çelikkale','metal',2,2,87,20,0,'sl',[[2,'Kalkan Darbesi'],[4,'Kale Yıkımı','recoil']],'Sırtındaki küçük kulelerde serçeler yaşar.'],
- [89,'Teneke Serçe','metal',0,0,0,-10,0,'w',[[1,'Gaga Vuruşu'],[2,'Kurmalı Dalış']],'Sırtındaki anahtarı kurulunca bütün gün öter.'],
- [90,'Bıçakkanat','metal',1,1,89,-10,0,'w',[[1,'Kanat Kesiği'],[3,'Bıçak Fırtınası','splash']],'Tüyleri gün ışığında ayna gibi parlar.'],
- [91,'Kılıçkartal','metal',2,2,90,0,0,'wt',[[2,'Çelik Pençe'],[4,'Kılıç Kasırgası','coin']],'Kanatlarındaki her tüy bir kılıçtır.'],
- [92,'Çancık','metal',0,0,0,0,1,'c',[[1,'Tını'],[2,'Çan Sesi','coin']],'Her adımda küçük bir çan sesi duyulur.'],
- [93,'Çanruh','metal',1,1,92,0,1,'c',[[1,'Ses Dalgası'],[3,'Kutsal Çan','heal']],'Manastırın çan kulesinde yüzyıllardır yaşar.'],
- [94,'Gong Lordu','metal',2,2,93,20,2,'lc',[[2,'Tokmak'],[4,'Dev Gong','splash']],'Gongunu bir kez çaldığında dağlar yankılanır.'],
- [95,'Kıskaçcık','metal',0,0,0,0,1,'l',[[1,'Mıknatıs Kıskaç'],[2,'Somun Atışı','coin']],'Kumsalda bulduğu vidaları toplamayı sever.'],
- [96,'Demirkıskaç','metal',1,1,95,20,1,'l',[[2,'Çelik Kıskaç'],[3,'Manyetik Fırtına','splash']],'Fırtınalı gecelerde deniz fenerini korur.'],
- [97,'Kılıç Aslanı','metal',3,0,0,0,0,'lt',[[3,'Kılıç Yelesi'],[4,'Bin Kılıç','splash']],'Yelesindeki kılıçlar düşen kahramanlardan kalmadır.'],
- [98,'Fokurcuk','poison',0,0,0,-10,1,'f',[[1,'Asit Baloncuğu'],[2,'Zehirli Sıçrama','burn']],'Bataklığın en sevimli ama en zehirli iribaşı.'],
- [99,'Asit Kurbağa','poison',1,1,98,0,0,'l',[[1,'Dil Kamçısı'],[3,'Asit Tükürüğü','burn']],'Sırtındaki kabarcıklar patladığında etrafa asit saçar.'],
- [100,'Bataklık Kralı','poison',2,2,99,20,0,'lc',[[2,'Kral Gırtlağı'],[4,'Zehir Seli','splash']],'Bataklığın taşlarından yapılmış tahtında oturur.'],
- [101,'Dikencik','poison',0,0,0,-10,1,'s',[[1,'Diken Batır'],[2,'Zehirli Isırık','burn']],'Yaprakların üstünde yavaşça ama kararlı ilerler.'],
- [102,'Kükürt Kozası','poison',1,1,101,10,1,'s',[[1,'Buhar'],[3,'Kükürt Bulutu','burn']],'İçinde uyurken etrafına zehirli sis yayar.'],
- [103,'Kükürt Güvesi','poison',2,2,102,-10,0,'w',[[2,'Toz Kanat'],[4,'Zehir Fırtınası','splash']],'Kanatlarındaki gözler düşmanlarını korkutur.'],
- [104,'Akrepçik','poison',0,0,0,0,0,'lt',[[1,'Kıskaç'],[2,'İğne','burn']],'Kuyruğundaki tek damla zehirle gurur duyar.'],
- [105,'Asit Akrep','poison',1,1,104,0,0,'lt',[[1,'Çelik Kıskaç'],[3,'Asit İğnesi','burn']],'Kanyonun asit havuzlarında avlanır.'],
- [106,'Ölümkuyruk','poison',2,2,105,10,0,'lt',[[2,'Kristal İğne'],[4,'Ölüm Darbesi','recoil']],'Antik çöl tapınağının bekçisidir.'],
- [107,'Sporcuk','poison',0,0,0,0,2,'c',[[1,'Spor Püskürt'],[2,'Mantar Tozu','coin']],'Utangaçtır, korkunca etrafa spor saçar.'],
- [108,'Sporbulut','poison',1,1,107,10,2,'c',[[2,'Zehirli Spor'],[3,'Spor Bulutu','splash']],'Ormanın en derin yerinde dev mantarların arasında yaşar.'],
- [109,'Bataklık Hidrası','poison',3,0,0,0,0,'lt',[[3,'Üçlü Isırık'],[4,'Asit Gölü','burn']],'Üç başından biri hep uyanıktır.'],
-];
-const E1=[1,2,2,3],E2=[2,3,4,4];   // Yaygın, Nadir, Destansı, Efsanevi
-const CARDS=RAW.map(([id,name,el,r,stage,from,hpMod,b,f,atks,flv])=>({id,name,el,r,stage,from,b,f,flv,
-  hp:RAR[r].hp+TYPE_HP[el]+hpMod*2+(atks.length<2?30:0),   // tek saldırılı kart doldurma yapamaz: +20 can
-  ret:Math.max(0,RAR[r].ret+TYPE_RET[el]),
-  // enerji nadirlikten gelir: ilk saldırı E1, ikinci (güçlü) saldırı E2 → evrimli kart her zaman daha sert vurur
-  atks:atks.map(([e0,n,fx],i)=>{const e=i===0?E1[r]:E2[r];return{e,name:n,fx,dmg:atkDmg(r,i,fx)}})}));
-const BY=Object.fromEntries(CARDS.map(c=>[c.id,c]));
-const rootOf=c=>c.from?rootOf(BY[c.from]):c;
-const N=CARDS.length;
-const pad=n=>String(n).padStart(3,'0');
-const setOf=c=>c.id>=86&&c.id<=109?2:1;
-const setCards=n=>CARDS.filter(c=>setOf(c)===n);
-const cno=c=>{const i=setCards(setOf(c)).indexOf(c);return pad(i>=0?i+1:c.id)};
-const setN=c=>setCards(setOf(c)).length;   // kart numarası: seri içindeki sıra (yeni eklenenler sona)
 
 /* =====================================================================
    3. KAYIT
    ===================================================================== */
 const KEY='kartdiyari.v2';
-const fresh=()=>({gold:ECON.startGold,dust:0,free:ECON.freePacks,owned:{},pity:0,lvl:1,xp:0,trophy:0,bestLg:0,wins:0,losses:0,opened:0,t:0});
 let S=fresh();
 try{const j=JSON.parse(localStorage.getItem(KEY));if(j&&typeof j==='object')S={...S,...j}}catch(e){}
 
@@ -1184,26 +1049,8 @@ document.documentElement.style.cssText='--ec-metal:#8e9bb0;--ec-poison:#8fd10f;-
 const ART={};
 const IMG=Object.fromEntries(Array.from({length:109},(_,i)=>[i+1,1]));
 /* ---------- UYANMIŞ EX KARTLAR ---------- */
-const EXA={blast:'Sahaya inince bütün rakiplere 20 hasar',heal:'Sahaya inince kendi kartlarına +30 can, kötü etkileri siler',stand:'Yenilmeden önce bir kez 50 canla ayağa kalkar'};
-const EXCOST={copies:3,dust:1500};
-const EXD=[[65,7,'Buz Ankası','water','blast',['Buz Tüyü'],['Donduran Fırtına','splash'],'Alevleri söndüğünde buzdan yeniden doğdu.'],
- [66,14,'Altın Deniz Ejderi','light','heal',['Altın Dalga'],['Güneş Gelgiti','heal'],'Gün batımında denizi altına boyar.'],
- [67,21,'Kristal Dev','shadow','stand',['Kristal Yumruk'],['Ametist Çığ','burn'],'Dağın kalbindeki kristaller onu uyandırdı.'],
- [68,28,'Fırtına Ejderi','air','blast',['Şimşek Pençe'],['Gök Gürültüsü','splash'],'Kanat çırptığında gök yarılır.'],
- [69,33,'Gül Geyiği','light','heal',['Çiçek Işığı'],['Gül Aurorası','heal'],'Geçtiği yerde karın üstünde çiçekler açar.'],
- [70,38,'Kızıl Ay Kurdu','fire','stand',['Kor Diş'],['Kızıl Tutulma','burn'],'Kızıl ay doğduğunda uluması dağları titretir.']];
-const EXC=EXD.map(([id,base,name,el,exa,a1,a2,flv])=>{const B0=BY[base];return{id,base,name,el,exa,flv,ex:1,r:3,stage:0,from:0,b:B0.b,f:B0.f,ret:B0.ret,hp:260,
-  atks:[{e:E1[3],name:a1[0],fx:a1[1],dmg:Math.max(10,round5(70-(a1[1]?FX[a1[1]].cost:0)))},{e:E2[3],name:a2[0],fx:a2[1],dmg:Math.max(10,round5(125-(a2[1]?FX[a2[1]].cost:0)))}]}});
-EXC.forEach(c=>BY[c.id]=c);
-const exOf=c=>EXC.find(x=>x.base===c.id);
 /* ---------- EZELİ KARTLAR (şimdilik sadece oyunun sahibine açık, paketten/rakipten çıkmaz) ---------- */
 const EZOWN='u_gCZR5eBoOHaN6bC0V8kJwQ';
-const EZA={drain:'Sahadayken her tur rakibin bütün kartlarından 50 can çeker ve kendini iyileştirir'};const EZDR=50;
-const EZC=[[83,'Ezelhan','blood','drain',['Kıyamet Pençesi'],['Tutulma Nefesi','burn'],'Dünyanın başlangıcından önce vardı; altı türü yuttu ve gökyüzünü kararttı.',0,'whts'],
- [84,'Ölüağaç','blood','drain',['Kemik Dal'],['Çürüyen Orman','splash'],'Bastığı yerde orman küle döner; boynuzlarındaki fenerler kayıp ruhları taşır.',1,'l'],
- [85,'Boşgöz','blood','drain',['Boşluk Bakışı'],['Göğün Yarığı','splash'],'Gökyüzündeki yarığın ardından dünyayı izleyen tek göz.',0,'c']].map(([id,name,el,exa,a1,a2,flv,b,f])=>({id,name,el,exa,flv,ex:1,ez:1,r:3,stage:0,from:0,b,f,ret:2,hp:500,
-  atks:[{e:E1[3],name:a1[0],dmg:400},{e:E2[3],name:a2[0],fx:a2[1],dmg:400}]}));
-EZC.forEach(c=>BY[c.id]=c);
 const exaTxt=c=>(c.ez?EZA:EXA)[c.exa];
 const koL=c=>c.ez?3:c.ex?2:1;   // yenilince giden can
 const ALLC=()=>[...CARDS,...EXC,...EZC.filter(c=>owned(c.id))];   // yapay zekâ görseli olan kartlar: img/<no>.jpg
@@ -1256,7 +1103,7 @@ FRAMES.shadow={basit:{src:'img/fr_shadow_c.webp',art:[30,144,1029,868],hd:[40,34
 const LEG_BORDER='img/fr_leg.webp';
 const fpos=([x1,y1,x2,y2])=>`left:${x1/10.6}%;top:${y1/14.84}%;width:${(x2-x1)/10.6}%;height:${(y2-y1)/14.84}%`;
 // ---------- PARLAK KARTLAR ----------
-const SHINY={chance:.015};window.__shiny=SHINY;
+window.__shiny=SHINY;
 const hasShiny=id=>(S.shiny||{})[id]>0;
 const shownShiny=id=>hasShiny(id)&&!(S.shOff||{})[id];
 const shCls=(c,o)=>{const sh=o.miss?false:(o.shiny??shownShiny(c.id));return sh?(o.noTilt?' holo still':' holo'):''};
@@ -1321,24 +1168,6 @@ document.addEventListener('pointermove',e=>{
 /* =====================================================================
    5. PAKET MANTIĞI (oyun ve simülasyon aynı fonksiyonu kullanır)
    ===================================================================== */
-const POOL=[0,1,2,3].map(r=>CARDS.filter(c=>c.r===r));
-const POOLS={1:[0,1,2,3].map(r=>CARDS.filter(c=>c.r===r&&setOf(c)===1)),2:[0,1,2,3].map(r=>CARDS.filter(c=>c.r===r&&setOf(c)===2))};
-let packSet=1;
-function roll(odds){let x=Math.random()*100;for(let i=0;i<4;i++){if((x-=odds[i])<0)return i}return 0}
-const EVO_NEED={1:10,2:20};               // evrim bedeli: temel karttan kaç kopya
-const STAGE_W=[1,0.08,0.02];               // paketten çıkma ağırlığı: Temel 1, Evrim 1 çok nadir, Evrim 2 aşırı nadir
-const cw=c=>c.r===3?1:STAGE_W[c.stage];
-function drawCard(r){const P=POOLS[packSet][r],tot=P.reduce((t,c)=>t+cw(c),0);let x=Math.random()*tot;for(const c of P){if((x-=cw(c))<0)return c}return P[P.length-1]}
-const copies=c=>Math.max(0,owned(rootOf(c).id)-1);   // koleksiyondaki 1 tane hariç fazla kopyalar
-function canEvo(t){return t.stage>0&&copies(t)>=EVO_NEED[t.stage]&&(t.stage<2||owned(t.from)>0)}
-function doEvo(t){const root=rootOf(t);S.owned[root.id]-=EVO_NEED[t.stage];S.owned[t.id]=owned(t.id)+1;save()}
-function rollPack(pity){
-  // Nadir ve Destansı kartların hepsi evrim kartı: çoğu zaman yerine Yaygın (temel) kart gelir
-  const out=PACK.slots.map(o=>{const c=drawCard(roll(o));return c.stage>0&&Math.random()>STAGE_W[c.stage]?drawCard(0):c});
-  let hasL=out.some(c=>c.r===3);
-  if(!hasL&&pity+1>=PACK.pity){out[out.length-1]=drawCard(3);hasL=true}
-  return{out,pity:hasL?0:pity+1};
-}
 
 /* =====================================================================
    6. EKRANLAR
@@ -1359,18 +1188,14 @@ const packArt=()=>`<div class="foil img"><img src="img/${packSet===2?'pack2':'pa
 /* ---------- PAKETLER ---------- */
 
 /* ---------- HEDİYE PAKETİ ---------- */
-const GIFT={every:6*3600e3,max:2};
-function giftTick(){const now=Date.now();if(S.gift==null){S.gift=1;S.gt=now;save()}
-  if(S.gift>=GIFT.max){S.gt=now;return}
-  const n=Math.floor((now-(S.gt||now))/GIFT.every);if(n>0){const add=Math.min(n,GIFT.max-S.gift);S.gift+=add;S.gt+=add*GIFT.every;if(S.gift>=GIFT.max)S.gt=now;save()}}
+function giftTick(){MR.giftTick(S,Date.now())}   // sadece görünüm; hediyeyi sunucu verir
 const hm=ms=>{const m=Math.max(1,Math.ceil(ms/60000));return m>=60?`${Math.floor(m/60)}s ${m%60}dk`:`${m}dk`};
 function giftBox(){giftTick();const g=S.gift,rem=GIFT.every-(Date.now()-S.gt);
   return `<div class="fp gift${g?' rdy':''}"><img class="gfi" src="img/ic/gift.webp" alt=""><div class="gft"><b>${g?`Hediye paketi hazır${g>1?` (${g})`:''}!`:'Hediye paketi'}</b><small>${g>=GIFT.max?`En fazla ${GIFT.max} birikir, al ki sayaç işlesin`:`Sonraki: ${hm(rem)} · ${g}/${GIFT.max} birikti`}</small></div>${g?'<button class="gbtn" id="gclaim">Al</button>':''}</div>`}
 function navDot(){giftTick();const b=document.querySelector('nav button[data-tab=pack]');if(b)b.classList.toggle('dot',S.gift>0||(typeof dqReady==='function'&&dqReady()))}
 setInterval(()=>{navDot();if(tab==='pack'&&!B&&!$('#ov').classList.contains('on')){const g=$('.gift');if(g)g.outerHTML=giftBox(),bindGift()}},30000);
-function bindGift(){const b=$('#gclaim');if(b)b.onclick=()=>{const n=S.gift;S.free+=n;S.gift=0;S.gt=Date.now();save();SFX.coins();toast(`+${n} ücretsiz paket`);render()}}
+function bindGift(){const b=$('#gclaim');if(b)b.onclick=async()=>{b.disabled=true;try{const r=await act('gift');SFX.coins();toast(`+${r.n} ücretsiz paket`)}catch(e){toast(e.message)}render()}}
 const ago=t=>{const m=Math.floor((Date.now()-t)/60000);return m<1?'az önce':m<60?m+' dk önce':m<1440?Math.floor(m/60)+' saat önce':Math.floor(m/1440)+' gün önce'};
-function noteRare(c){if(c.r<2)return;S.rare=[{id:c.id,t:Date.now()},...(S.rare||[])].slice(0,3)}
 function rareStrip(){const R=(S.rare||[]).filter(x=>BY[x.id]);
   return `<div class="fp rares"><b class="rh">Son nadir kartlar</b>${R.length?`<div class="rrow">${R.map(x=>{const c=BY[x.id];return `<div class="rit r${c.r}" data-id="${c.id}"><img src="img/t/${c.id}.webp" alt=""><span>${c.name}</span><small>${RAR[c.r].n} · ${ago(x.t)}</small></div>`}).join('')}</div>`:'<small class="rem">Henüz Destansı ya da Efsanevi kart çıkmadı. İlki burada görünecek.</small>'}</div>`}
 function renderPack(){
@@ -1388,23 +1213,16 @@ function renderPack(){
   const go=()=>{if(S.free>0||S.gold>=PACK.cost)openPack()};
   $('#buy').onclick=go;$('#pk').onclick=go;
 }
-function openPack(){
-  if(S.free>0)S.free--;else S.gold-=PACK.cost;
-  const pityBefore=S.pity,p=rollPack(S.pity);S.pity=p.pity;p.out=tutRig(p.out);
-  let dustGain=0,xpGain=0;
-  dq('pack');const res=p.out.map(c=>{const isNew=!owned(c.id);S.owned[c.id]=owned(c.id)+1;
-    xpGain+=XP.card[c.r]*(isNew?XP.newMult:1);noteRare(c);
-    const sh=Math.random()<SHINY.chance,newSh=sh&&!hasShiny(c.id);if(sh){S.shiny=S.shiny||{};S.shiny[c.id]=(S.shiny[c.id]||0)+1}return{c,isNew,sh,newSh}});
-  // en nadir en sona: nadirlik artan, eşitlikte yeniler sona
-  res.sort((a,b)=>a.c.r-b.c.r||(a.isNew-b.isNew));
+async function openPack(){
+  if(window.__pkBusy)return;window.__pkBusy=1;let r;
+  try{r=await act('pack',{set:packSet})}catch(e){toast(e.message);return}finally{window.__pkBusy=0}
+  const res=r.res.map(x=>({c:BY[x.id],isNew:x.isNew,sh:x.sh,newSh:x.newSh}));
   vidLoad();
   // paket açılırken kartların büyük resimleri arkada insin, çevrilince hazır olsun
   res.forEach(r=>{const im=new Image();im.src=`img/${r.c.id}.jpg`;if(r.sh&&SHART.has(r.c.id)){const i2=new Image();i2.src=`img/s/${r.c.id}.jpg`}});
-  const from={lvl:S.lvl,xp:S.xp},ups=addXp(xpGain);
-  S.dust+=dustGain;S.opened++;save();renderTop();
-  showOpen(res,dustGain,{from,gain:xpGain,ups},pityBefore+1>=PACK.pity);
+  renderTop();
+  showOpen(res,0,r.xp,r.pityHit);
 }
-function addXp(n){let ups=0;S.xp+=n;while(S.xp>=XP.need(S.lvl)){S.xp-=XP.need(S.lvl);S.lvl++;ups++;S.free+=XP.reward.free;S.gold+=XP.reward.gold}return ups}
 function shelfHTML(){
   const show=[...POOL[3],...POOL[2].slice(0,2)];
   return `<div class="shelf">${show.map(c=>`<div class="sh${owned(c.id)?'':' miss'}">${art(c)}</div>`).join('')}</div>`;
@@ -1572,7 +1390,7 @@ function renderCol(){
   document.querySelectorAll('.grid .card').forEach(el=>el.onclick=()=>showCard(BY[el.dataset.id],true));
   document.querySelectorAll('.sgrid .spc').forEach(el=>el.onclick=()=>showSup(el.dataset.sk));
 }
-function canAwaken(c){const X=exOf(c),ch=ADV_CH.findIndex(x=>x[0]===c.el);return !!(X&&!owned(X.id)&&owned(c.id)>=1+EXCOST.copies&&S.dust>=EXCOST.dust&&(S.exB||{})[ch])}
+function canAwaken(c){return MR.canAwaken(S,c)}
 function awakenBox(c){const X=exOf(c);if(!X)return'';const ch=ADV_CH.findIndex(x=>x[0]===c.el),ok=(b,t)=>`<li class="${b?'ok':''}">${b?'✓':'○'} ${t}</li>`;
   if(owned(X.id))return `<div class="evo awk"><b>⚡ Uyanış</b><p class="evh">${X.name} EX senin.</p><button class="btn alt" id="awv">EX kartı gör</button></div>`;
   return `<div class="evo awk"><b>⚡ Uyanış: ${X.name} EX</b><ul>${ok(owned(c.id)>=1+EXCOST.copies,`${c.name} kopyası: ${Math.max(0,owned(c.id)-1)}/${EXCOST.copies}`)}${ok(S.dust>=EXCOST.dust,`Toz: ${S.dust}/${EXCOST.dust}`)}${ok((S.exB||{})[ch],`Macera: ${ADV_CH[ch][1]} uyanmış boss'u yen`)}</ul><button class="btn" id="awk" ${canAwaken(c)?'':'disabled'}>Uyandır</button></div>`}
@@ -1588,10 +1406,10 @@ function showCard(c,allowCraft){
   ov.classList.add('on');
   {const t=$('#shtg');if(t)t.onclick=()=>{S.shOff=S.shOff||{};S.shOff[c.id]=shownShiny(c.id)?1:0;if(!S.shOff[c.id])delete S.shOff[c.id];save();renderCol();showCard(c,allowCraft)}}
   $('#close').onclick=()=>{ov.classList.remove('on');ov.innerHTML='';if(S.tut===6&&!B){if(!(S.deck2||[]).length){const d=autoDeck();if(!d.includes(TUT.evo))d.unshift(TUT.evo);S.deck2=validDeck(d);save()}tab='arena';render()}};
-  {const ab=$('#awk');if(ab)ab.onclick=()=>{const X=exOf(c);if(!canAwaken(c))return;S.owned[c.id]-=EXCOST.copies;S.dust-=EXCOST.dust;S.owned[X.id]=1;save();renderTop();renderCol();evoAnim(c,X)};const av=$('#awv');if(av)av.onclick=()=>showCard(exOf(c),true)}
-  const cr=$('#craft');if(cr)cr.onclick=()=>{S.dust-=R.craft;S.owned[c.id]=1;save();toast(c.name+' üretildi');renderTop();renderCol();showCard(c,true)};
-  const td=$('#todust');if(td)td.onclick=()=>{S.dust+=extra*R.dust;S.owned[c.id]=1;save();toast(`+${extra*R.dust} toz`);renderTop();renderCol();showCard(c,true)};
-  ov.querySelectorAll('.evbtn').forEach(b=>b.onclick=()=>{const t=BY[b.dataset.t];if(!canEvo(t))return;doEvo(t);if(S.tut===5&&t.id===TUT.evo){S.tut=6;save()}renderTop();renderCol();evoAnim(root,t)});
+  {const ab=$('#awk');if(ab)ab.onclick=async()=>{const X=exOf(c);if(!canAwaken(c))return;ab.disabled=true;try{await act('awaken',{id:c.id})}catch(e){toast(e.message);ab.disabled=false;return}renderTop();renderCol();evoAnim(c,X)};const av=$('#awv');if(av)av.onclick=()=>showCard(exOf(c),true)}
+  const cr=$('#craft');if(cr)cr.onclick=async()=>{cr.disabled=true;try{await act('craft',{id:c.id})}catch(e){toast(e.message);cr.disabled=false;return}toast(c.name+' üretildi');renderTop();renderCol();showCard(c,true)};
+  const td=$('#todust');if(td)td.onclick=async()=>{td.disabled=true;let r;try{r=await act('todust',{id:c.id})}catch(e){toast(e.message);td.disabled=false;return}toast(`+${r.dust} toz`);renderTop();renderCol();showCard(c,true)};
+  ov.querySelectorAll('.evbtn').forEach(b=>b.onclick=async()=>{const t=BY[b.dataset.t];if(!canEvo(t))return;b.disabled=true;try{await act('evo',{id:t.id})}catch(e){toast(e.message);b.disabled=false;return}renderTop();renderCol();evoAnim(root,t)});
 }
 async function evoAnim(from,to){SFX.evo();
   const ov=$('#ov');ov.innerHTML=`<div class="ovt">Evrimleşiyor…</div><div class="evstage"><div class="evc a">${cardHTML(from,{full:1,w:'min(70vw,300px)'})}</div><div class="evc b">${cardHTML(to,{full:1,w:'min(70vw,300px)'})}</div></div>`;
@@ -1612,7 +1430,6 @@ function typeChart(){
 /* ---------- ARENA (6 kart, 3 sahada + deste) ---------- */
 const BAT={deck:15,hand:5,field:3,lives:6,time:180,minC:9,maxS:6,budget:50,pts:[2,3,4,5],handMax:5};   // yeni arena: 15 kartlık deste, elde 5 kart, sahada 3 yaratık, 6 can, toplam 3 dakika
 /* ---------- DESTEK KARTLARI (ödüllerden gelir) ---------- */
-const SUPK=['fire','water','earth','air','light','shadow','metal','poison','evo'];
 const SUPN={fire:'Ateş Taşı',water:'Su İncisi',earth:'Toprak Taşı',air:'Hava Tüyü',light:'Işık Kristali',shadow:'Gölge Taşı',metal:'Metal Taşı',poison:'Zehir Şişesi',evo:'Evrim Taşı'};
 const supIco=k=>k==='evo'?'img/ic/star.webp':`img/ic/${k}.webp`;
 const supArt=k=>`img/sup/${k}.webp`;
@@ -1621,8 +1438,7 @@ function supCard(k,o={}){return `<div class="spc${k==='evo'?' evo':''}" data-sk=
 function showSup(k){const ov=$('#ov');ov.className='ov on';ov.innerHTML=`<div class="ovt">${SUPN[k]}</div><div class="spbig">${supCard(k,{w:'min(70vw,300px)',n:supHave(k),desc:false})}</div><p class="ttx">${supTxt(k)}.<br>Her tur en fazla 1 destek kartı oynayabilirsin. Destek kartları zafer sandıklarından, maceradan ve günlük görevlerden gelir.</p><div class="ovb"><button class="btn" id="close">Kapat</button></div>`;$('#close').onclick=()=>{ov.className='ov';ov.innerHTML=''}}
 const supTxt=k=>k==='evo'?'Temel yaratık yenilene kadar evrimleşir (evrimi koleksiyonunda olmalı)':`${T[k].n} yaratığa +30 can ve +10 hasar`;
 const supHave=k=>(S.sup||{})[k]||0;
-function giveSup(k,n=1){S.sup=S.sup||{};S.sup[k]=(S.sup[k]||0)+n}
-const rndSup=()=>Math.random()<.2?'evo':ELS[Math.floor(Math.random()*ELS.length)];
+function giveSup(k,n=1){MR.giveSup(S,k,n)}
 if(S.supV===1&&!S.supV2){giveSup('metal',1);giveSup('poison',1);S.supV2=1}
 if(S.supV!==1){S.sup=S.sup||{};giveSup('evo',2);ELS.forEach(e=>giveSup(e,1));S.supV=1;save()}
 const evoNext=c=>CARDS.find(x=>x.from===c.id);
@@ -1716,20 +1532,6 @@ function openDeckEditor(){
 }
 /* ---------- LİG ---------- */
 // kupa: galibiyet +, mağlubiyet − ; lig yükseldikçe rakip güçlenir, altın ödülü artar
-const LEAGUES=[
-  {n:'Bronz',  min:0,   col:'#c98a54',up:0,   down:.35,mis:.45,gold:0, reward:0},
-  {n:'Gümüş',  min:200, col:'#c7d2da',up:0,   down:.15,mis:.30,gold:10,reward:1},
-  {n:'Altın',  min:500, col:'#f5c451',up:.10, down:0,  mis:.18,gold:20,reward:2},
-  {n:'Elmas',  min:900, col:'#7fd8ff',up:.25, down:0,  mis:.10,gold:35,reward:3},
-  {n:'Usta',   min:1400,col:'#c27bff',up:.40, down:0,  mis:.05,gold:50,reward:4},
-  {n:'Efsane', min:2000,col:'#ff6a5a',up:.55, down:0,  mis:0,  gold:70,reward:5}
-];
-const TROPHY={win:30,loss:-18,floorStep:true};   // lig tabanının altına düşülmez
-// galibiyet serisi: 2. galibiyetten itibaren ek kupa/altın (4'te sabitlenir)
-const STREAK={tr:[0,0,5,10,15],gold:[0,0,10,20,30]};
-const strkB=n=>{const k=Math.min(n,4);return{tr:STREAK.tr[k],g:STREAK.gold[k]}};
-// zafer sandığı: her 3 galibiyette 1 sandık; içerik lige göre artar
-const CHEST={need:3,gold:l=>50+l*15,dust:l=>10+l*5,card:[70,25,4.6,0.4],pack:.10};
 function chestSvg(open){return `<img class="chsv${open?' op':''}" src="img/ic/${open?'chest_open':'chest'}.webp" alt="">`}
 function flameSvg(){return `<img class="flm" src="img/ic/flame.webp" alt="">`}
 function arenaStrip(){const st=S.streak||0,cp=S.chest||0,nc=S.chests||0,h=S.hist||[],b=strkB(st+1);
@@ -1738,11 +1540,10 @@ function arenaStrip(){const st=S.streak||0,cp=S.chest||0,nc=S.chests||0,h=S.hist
   <div class="ast"><small>Zafer sandığı</small>${nc?`<button class="chbtn" id="opench">${chestSvg()}<b>Aç${nc>1?` (${nc})`:''}</b></button>`:`<div class="chp">${chestSvg()}<span>${[0,1,2].map(k=>`<i class="${k<cp?'on':''}"></i>`).join('')}</span></div><em>${CHEST.need-cp} galibiyet kaldı</em>`}</div>
   <div class="ast"><small>Son maçlar</small><div class="hst">${h.length?h.map(x=>`<span class="${x.w?'w':'l'}">${x.w?'G':'M'}<i>${x.dt>=0?'+':''}${x.dt}</i></span>`).join(''):'<em>Henüz maç yok</em>'}</div></div>
   </div>`}
-function openChest(){
-  if(!(S.chests>0))return;S.chests--;const lg=lgOf(S.trophy||0),g=CHEST.gold(lg),d=CHEST.dust(lg);
-  let c=drawCard(roll(CHEST.card));if(c.stage>0&&Math.random()>STAGE_W[c.stage])c=drawCard(0);
-  const isNew=!owned(c.id);S.owned[c.id]=owned(c.id)+1;noteRare(c);const csh=Math.random()<SHINY.chance;if(csh){S.shiny=S.shiny||{};S.shiny[c.id]=(S.shiny[c.id]||0)+1}const pk=Math.random()<CHEST.pack;
-  S.gold+=g;S.dust+=d;if(pk)S.free++;const csp=Math.random()<.4?rndSup():null;if(csp)giveSup(csp);addXp(XP.card[c.r]*(isNew?XP.newMult:1));save();
+async function openChest(){
+  if(!(S.chests>0)||window.__chBusy)return;window.__chBusy=1;let r;
+  try{r=await act('chest')}catch(e){toast(e.message);return}finally{window.__chBusy=0}
+  const g=r.g,d=r.d,c=BY[r.id],isNew=r.isNew,csh=r.sh,pk=r.pk,csp=r.sup;renderTop();
   const ov=$('#ov');ov.className='ov on';
   ov.innerHTML=`<div class="ovt">Zafer Sandığı</div><div class="chbig">${chestSvg()}</div><div class="chres"></div><div class="ovb" style="opacity:0"><button class="btn" id="chok">Tamam</button></div>`;
   const big=ov.querySelector('.chbig');big.classList.add('shake');SFX.rattle();
@@ -1755,7 +1556,6 @@ function openChest(){
   },1300);
   $('#chok').onclick=()=>{ov.className='ov';ov.innerHTML='';render()};
 }
-const lgOf=t=>{let i=0;LEAGUES.forEach((l,k)=>{if(t>=l.min)i=k});return i};
 function lgBadge(i,big){return `<span class="lgb2${big?' big':''}"><img src="img/lg/${i}.webp" alt="${LEAGUES[i].n}"></span>`}
 function foeDeck(mine,lg){const li=lg??lgOf(S.trophy||0),L=LEAGUES[li];
   const cr=mine.filter(x=>x.t==='c').map(x=>{const c=x.c;let r=Math.min(3,c.r);if(r<3&&Math.random()<L.up)r++;else if(r>0&&r<3&&Math.random()<L.down)r--;const p=POOL[r];return p[Math.floor(Math.random()*p.length)]});
@@ -1826,11 +1626,16 @@ function doSup(X,s,j,i){const P=X[s],x=P.hand[j],f=P.board[i];P.hand.splice(j,1)
   if(x.k==='evo'){const e=evoNext(f.c),ratio=f.hp/mx(f);f.c=e;f.max=e.hp+(f.st?30:0);f.hp=Math.max(10,Math.round(f.max*ratio/5)*5);f.evo=true;return{k:'evo',e}}
   f.st=x.k;f.max=mx(f)+30;f.hp+=30;return{k:x.k}}
 const outOf=(X,s)=>X[s].lives<=0||(!X[s].board.some(Boolean)&&!X[s].hand.some(x=>x.t==='c')&&!X[s].deck.some(x=>x.t==='c'));
-function startBattle(adv,fr){fx2Load();musBt=Date.now();if(B&&B.iv)clearInterval(B.iv);
+async function startBattle(adv,fr){if(window.__btStart)return;window.__btStart=1;let bid,fo;
+  // savaşı sunucu başlatır (kimlik + başlangıç zamanı); ödülleri bitişte sunucu hesaplar
+  try{const r=await act('battle_start',{mode:fr?'friend':adv!=null?'adv':'arena',adv:adv!=null?adv:undefined,fr:fr?fr.name:undefined});bid=r.id;fo=r.forfeit}
+  catch(e){toast(e.message);return}finally{window.__btStart=0}
+  if(fo)setTimeout(()=>toast(`Yarım kalan arena savaşı yenilgi sayıldı (${fo.dt} kupa)`),400);
+  fx2Load();musBt=Date.now();if(B&&B.iv)clearInterval(B.iv);
   const st=adv!=null?advStage(adv):null,md=myDeck();let fd;
   if(st){const hm=st.rule==='hp'?1.2:1,cr=[...st.deck,...st.deck.filter(c=>c!==st.boss).slice(0,4)].map(c=>{let k=hm;if(st.boss&&c===st.boss&&st.rule==='boss')k=1.5;return k===1?c:{...c,hp:Math.round(c.hp*k/5)*5}});
     const sp=st.el?[st.el,st.el,st.el,'evo']:['evo'];fd=shuffle([...cr.map(c=>({t:'c',c})),...sp.map(k=>({t:'s',k}))])}else fd=fr?frDeck(fr.deck):foeDeck(md);
-  B={me:side(md),foe:side(fd),turn:'me',sel:null,selH:null,supUsed:false,busy:true,over:false,win:null,adv:st?adv:null,mis:st?st.mis:null,st,dmg:{me:0,foe:0},log:fr?escH(fr.name)+' destesiyle dostluk maçı':'Eller dağıtıldı',fr:fr||null};
+  B={me:side(md),foe:side(fd),turn:'me',sel:null,selH:null,supUsed:false,busy:true,over:false,win:null,adv:st?adv:null,mis:st?st.mis:null,st,dmg:{me:0,foe:0},log:fr?escH(fr.name)+' destesiyle dostluk maçı':'Eller dağıtıldı',fr:fr||null,bid,stats:{hit:{},weak:0,ko:0}};
   const tutB=S.tut===6&&!st&&!fr;
   if(tutB){// öğretici savaşı: kolay rakip; sahada Kıvılcık + 1 yaratık, 3. yer boş; elde 1 yaratık ve Evrim Taşı
     B.tut=true;B.tstep=0;B.mis=.45;
@@ -1982,27 +1787,19 @@ function bnum(el,txt,cls){if(!el)return;const r=el.getBoundingClientRect(),d=doc
 const curAtk=f=>f.ch&&f.c.atks[1]?f.c.atks[1]:f.c.atks[0];
 const FXS={burn:'Yakar',splash:'Sıçrar',heal:'İyileşir',coin:'Yazı-tura',recoil:'Geri teper'};
 const FXL={burn:`vurduğu kart 2 tur ${FXV.burn} hasar alır`,splash:`diğer rakip kartlara da ${FXV.splash} hasar`,heal:`saldıran ${FXV.heal} can kazanır`,coin:`%50 ihtimalle +${FXV.coin} hasar`,recoil:`saldıran kendine ${FXV.recoil} hasar verir`};
-function endBattle(win){
-  if(!B||B.done)return;B.done=1;B.tEnd=Date.now();if(B.iv)clearInterval(B.iv);B.busy=false;B.sel=null;B.selH=null;
-  if(B.fr){B.over=true;B.win=win;dq('battle');if(win)dq('win');save();cloudPush(true);
-    api('/api/duel',{m:'POST',b:{u:B.fr.name,win:!!win}}).catch(()=>{});
-    renderTop();renderBattle();setTimeout(()=>{if(win){SFX.win();vConfetti()}else SFX.lose()},250);return}
-  if(B.adv!=null){B.over=true;B.win=win;const st=advStage(B.adv),first=st.x?!(S.exB||{})[st.ch]:B.adv>=advDone();B.first=win&&first;B.pk=0;B.du=0;
-    B.g=win?(first?st.gold:Math.round(st.gold/4)):10;S.gold+=B.g;if(B.first){S.dust+=st.dust;B.du=st.dust;if(st.x){S.exB=S.exB||{};S.exB[st.ch]=1}else S.advC=B.adv+1;if(st.pack){S.free+=st.pack;B.pk=st.pack}B.sup=st.x||st.p===4?'evo':st.el;giveSup(B.sup)}
-    dq('battle');if(win){dq('win');dq('adv')}
-    save();renderTop();renderBattle();setTimeout(()=>{if(win){SFX.win();vConfetti()}else SFX.lose()},250);return}
-  dq('battle');if(win)dq('win');
-  B.over=true;B.win=win;const lg0=lgOf(S.trophy||0),floor=LEAGUES[lg0].min;B.lg0=lg0;B.g=win?ECON.win+LEAGUES[lg0].gold:ECON.loss;S.gold+=B.g;
-  if(!B.why)B.why=win?'':'';
-  B.dt=win?TROPHY.win:Math.max(TROPHY.loss,floor-(S.trophy||0));B.sb=null;B.chest=0;B.lost=0;
-  if(win){S.streak=(S.streak||0)+1;const sb=strkB(S.streak);if(sb.tr||sb.g){B.sb={n:S.streak,...sb};B.dt+=sb.tr;B.g+=sb.g;S.gold+=sb.g}
-    S.chest=(S.chest||0)+1;if(S.chest>=CHEST.need){S.chest-=CHEST.need;S.chests=(S.chests||0)+1;B.chest=1}}
-  else{B.lost=S.streak||0;S.streak=0}
-  S.trophy=Math.max(0,(S.trophy||0)+B.dt);if(win)S.wins++;else S.losses++;
-  S.hist=[...(S.hist||[]),{w:win?1:0,dt:B.dt}].slice(-5);
-  B.tutEnd=0;if(S.tut===6){S.tut=8;S.free++;B.tutEnd=1}
-  B.lg1=lgOf(S.trophy);B.reward=0;if(B.lg1>(S.bestLg||0)){for(let k=(S.bestLg||0)+1;k<=B.lg1;k++)B.reward+=LEAGUES[k].reward;S.free+=B.reward;S.bestLg=B.lg1}
-  save();renderTop();renderBattle();setTimeout(()=>{if(win){SFX.win();vConfetti()}else SFX.lose()},250);
+async function endBattle(win){
+  if(!B||B.done)return;B.done=1;B.tEnd=Date.now();if(B.iv)clearInterval(B.iv);B.busy=true;B.sel=null;B.selH=null;
+  const Bk=B,dq0=JSON.stringify(((S.dq||{}).l)||[]);B.log='Sonuç kaydediliyor...';renderBattle();
+  // ödüller sunucuda hesaplanır: kupa, altın, seri, sandık, lig, macera, görevler
+  let r=null,err=null;try{r=await act('battle_end',{id:Bk.bid,win:!!win,stats:Bk.stats})}catch(e){err=e.message}
+  if(B!==Bk)return;
+  B.busy=false;B.over=true;B.win=win;
+  if(B.fr){if(!err)api('/api/duel',{m:'POST',b:{u:B.fr.name,win:!!win}}).catch(()=>{})}
+  else if(B.adv!=null)Object.assign(B,{first:false,pk:0,du:0,g:0,sup:null},r||{},{win});
+  else{const lg=lgOf(S.trophy||0);Object.assign(B,{lg0:lg,g:0,dt:0,sb:null,chest:0,lost:0,lg1:lg,reward:0,tutEnd:0},r||{},{win})}
+  if(err){B.why=err;toast(err)}
+  try{const o=JSON.parse(dq0);((S.dq||{}).l||[]).forEach((m,k)=>{const D=DQP[m.i],b=o[k];if(m.p>=D.n&&!(b&&b.i===m.i&&b.p>=D.n))setTimeout(()=>toast('Görev tamamlandı: '+D.x(m.el)),700)})}catch(e){}
+  navDot();renderTop();renderBattle();setTimeout(()=>{if(win){SFX.win();vConfetti()}else SFX.lose()},250);
 }
 // sahadaki canı bitmiş kartları kaldırır, desteden yenisini getirir; savaş bittiyse true
 /* ---------- DESTEK ANİMASYONLARI ---------- */
@@ -2430,12 +2227,20 @@ function stripEz(d,owner){if(!d||!d.owned||typeof d.owned!=='object')return d;
 function cloudQ(){if(!cloudOn())return;clearTimeout(window.__cqT);window.__cqT=setTimeout(()=>cloudPush(),1500)}
 async function cloudPush(now){if(!cloudOn())return;
   if(window.__cqBusy){if(!now)cloudQ();return}window.__cqBusy=1;clearTimeout(window.__cqT);
-  try{const r=await api('/api/save',{m:'PUT',b:{data:S,rev:accGet().rev||0,pub:{tr:S.trophy||0,lg:lgOf(S.trophy||0),lvl:S.lvl||1,col:uniq(),tot:N,w:S.wins||0,l:S.losses||0},deck:deckKeys()}});accRev(r.rev)}
+  try{const r=await api('/api/save',{m:'PUT',b:{data:S,rev:accGet().rev||0,deck:deckKeys()}});accRev(r.rev)}
   catch(e){if(e.status===409&&e.data&&e.data.save)cloudConflict(e.data.save);else if(e.status!==401&&!now)window.__cqT=setTimeout(()=>cloudPush(),20000)}
   finally{window.__cqBusy=0}}
 function accRev(rev){const a=accGet();if(a.tok&&Number.isInteger(rev)){a.rev=rev;accSet(a)}}
+// Ekonomi alanlarını (altın, kartlar, paketler...) sunucudaki değerle değiştirir.
+function applySrv(sv){if(!sv)return;for(const k of MR.ECON_KEYS){if(sv[k]===undefined)delete S[k];else S[k]=sv[k]}try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+// Ekonomi işlemi: Cloudflare sürümünde sunucuda yapılır; artifact içinde (window.claude) aynı kurallar yerelde çalışır.
+async function act(a,p={}){
+  if(window.claude){const r=MR.act(S,a,p,{rng:Math.random,now:Date.now(),friendOk:true});save();return r}
+  if(!accGet().tok){openAccount(true);throw new Error('Önce giriş yap.')}
+  let j;try{j=await api('/api/act',{m:'POST',b:{...p,a,tut:S.tut}})}catch(e){if(e.status===401)openAccount(true);throw e}
+  applySrv(j.save);accRev(j.rev);return j.r}
 // Aynı hesap başka cihazda daha yeni kaydedilmiş: sunucudaki kayıt geçerli olur, bu cihazdaki .bak olarak yedeklenir.
-function cloudConflict(sv){takeSave(stripEz(sv.data,!!accGet().owner));accRev(sv.rev);
+function cloudConflict(sv){takeSave(sv.data);accRev(sv.rev);
   toast('Hesabın başka bir cihazda oynandı, en güncel kayıt yüklendi');if(!B)render();else renderTop()}
 // Sekmeye/uygulamaya dönünce başka cihazdaki yeni ilerlemeyi çek (savaş sırasında değil).
 async function cloudPull(){if(!cloudOn()||(B&&!B.over))return;
@@ -2447,33 +2252,33 @@ function afterAuth(j,login){const a=accGet(),sv=j.save,r=sv&&sv.data;
   // giriş yapınca ya da sunucu bu cihazın bildiğinden yeni bir sürüme sahipse sunucudaki kayıt geçerli
   const take=!!r&&(login||(sv.rev||0)>(a.rev||0));
   accSet({tok:j.token||a.tok,user:j.user,owner:!!j.owner,rev:sv?(sv.rev||0):0});window.__ezOwner=!!j.owner;
-  if(take)takeSave(r);
-  stripEz(S,!!j.owner);try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}
+  if(take)takeSave(r);else if(r)applySrv(r);   // ekonomi her zaman sunucudan
+  try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}
   if(!take)cloudPush();
   if(!B)render();frBadge()}
 async function cloudInit(){if(window.claude)return;
   // giriş sonradan yapılsa da çalışsın diye dinleyici her zaman kurulur; içeride oturum kontrol edilir
   addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')cloudPush(true);else cloudPull()});
-  if(!accGet().tok)return;
-  try{afterAuth(await api('/api/me'),false)}catch(e){}}
-function openAccount(){const ov=$('#ov');ov.className='ov on';
-  ov.innerHTML=`<div class="fp setp"><div class="sth"><b>Hesap</b><button class="stx" id="accback" aria-label="Geri">✕</button></div>
+  if(!accGet().tok){openAccount(true);return}   // hesap şart
+  try{afterAuth(await api('/api/me'),false)}catch(e){if(e.status===401)openAccount(true)}}
+function openAccount(force){if(force&&$('#accu'))return;const ov=$('#ov');ov.className='ov on';window.__accForce=!!force;
+  ov.innerHTML=`<div class="fp setp"><div class="sth"><b>Hesap</b>${force?'':'<button class="stx" id="accback" aria-label="Geri">✕</button>'}</div>${force?'<p class="sionote">Mythbeast Realm\'de ilerlemen hesabında saklanır. Oynamak için giriş yap ya da ücretsiz hesap aç.</p>':''}
     <input class="accin" id="accu" placeholder="Kullanıcı adı" autocomplete="username" autocapitalize="off" spellcheck="false" maxlength="16">
     <input class="accin" id="accp" type="password" placeholder="Şifre (en az 6 karakter)" autocomplete="current-password" maxlength="64">
     <p class="sioerr" id="accerr"></p>
     <div class="stsv2"><button class="btn" id="acclog">Giriş yap</button><button class="btn alt" id="accreg">Kayıt ol</button></div>
-    <p class="sionote"><b>Kayıt ol:</b> bu cihazdaki ilerlemen yeni hesabına aktarılır.<br><b>Giriş yap:</b> hesabındaki kayıt yüklenir.</p>
-    <button class="btn alt" id="accdone">Geri</button></div>`;
+    <p class="sionote"><b>Kayıt ol:</b> yeni hesap sıfırdan başlar.<br><b>Giriş yap:</b> hesabındaki ilerleme yüklenir.</p>
+    ${force?'':'<button class="btn alt" id="accdone">Geri</button>'}</div>`;
   const er=$('#accerr'),bl=$('#acclog'),br=$('#accreg');
   const go=async reg=>{const u=$('#accu').value.trim(),p=$('#accp').value;er.textContent='';
     if(!u||!p){er.textContent='Kullanıcı adı ve şifre yaz.';return}
     bl.disabled=br.disabled=true;
     try{const j=await api(reg?'/api/register':'/api/login',{m:'POST',b:{u,p}});afterAuth(j,!reg);
-      toast(reg?'Hesap açıldı, ilerlemen buluta kaydedildi':'Hoş geldin, '+j.user);openSettings()}
+      toast(reg?'Hesap açıldı, iyi oyunlar!':'Hoş geldin, '+j.user);if(window.__accForce){ov.className='ov';ov.innerHTML='';window.__accForce=false;if(!B)render();if(S.tut===1&&!$('#title'))setTimeout(showWelcome,350)}else openSettings()}
     catch(e){er.textContent=e.message}finally{bl.disabled=br.disabled=false}};
   bl.onclick=()=>go(false);br.onclick=()=>go(true);
   $('#accp').onkeydown=e=>{if(e.key==='Enter')go(false)};
-  const back=()=>openSettings();$('#accback').onclick=back;$('#accdone').onclick=back}
+  if(!force){const back=()=>openSettings();$('#accback').onclick=back;$('#accdone').onclick=back}}
 /* ---------- KAYIT DIŞA / İÇE AKTARMA ---------- */
 // Kod biçimi: "MR1." + JSON kaydının base64 hali. Başka cihaza / adrese ilerleme taşımak için.
 const SAVE_PFX='MR1.';
@@ -2492,7 +2297,7 @@ function openSaveIO(mode){const ov=$('#ov');ov.className='ov on';
   const own=Object.keys(S.owned||{}).length;
   if(mode==='exp'){
     ov.innerHTML=`<div class="fp setp"><div class="sth"><b>Dışa aktar</b><button class="stx" id="sioback" aria-label="Geri">✕</button></div>
-      <p class="sionote">Bu kod tüm ilerlemeni taşır: <b>${own} kart</b>, altın, kupa ve seviye. Kopyala, oyunun yeni adresinde <b>Ayarlar → İçe aktar</b>'a yapıştır.</p>
+      <p class="sionote">Bu kod tüm ilerlemeni taşır: <b>${own} kart</b>, altın, kupa ve seviye. Yedek olarak saklayabilirsin; ilerlemen zaten hesabında duruyor.</p>
       <textarea class="siotx" id="siotx" readonly></textarea>
       <p class="sioerr" id="sioerr"></p>
       <div class="stsv2"><button class="btn" id="siocopy">Kopyala</button>${window.claude?'':'<button class="btn alt" id="siofile">Dosya indir</button>'}</div>
@@ -2502,25 +2307,6 @@ function openSaveIO(mode){const ov=$('#ov');ov.className='ov on';
     if($('#siofile'))$('#siofile').onclick=()=>{try{const b=new Blob([ta.value],{type:'text/plain'}),a=document.createElement('a');
       a.href=URL.createObjectURL(b);a.download='mythbeast-kayit-'+new Date().toISOString().slice(0,10)+'.txt';document.body.appendChild(a);a.click();
       setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500)}catch(e){$('#sioerr').textContent='Dosya indirilemedi. Kopyala düğmesini kullan.'}};
-  }else{
-    ov.innerHTML=`<div class="fp setp"><div class="sth"><b>İçe aktar</b><button class="stx" id="sioback" aria-label="Geri">✕</button></div>
-      <p class="sionote">Kayıt kodunu yapıştır ya da kayıt dosyasını seç. <b>Bu cihazdaki mevcut ilerlemenin yerine geçer.</b></p>
-      <textarea class="siotx" id="siotx" placeholder="MR1. ile başlayan kodu buraya yapıştır"></textarea>
-      <p class="sioerr" id="sioerr"></p>
-      <div class="stsv2"><button class="btn alt" id="siopick">Dosya seç</button><button class="btn" id="sioload">Yükle</button></div>
-      <input type="file" id="siofi" accept=".txt,text/plain" hidden>
-      <button class="btn alt" id="siodone">Geri</button></div>`;
-    const ta=$('#siotx'),er=$('#sioerr'),go=$('#sioload');
-    $('#siopick').onclick=()=>$('#siofi').click();
-    $('#siofi').onchange=e=>{const f=e.target.files&&e.target.files[0];if(!f)return;f.text().then(t=>{ta.value=t.trim();er.textContent=''})};
-    ta.oninput=()=>{er.textContent='';delete go.dataset.ok;go.textContent='Yükle'};
-    go.onclick=async()=>{let d;try{d=parseSaveCode(ta.value)}catch(e){er.textContent=e.message;return}
-      stripEz(d,!!(window.__ezOwner||accGet().owner));
-      if(!go.dataset.ok){go.dataset.ok=1;er.textContent='';go.textContent=`${Object.keys(d.owned).length} kartlı kayıt yüklensin mi? Tekrar bas`;return}
-      try{localStorage.setItem(KEY+'.bak',JSON.stringify(S))}catch(e){}
-      S={...fresh(),...d};S.t=Date.now();save();
-      clearTimeout(saveTimer);try{await pushDb()}catch(e){}
-      toast('Kayıt yüklendi');setTimeout(()=>location.reload(),700)};
   }
   const back=()=>openSettings();$('#sioback').onclick=back;$('#siodone').onclick=back}
 function openSettings(){const ov=$('#ov');ov.className='ov on';
@@ -2530,7 +2316,7 @@ function openSettings(){const ov=$('#ov');ov.className='ov on';
     ${row('stmv','Müzik','<span class="sic">♫</span>',mvol())}
     ${row('stsv','Efektler','<span class="sic">✦</span>',svol())}
     ${window.claude?'':(()=>{const a=accGet();return `<div class="stsv"><b>Hesap</b>${a.user?`<p class="sionote">Giriş yapıldı: <b>${escH(a.user)}</b>. İlerlemen buluta kaydediliyor, başka cihazdan da devam edebilirsin.</p><button class="btn alt" id="stout">Çıkış yap</button>`:`<p class="sionote">Giriş yaparsan ilerlemen buluta kaydedilir; telefon değişse bile kaybolmaz.</p><button class="btn" id="stacc">Giriş yap / Kayıt ol</button>`}</div>`})()}
-    <div class="stsv"><b>Kayıt</b><div class="stsv2"><button class="btn alt" id="stexp">Dışa aktar</button><button class="btn alt" id="stimp">İçe aktar</button></div></div>
+    <div class="stsv"><b>Kayıt</b><div class="stsv2"><button class="btn alt" id="stexp">Dışa aktar</button></div></div>
     <div class="stinfo">Mythbeast Realm · Seri 1<br><small>Müzik ve ses efektleri: kendi parçaların ve OpenGameArt (CC0)</small></div>
     <button class="btn alt" id="stok">Tamam</button></div>`;
   const upd=()=>{['stmv','stsv'].forEach(k=>{const r=$('#'+k);$('#'+k+'v').textContent=r.value;r.style.setProperty('--p',r.value+'%')});$('.setp').classList.toggle('muted',!SFX.on())};upd();
@@ -2538,33 +2324,18 @@ function openSettings(){const ov=$('#ov');ov.className='ov on';
   $('#stsv').oninput=e=>{S.sv=e.target.value/100;upd();SFX.setVol()};$('#stsv').onchange=()=>{save();SFX.hit('fire','')};
   $('#stsnd').onclick=e=>{SFX.toggle();e.currentTarget.classList.toggle('on',SFX.on());e.currentTarget.parentNode.querySelector('.sic').innerHTML=sndIco();upd();const ts=$('#tsnd');if(ts)ts.innerHTML=sndIco()};
   const cl=()=>{ov.className='ov';ov.innerHTML='';if(tab==='rules')render()};$('#stclose').onclick=cl;$('#stok').onclick=cl;
-  $('#stexp').onclick=()=>openSaveIO('exp');$('#stimp').onclick=()=>openSaveIO('imp');
+  $('#stexp').onclick=()=>openSaveIO('exp');
   if($('#stacc'))$('#stacc').onclick=openAccount;
   const so=$('#stout');if(so)so.onclick=async()=>{if(!so.dataset.ok){so.dataset.ok=1;so.textContent='Emin misin? Tekrar bas';return}
     try{await cloudPush(true)}catch(e){}try{await api('/api/logout',{m:'POST'})}catch(e){}
-    accSet(null);window.__ezOwner=false;stripEz(S,false);try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}
-    toast('Çıkış yapıldı');openSettings();if(!B)render()}}
+    accSet(null);window.__ezOwner=false;S={...fresh(),sid:S.sid};initTut();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}
+    toast('Çıkış yapıldı');if(!B)render();openAccount(true)}}
 $('#gear').onclick=()=>{if(B&&!B.over&&B.busy)return;openSettings()};
 
 /* ---------- GÜNLÜK GÖREVLER ---------- */
-const DQP=[
-  {t:'pack',n:2,g:60,d:0,x:()=>'2 paket aç'},
-  {t:'battle',n:3,g:50,d:0,x:()=>'3 savaş oyna (arena ya da macera)'},
-  {t:'win',n:2,g:80,d:0,x:()=>'2 savaş kazan'},
-  {t:'hit',n:8,g:60,d:0,el:1,x:e=>`${T[e].n} kartlarınla 8 vuruş yap`},
-  {t:'weak',n:5,g:50,d:15,x:()=>'5 etkili vuruş yap (zayıf noktaya)'},
-  {t:'ko',n:8,g:60,d:0,x:()=>'8 rakip kart yen'},
-  {t:'adv',n:1,g:70,d:10,x:()=>'1 macera bölümü kazan'}];
-const DQB={free:1};
-const dayKey=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()};
-function srnd(seed){let a=seed>>>0;return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
-function dqList(){const k=dayKey();if(!S.dq||S.dq.day!==k){
-    const r=srnd([...k].reduce((a,c)=>a*31+c.charCodeAt(0),7)+(S.uidN||(S.uidN=Math.floor(Math.random()*1e6))));
-    const idx=[...DQP.keys()].sort(()=>r()-.5).slice(0,3);
-    const els=[...new Set(myDeck().filter(x=>x.t==='c').map(x=>x.c.el))];
-    S.dq={day:k,bonus:0,l:idx.map(i=>({i,p:0,c:0,el:DQP[i].el?els[Math.floor(r()*els.length)]||'fire':null}))};save()}
-  return S.dq}
-function dq(t,el,inc=1){if(!S.dq||S.dq.day!==dayKey())dqList();S.dq.l.forEach(m=>{const D=DQP[m.i];if(D.t!==t||m.p>=D.n)return;if(D.el&&m.el!==el)return;m.p=Math.min(D.n,m.p+inc);if(m.p>=D.n)setTimeout(()=>toast('Görev tamamlandı: '+D.x(m.el)),300)});navDot()}
+function dqList(){return MR.dqList(S,Date.now())}
+// savaş içindeki vuruş/zayıf vuruş/KO sayıları toplanır, savaş bitince sunucuya gider (görev ilerlemesini sunucu yapar)
+function dq(t,el,inc=1){if(B&&!B.done&&(t==='hit'||t==='weak'||t==='ko')){const s=B.stats||(B.stats={hit:{},weak:0,ko:0});if(t==='hit')s.hit[el]=(s.hit[el]||0)+inc;else s[t]+=inc}}
 const dqReady=()=>{const q=dqList();return q.l.some(m=>m.p>=DQP[m.i].n&&!m.c)||(!q.bonus&&q.l.every(m=>m.c))};
 function dqBox(){const q=dqList(),all=q.l.every(m=>m.c);
   const ms=()=>{const t=new Date();t.setHours(24,0,0,0);return hm(t-Date.now())};
@@ -2572,24 +2343,12 @@ function dqBox(){const q=dqList(),all=q.l.every(m=>m.c);
   ${q.l.map((m,j)=>{const D=DQP[m.i],ok=m.p>=D.n;return `<div class="dqi${m.c?' done':ok?' rdy':''}">${D.el?`<span class="dqe">${icon(m.el)}</span>`:''}<div class="dqt"><span>${D.x(m.el)}</span><div class="dqbar"><i style="width:${m.p/D.n*100}%"></i></div></div>
    <div class="dqr">${m.c?'<b class="ok">✓</b>':ok?`<button class="gbtn sm" data-dq="${j}">Al</button>`:`<small>${m.p}/${D.n}</small>`}<em><img src="img/ic/gold.webp" alt="">${D.g}${D.d?` <img src="img/ic/dust.webp" alt="">${D.d}`:''}</em></div></div>`}).join('')}
   <div class="dqi bonus${q.bonus?' done':all?' rdy':''}"><span class="dqe"><img src="img/ic/pack.webp" alt=""></span><div class="dqt"><span>Üç görevi de tamamla</span></div><div class="dqr">${q.bonus?'<b class="ok">✓</b>':all?'<button class="gbtn sm" data-dq="b">Al</button>':''}<em>+${DQB.free} paket · destek</em></div></div></div>`}
-function bindDq(){document.querySelectorAll('[data-dq]').forEach(b=>b.onclick=()=>{const q=dqList(),j=b.dataset.dq;
-  if(j==='b'){q.bonus=1;S.free+=DQB.free;const sk=rndSup();giveSup(sk);SFX.chest();toast(`+${DQB.free} ücretsiz paket · +1 ${SUPN[sk]}`)}else{const m=q.l[+j],D=DQP[m.i];m.c=1;S.gold+=D.g;S.dust+=D.d;SFX.coins();toast(`+${D.g} altın${D.d?` · +${D.d} toz`:''}`)}
-  save();render()})}
+function bindDq(){document.querySelectorAll('[data-dq]').forEach(b=>b.onclick=async()=>{const j=b.dataset.dq;b.disabled=true;let r;
+  try{r=await act('dq',{j:j==='b'?'b':+j})}catch(e){toast(e.message);render();return}
+  if(r.bonus){SFX.chest();toast(`+${r.free} ücretsiz paket · +1 ${SUPN[r.sup]}`)}else{SFX.coins();toast(`+${r.g} altın${r.d?` · +${r.d} toz`:''}`)}
+  render()})}
 
 /* ---------- MACERA MODU ---------- */
-const ADV_CH=[['fire','Kor Dağları'],['water','Mercan Denizi'],['earth','Kadim Orman'],['air','Bulut Zirvesi'],['light','Işık Tapınağı'],['shadow','Gece Diyarı']];
-const ADV_RULE={none:['Normal savaş',''],hp:['Dayanıklı rakip','Rakip kartları %20 fazla canla başlar'],first:['Pusu','Rakip ilk saldırır'],charged:['Hazırlıklı rakip','Rakip kartları dolu başlar'],burn:['Kızgın zemin','Senin kartların yanık başlar'],boss:['BOSS','Boss %50 fazla canla ve dolu başlar']};
-const ADV_N=ADV_CH.length*5;
-function advStageX(i){const ch=i-100,[el,cn]=ADV_CH[ch],X=EXC[ch],r=srnd(5000+ch*31);
-  const pool=CARDS.filter(c=>c.el===el&&c.r>=1&&c.r<3);const deck=[];for(let k=0;k<7;k++)deck.push(pool[Math.floor(r()*pool.length)]);deck[1]=X;deck[4]=BY[X.base];
-  return{i,ch,p:5,el,cn,name:`${X.name} EX`,rule:'boss',deck,boss:X,mis:.04,gold:400,dust:120,pack:2,x:1}}
-function advStage(i){if(i>=100)return advStageX(i);const ch=Math.floor(i/5),p=i%5,[el,cn]=ADV_CH[ch],d=i/(ADV_N-1),r=srnd(1000+i*97);
-  const rule=p===4?'boss':['none','hp','first',ch%2?'burn':'charged'][p];
-  const pool=CARDS.filter(c=>c.el===el&&c.r<3),pk=rr=>{const L=pool.filter(c=>c.r===rr);return (L.length?L:pool)[Math.floor(r()*(L.length||pool.length))]};
-  const w=[Math.max(.1,.85-1.1*d),.15+.45*d,Math.max(0,.6*d-.05)];
-  const deck=[];for(let k=0;k<7;k++){let x=r()*(w[0]+w[1]+w[2]),rr=x<w[0]?0:x<w[0]+w[1]?1:2;if(p===0&&ch===0)rr=0;deck.push(pk(rr))}
-  let boss=null;if(p===4){boss=CARDS.find(c=>c.el===el&&c.r===3)||pool.sort((a,b)=>b.hp-a.hp)[0];deck[1]=boss}
-  return{i,ch,p,el,cn,name:p===4?`${boss.name}`:`${cn} ${p+1}`,rule,deck,boss,mis:Math.max(.05,.45-.42*d)-(p===4?.05:0),gold:60+i*8,dust:10+i*2,pack:p===4?1:0}}
 const advDone=()=>S.advC||0;
 function renderAdv(){if(B)return renderBattle();
   const c=advDone();
@@ -2611,7 +2370,6 @@ function advInfo(i){const st=advStage(i),ov=$('#ov'),R=ADV_RULE[st.rule],first=s
   $('#aigo').onclick=()=>{if(!uniq()){toast('Önce bir paket aç');return}ov.className='ov';ov.innerHTML='';startBattle(i)}}
 /* ---------- ÖĞRETİCİ ---------- */
 // adımlar: 1 karşılama · 2 paket açma (3 paket, her birinden 2 Kıvılcık) · 5 evrim · 6 arena · 8 bitti · 9 eski oyuncu
-const TUT={card:4,evo:5,start:5,perPack:2,packs:3};
 function initTut(){if(S.tut!=null)return;if(!Object.keys(S.owned||{}).length&&!S.opened){S.tut=1;S.tp=0;S.th=0;S.owned={[TUT.card]:TUT.start};save()}else S.tut=9}
 initTut();
 const tutOn=()=>S.tut>0&&S.tut<8;
@@ -2621,7 +2379,6 @@ function showWelcome(){const ov=$('#ov'),c=BY[TUT.card];ov.className='ov on';
   <div class="ovb"><button class="btn" id="tgo2">Hadi başlayalım</button></div>`;
   $('#tgo2').onclick=()=>{S.tut=2;save();ov.className='ov';ov.innerHTML='';tab='pack';render()}}
 // paket hilesi: öğreticinin ilk paketlerinde 2 Yaygın yuvaya Kıvılcık koy
-function tutRig(out){if(!(S.tut>=2&&S.tut<5&&(S.tp||0)<TUT.packs))return out;for(let k=0;k<TUT.perPack;k++)out[k]=BY[TUT.card];S.tp=(S.tp||0)+1;if(S.tp>=TUT.packs)S.tut=5;return out}
 // hedef seçimi: o anki duruma göre neyi göstereceğini bulur
 function tutTarget(){
   if(!tutOn()||$('#title'))return null;const ov=$('#ov'),on=ov.classList.contains('on'),q=x=>document.querySelector(x),nm=BY[TUT.card].name;
@@ -2664,7 +2421,7 @@ function tipBox(h){const d=document.createElement('div');d.className='tipbox';d.
 const sndIco=()=>SFX.on()?'<svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16 8.5a5 5 0 010 7M18.5 6a8.5 8.5 0 010 12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>':'<svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16 9l5 6M21 9l-5 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
 {const ts=$('#tsnd');ts.innerHTML=sndIco();ts.onclick=e=>{e.stopPropagation();SFX.toggle();ts.innerHTML=sndIco()}}
 {const t=$('#title');$('#tinfo').textContent=`Seviye ${S.lvl} · ${uniq()}/${N} kart`;
- $('#tgo').onclick=()=>{setTimeout(()=>{musGo=true;musicSync()},2500);t.classList.add('out');setTimeout(()=>t.remove(),600);if(S.tut===1)setTimeout(showWelcome,350)}}
+ $('#tgo').onclick=()=>{setTimeout(()=>{musGo=true;musicSync()},2500);t.classList.add('out');setTimeout(()=>t.remove(),600);if(S.tut===1&&(window.claude||accGet().tok))setTimeout(showWelcome,350)}}
 render();
 connectDb();
 cloudInit();

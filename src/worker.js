@@ -1,4 +1,6 @@
-// Mythbeast Realm — sunucu: hesaplar ve bulut kaydı.
+// Mythbeast Realm — sunucu: hesaplar, bulut kaydı ve oyun ekonomisi (hile koruması).
+import '../rules.js';
+const MR = globalThis.MR;
 // /api/* istekleri buraya gelir, diğer her şey statik oyun dosyalarıdır (ASSETS).
 // Veritabanı: Cloudflare D1 (binding: DB). Tablolar ilk istekte kendiliğinden kurulur.
 
@@ -106,6 +108,32 @@ async function friendRow(db, x, y) {   // iki kişi arasındaki ilişki (yön fa
 }
 async function areFriends(db, x, y) { const r = await friendRow(db, x, y); return !!r && r.status === 'ok'; }
 
+// kriptografik rastgele sayı (0-1): paketleri ve sandıkları sunucu açar
+function cryptoRng() { const a = new Uint32Array(2); crypto.getRandomValues(a); return (a[0] * 2 ** 21 + (a[1] >>> 11)) / 2 ** 53; }
+async function loadState(db, uid) {
+  const row = await db.prepare('SELECT data, rev FROM saves WHERE user_id = ?').bind(uid).first();
+  return row ? { st: JSON.parse(row.data), rev: row.rev, exists: true } : { st: MR.fresh(), rev: 0, exists: false };
+}
+// Kaydı yazar; başka bir istek araya girdiyse false döner (çağıran yeniden dener).
+async function storeState(db, uid, st, rev, exists) {
+  const txt = JSON.stringify(st), now = Date.now();
+  if (txt.length > MAX_SAVE) throw new Error('too_big');
+  if (!exists) {
+    const r = await db.prepare('INSERT INTO saves (user_id, data, t, updated, rev) VALUES (?, ?, ?, ?, 1) ON CONFLICT(user_id) DO NOTHING RETURNING rev')
+      .bind(uid, txt, Number(st.t) || now, now).first();
+    return r ? r.rev : false;
+  }
+  const r = await db.prepare('UPDATE saves SET data = ?, t = ?, updated = ?, rev = rev + 1 WHERE user_id = ? AND rev = ? RETURNING rev')
+    .bind(txt, Number(st.t) || now, now, uid, rev).first();
+  return r ? r.rev : false;
+}
+async function storePub(db, uid, st, deck, owner) {
+  const own = k => typeof k !== 'number' || (st.owned && st.owned[k] > 0);
+  await db.prepare('INSERT INTO pub (user_id, stats, deck, updated) VALUES (?, ?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET stats = excluded.stats, deck = excluded.deck, updated = excluded.updated')
+    .bind(uid, JSON.stringify(MR.pubStats(st)), JSON.stringify(cleanDeck(deck, owner).filter(own)), Date.now()).run();
+}
+const ctxOf = (uid, extra) => ({ rng: cryptoRng, now: Date.now(), uid, ...extra });
+
 async function handleApi(req, env, path) {
   const db = env.DB;
   if (!db) return err('Sunucu veritabanı ayarlı değil.', 500);
@@ -125,8 +153,10 @@ async function handleApi(req, env, path) {
         .bind(ukey, u, salt, hash, Date.now()).run();
       id = r.meta.last_row_id;
     } catch { return err('Bu kullanıcı adı alınmış.', 409); }
-    const user = { id, name: u };
-    return json({ token: await newSession(db, id), user: u, owner: isOwner(env, user), save: null });
+    const user = { id, name: u }, owner = isOwner(env, user);
+    const st = fixEz(MR.normalize(MR.fresh(), ctxOf(id)), owner);   // yeni hesap sunucuda sıfırdan başlar
+    await storeState(db, id, st, 0, false);
+    return json({ token: await newSession(db, id), user: u, owner, save: { data: st, t: st.t || 0, rev: 1 } });
   }
 
   if (path === '/api/login' && method === 'POST') {
@@ -147,7 +177,7 @@ async function handleApi(req, env, path) {
     const user = { id: row.id, name: row.name }, owner = isOwner(env, user);
     const sv = await db.prepare('SELECT data, t, rev FROM saves WHERE user_id = ?').bind(row.id).first();
     return json({ token: await newSession(db, row.id), user: row.name, owner,
-      save: sv ? { data: fixEz(JSON.parse(sv.data), owner), t: sv.t, rev: sv.rev } : null });
+      save: sv ? { data: fixEz(MR.normalize(JSON.parse(sv.data), ctxOf(row.id)), owner), t: sv.t, rev: sv.rev } : null });
   }
 
   const user = await authUser(req, db);
@@ -160,38 +190,49 @@ async function handleApi(req, env, path) {
   }
   if (path === '/api/me' && method === 'GET') {
     const sv = await db.prepare('SELECT data, t, rev FROM saves WHERE user_id = ?').bind(user.id).first();
-    return json({ user: user.name, owner, save: sv ? { data: fixEz(JSON.parse(sv.data), owner), t: sv.t, rev: sv.rev } : null });
+    return json({ user: user.name, owner, save: sv ? { data: fixEz(MR.normalize(JSON.parse(sv.data), ctxOf(user.id)), owner), t: sv.t, rev: sv.rev } : null });
   }
   if (path === '/api/save' && method === 'PUT') {
+    // Oyun sadece ayarları, deste seçimini ve öğreticinin ilk adımlarını değiştirebilir; ekonomi alanları yok sayılır.
     const body = await readBody(req);
     const data = body && body.data;
-    if (!data || typeof data !== 'object' || typeof data.owned !== 'object') return err('Kayıt geçersiz.');
-    const txt = JSON.stringify(fixEz(data, owner));
-    if (txt.length > MAX_SAVE) return err('Kayıt çok büyük.', 413);
-    const t = Number(data.t) || Date.now(), now = Date.now();
-    let rev;
-    if (Number.isInteger(body.rev)) {
-      // sadece cihazın bildiği sürüm hâlâ en güncelse yazılır
-      const up = await db.prepare('UPDATE saves SET data = ?, t = ?, updated = ?, rev = rev + 1 WHERE user_id = ? AND rev = ? RETURNING rev')
-        .bind(txt, t, now, user.id, body.rev).first();
-      if (up) rev = up.rev;
-      else {
-        const cur = await db.prepare('SELECT data, t, rev FROM saves WHERE user_id = ?').bind(user.id).first();
-        if (cur) return json({ error: 'Bu hesap başka bir cihazda oynandı.', conflict: true,
-          save: { data: fixEz(JSON.parse(cur.data), owner), t: cur.t, rev: cur.rev } }, 409);
-        await db.prepare('INSERT INTO saves (user_id, data, t, updated, rev) VALUES (?, ?, ?, ?, 1)').bind(user.id, txt, t, now).run();
-        rev = 1;
-      }
-    } else {   // eski sürüm oyun sayfaları için (sürüm bilmeden yazar)
-      const r = await db.prepare('INSERT INTO saves (user_id, data, t, updated, rev) VALUES (?, ?, ?, ?, 1) ON CONFLICT(user_id) DO UPDATE SET data = excluded.data, t = excluded.t, updated = excluded.updated, rev = saves.rev + 1 RETURNING rev')
-        .bind(user.id, txt, t, now).first();
-      rev = r.rev;
+    if (!data || typeof data !== 'object') return err('Kayıt geçersiz.');
+    for (let tries = 0; tries < 4; tries++) {
+      const cur = await loadState(db, user.id);
+      const st = fixEz(MR.normalize(MR.mergeClient(cur.st, data), ctxOf(user.id)), owner);
+      const rev = await storeState(db, user.id, st, cur.rev, cur.exists);
+      if (rev === false) continue;
+      await storePub(db, user.id, st, body.deck, owner);
+      return json({ ok: true, t: st.t || 0, rev });
     }
-    const ops = [];
-    if (body.pub) ops.push(db.prepare('INSERT INTO pub (user_id, stats, deck, updated) VALUES (?, ?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET stats = excluded.stats, deck = excluded.deck, updated = excluded.updated')
-      .bind(user.id, JSON.stringify(cleanStats(body.pub)), JSON.stringify(cleanDeck(body.deck, owner)), Date.now()));
-    if (ops.length) await db.batch(ops);
-    return json({ ok: true, t, rev });
+    return err('Kayıt şu an yazılamadı, tekrar dene.', 503);
+  }
+  if (path === '/api/act' && method === 'POST') {
+    const body = await readBody(req);
+    const a = String(body.a || '');
+    let friendOk = false;
+    if (a === 'battle_start' && body.mode === 'friend') {
+      const o = await userByName(db, body.fr);
+      friendOk = !!o && await areFriends(db, user.id, o.id);
+    }
+    for (let tries = 0; tries < 4; tries++) {
+      const cur = await loadState(db, user.id);
+      const st = cur.st;
+      if (Number.isInteger(body.tut)) MR.mergeClient(st, { tut: body.tut });
+      const ctx = ctxOf(user.id, { friendOk });
+      MR.normalize(st, ctx); fixEz(st, owner);
+      let r;
+      try { r = MR.act(st, a, body, ctx); }
+      catch (e) { if (e && e.user) return err(e.message, 400); throw e; }
+      fixEz(st, owner);
+      const rev = await storeState(db, user.id, st, cur.rev, cur.exists);
+      if (rev === false) continue;          // aynı anda başka bir işlem yazdı: baştan dene
+      if (a === 'battle_end' || a === 'pack' || a === 'evo' || a === 'awaken' || a === 'craft' || a === 'chest')
+        await db.prepare("INSERT INTO pub (user_id, stats, deck, updated) VALUES (?, ?, '[]', ?) ON CONFLICT(user_id) DO UPDATE SET stats = excluded.stats, updated = excluded.updated")
+          .bind(user.id, JSON.stringify(MR.pubStats(st)), Date.now()).run();   // deste seçimine dokunmadan tabloyu güncelle
+      return json({ r, save: st, rev });
+    }
+    return err('İşlem şu an yapılamadı, tekrar dene.', 503);
   }
 
   // ---------- ARKADAŞLAR ----------
