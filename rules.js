@@ -33,7 +33,7 @@ const atkDmg=(r,i,fx)=>Math.max(10,round5(ATK[i][r]-(fx?FX[fx].cost:0)));
 const PACK={cost:100,pity:60,
   slots:[[85,13,2,0],[85,13,2,0],[85,13,2,0],[0,82.4,17,0.6],[0,66.5,32,1.5]]};  // her slot: Yaygın/Nadir/Destansı/Efsanevi %
 const XP={card:[2,5,12,30],newMult:2,need:l=>50+(l-1)*25,reward:{free:1,gold:50}};  // seviye sistemi
-const ECON={startGold:700,freePacks:5,win:60,loss:20,teamMax:10};
+const ECON={startGold:700,freePacks:5,win:150,loss:20,teamMax:10};
 
 const RAW=[
  [1,'Korkuyruk','fire',0,0,0,0,1,'tl',[[1,'Kıvılcım'],[2,'Alev Kuyruk']],'Kuyruğundaki kor sönerse hemen uykuya dalar.'],
@@ -217,17 +217,19 @@ const SUPK=['fire','water','earth','air','light','shadow','metal','poison','evo'
 
 const ADV_CH=[['fire','Kor Dağları'],['water','Mercan Denizi'],['earth','Kadim Orman'],['air','Bulut Zirvesi'],['light','Işık Tapınağı'],['shadow','Gece Diyarı']];
 const ADV_RULE={none:['Normal savaş',''],hp:['Dayanıklı rakip','Rakip kartları %20 fazla canla başlar'],first:['Pusu','Rakip ilk saldırır'],charged:['Hazırlıklı rakip','Rakip kartları dolu başlar'],burn:['Kızgın zemin','Senin kartların yanık başlar'],boss:['BOSS','Boss %50 fazla canla ve dolu başlar']};
-const ADV_N=ADV_CH.length*5;
+const ADV_P=10;                       // her diyardaki bölüm sayısı (son bölüm boss)
+const ADV_N=ADV_CH.length*ADV_P;
 function advStageX(i){const ch=i-100,[el,cn]=ADV_CH[ch],X=EXC[ch],r=srnd(5000+ch*31);
   const pool=CARDS.filter(c=>c.el===el&&c.r>=1&&c.r<3);const deck=[];for(let k=0;k<7;k++)deck.push(pool[Math.floor(r()*pool.length)]);deck[1]=X;deck[4]=BY[X.base];
-  return{i,ch,p:5,el,cn,name:`${X.name} EX`,rule:'boss',deck,boss:X,mis:.04,gold:400,dust:120,pack:2,x:1}}
-function advStage(i){if(i>=100)return advStageX(i);const ch=Math.floor(i/5),p=i%5,[el,cn]=ADV_CH[ch],d=i/(ADV_N-1),r=srnd(1000+i*97);
-  const rule=p===4?'boss':['none','hp','first',ch%2?'burn':'charged'][p];
+  return{i,ch,p:ADV_P,el,cn,name:`${X.name} EX`,rule:'boss',deck,boss:X,mis:.04,gold:1200,dust:120,pack:2,x:1}}
+function advStage(i){if(i>=100)return advStageX(i);const ch=Math.floor(i/ADV_P),p=i%ADV_P,[el,cn]=ADV_CH[ch],d=i/(ADV_N-1),r=srnd(1000+i*97),last=p===ADV_P-1;
+  const rule=last?'boss':['none','hp','first',ch%2?'burn':'charged','none','charged','hp','first',ch%2?'charged':'burn'][p];
   const pool=CARDS.filter(c=>c.el===el&&c.r<3),pk=rr=>{const L=pool.filter(c=>c.r===rr);return (L.length?L:pool)[Math.floor(r()*(L.length||pool.length))]};
   const w=[Math.max(.1,.85-1.1*d),.15+.45*d,Math.max(0,.6*d-.05)];
   const deck=[];for(let k=0;k<7;k++){let x=r()*(w[0]+w[1]+w[2]),rr=x<w[0]?0:x<w[0]+w[1]?1:2;if(p===0&&ch===0)rr=0;deck.push(pk(rr))}
-  let boss=null;if(p===4){boss=CARDS.find(c=>c.el===el&&c.r===3)||pool.sort((a,b)=>b.hp-a.hp)[0];deck[1]=boss}
-  return{i,ch,p,el,cn,name:p===4?`${boss.name}`:`${cn} ${p+1}`,rule,deck,boss,mis:Math.max(.05,.45-.42*d)-(p===4?.05:0),gold:60+i*8,dust:10+i*2,pack:p===4?1:0}}
+  let boss=null;if(last){boss=CARDS.find(c=>c.el===el&&c.r===3)||pool.sort((a,b)=>b.hp-a.hp)[0];deck[1]=boss}
+  // ilk geçiş altını 200'den ~1000'e çıkar; diyar ortasında ve sonunda (boss) 1 paket
+  return{i,ch,p,el,cn,name:last?`${boss.name}`:`${cn} ${p+1}`,rule,deck,boss,mis:Math.max(.05,.45-.42*d)-(last?.05:0),gold:Math.round((200+800*d)/10)*10,dust:10+i,pack:last||p===4?1:0}}
 
 const TUT={card:4,evo:5,start:5,perPack:2,packs:3};
 
@@ -238,7 +240,7 @@ const fresh=()=>({gold:ECON.startGold,dust:0,free:ECON.freePacks,owned:{},pity:0
    ===================================================================== */
 // Sunucunun sahip olduğu alanlar: istemcinin kaydetme isteği bunları DEĞİŞTİREMEZ.
 const ECON_KEYS=['gold','dust','free','owned','shiny','sup','supV','supV2','pity','xp','lvl','opened','trophy','bestLg','wins','losses',
-  'streak','chest','chests','hist','gift','gt','advC','exB','dq','rare','tp','uidN','tut','bt','bl'];
+  'streak','chest','chests','hist','gift','gt','advC','advV','exB','dq','rare','tp','uidN','tut','bt','bl'];
 // İstemcinin değiştirebildiği zararsız alanlar (ayarlar, deste seçimi, ipuçları).
 const CLIENT_KEYS=['mv','sv','snd','deck','deck2','shOff','pset','th','sid','t'];
 const TUT_CLIENT_MAX=2;            // istemci öğreticiyi en fazla bu adıma kendisi ilerletebilir (hoş geldin → paket aç)
@@ -286,6 +288,8 @@ function tutRig(st,out){if(!(st.tut>=2&&st.tut<5&&(st.tp||0)<TUT.packs))return o
 // Eksik alanları tamamlar, zamanla gelen şeyleri (hediye, günlük görev) günceller. Her işlemden önce çalışır.
 function normalize(st,ctx){const F=fresh();for(const k in F)if(st[k]==null)st[k]=F[k];
   if(typeof st.owned!=='object'||!st.owned)st.owned={};
+  // macera diyar başına 5'ten 10 bölüme çıktı: eski ilerleme yeni numaralandırmaya taşınır
+  if(st.advV!==2){const c=st.advC||0;st.advC=Math.min(ADV_N,Math.floor(c/5)*ADV_P+(c%5)*2);st.advV=2}
   if(st.uidN==null)st.uidN=ctx.uid!=null?((ctx.uid*7919+13)%1e6):Math.floor(ctx.rng()*1e6);
   if(st.supV===1&&!st.supV2){giveSup(st,'metal',1);giveSup(st,'poison',1);st.supV2=1}
   if(st.supV!==1){st.sup=st.sup||{};giveSup(st,'evo',2);ELS.forEach(e=>giveSup(st,e,1));st.supV=1}
@@ -313,7 +317,7 @@ function battleEnd(st,p,ctx){const bt=st.bt,now=ctx.now;
   st.bl.push(now);
   if(bt.mode==='adv'){const st0=advStage(bt.adv),first=st0.x?!(st.exB||{})[st0.ch]:bt.adv>=(st.advC||0),R={mode:'adv',win,first:win&&first,pk:0,du:0,sup:null};
     R.g=win?(first?st0.gold:Math.round(st0.gold/4)):10;st.gold+=R.g;
-    if(R.first){st.dust+=st0.dust;R.du=st0.dust;if(st0.x){st.exB=st.exB||{};st.exB[st0.ch]=1}else st.advC=bt.adv+1;if(st0.pack){st.free+=st0.pack;R.pk=st0.pack}R.sup=st0.x||st0.p===4?'evo':st0.el;giveSup(st,R.sup)}
+    if(R.first){st.dust+=st0.dust;R.du=st0.dust;if(st0.x){st.exB=st.exB||{};st.exB[st0.ch]=1}else st.advC=bt.adv+1;if(st0.pack){st.free+=st0.pack;R.pk=st0.pack}R.sup=st0.x||st0.p===ADV_P-1?'evo':st0.el;giveSup(st,R.sup)}
     if(win)dqInc(st,'adv',null,1,now);return R}
   const R={mode:'arena',win},lg0=lgOf(st.trophy||0),floor=LEAGUES[lg0].min;R.lg0=lg0;R.g=win?ECON.win+LEAGUES[lg0].gold:ECON.loss;st.gold+=R.g;
   R.dt=win?TROPHY.win:Math.max(TROPHY.loss,floor-(st.trophy||0));R.sb=null;R.chest=0;R.lost=0;
@@ -363,7 +367,7 @@ function act(st,a,p,ctx){p=p||{};const rng=ctx.rng,now=ctx.now;normalize(st,ctx)
     m.c=1;st.gold+=D.g;st.dust+=D.d;return{g:D.g,d:D.d}}
   case 'battle_start':{const mode=p.mode==='adv'?'adv':p.mode==='friend'?'friend':'arena';let adv=null;
     if(mode==='adv'){adv=Math.floor(+p.adv);const c=st.advC||0;
-      const ok=adv>=0&&(adv<ADV_N?adv<=c:(adv>=100&&adv<100+ADV_CH.length&&c>=(adv-99)*5));if(!ok)throw uerr('Bu bölüm henüz açılmadı.')}
+      const ok=adv>=0&&(adv<ADV_N?adv<=c:(adv>=100&&adv<100+ADV_CH.length&&c>=(adv-99)*ADV_P));if(!ok)throw uerr('Bu bölüm henüz açılmadı.')}
     if(mode==='friend'&&!ctx.friendOk)throw uerr('Sadece arkadaşlarının destesiyle savaşabilirsin.');
     const fo=forfeit(st,now);
     const id=Math.floor(rng()*2**52).toString(36);st.bt={id,mode,adv,t0:now,tut:mode==='arena'&&st.tut===6?1:0};
@@ -377,7 +381,7 @@ function pubStats(st){return{tr:st.trophy||0,lg:lgOf(st.trophy||0),lvl:st.lvl||1
 
 const MR={ELS,round5,round10,RAR,TYPE_HP,TYPE_RET,DMG,ATK,FXV,FX,atkDmg,PACK,XP,ECON,RAW,E1,E2,CARDS,BY,rootOf,N,pad,setOf,setCards,cno,setN,
   EXA,EXCOST,EXD,EXC,exOf,EZA,EZDR,EZC,POOL,POOLS,EVO_NEED,STAGE_W,cw,SHINY,LEAGUES,lgOf,TROPHY,STREAK,strkB,CHEST,GIFT,DQP,DQB,srnd,SUPK,
-  ADV_CH,ADV_RULE,ADV_N,advStage,advStageX,TUT,fresh,
+  ADV_CH,ADV_RULE,ADV_N,ADV_P,advStage,advStageX,TUT,fresh,
   ECON_KEYS,CLIENT_KEYS,BATTLE_MIN_MS,BATTLE_PER_HOUR,own,tutOn,roll,drawCard,rollPack,copies,canEvo,canAwaken,giveSup,rndSup,addXp,
   giftTick,dayKey,dqList,dqInc,normalize,mergeClient,act,pubStats};
 G.MR=MR;
