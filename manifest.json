@@ -1,0 +1,17 @@
+{
+  "name": "Mythbeast Realm",
+  "short_name": "Mythbeast",
+  "description": "Efsanevi yaratık kartları topla, evrimleştir ve arenada savaş.",
+  "lang": "tr",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "portrait",
+  "background_color": "#120a1e",
+  "theme_color": "#120a1e",
+  "icons": [
+    { "src": "img/icon192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "img/icon512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "img/icon512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
