@@ -324,6 +324,7 @@ th{color:var(--mute);font-weight:500}
 .tear .cap,.tear .pb{border-radius:0!important}
 .back,.back.sw{background:url(img/back.webp) center/100% 100% no-repeat!important;border:0!important;border-radius:4%!important;box-shadow:none;filter:drop-shadow(0 10px 18px #000a)}
 .back.sw::after,.back::after{display:none}
+.back.s2,.back.sw.s2{background:url(img/back2.webp) center/100% 100% no-repeat!important}
 
 /* ================= AI ÇERÇEVELİ KART ================= */
 .card.r3 .frame{border-color:transparent;background:linear-gradient(170deg,var(--bd1),var(--bd2)) padding-box;padding:.62em .6em .55em}
@@ -1478,7 +1479,7 @@ function reveal(res,dustGain){
   const W='min(74vw,310px)';
   function deal(){
     const x=res[idx];state=0;
-    $('#rslot').innerHTML=`<div class="rc deal" id="rc"><div class="rays r${x.c.r}"></div><div class="flip" id="fl"><div class="back sw"></div><div class="front">${cardHTML(x.c,{full:1,w:W,shiny:!!x.sh})}</div></div></div>`;
+    $('#rslot').innerHTML=`<div class="rc deal" id="rc"><div class="rays r${x.c.r}"></div><div class="flip" id="fl"><div class="back sw${setOf(x.c)===2?' s2':''}"></div><div class="front">${cardHTML(x.c,{full:1,w:W,shiny:!!x.sh})}</div></div></div>`;
     $('#ban').className='banner';$('#ban').innerHTML='';$('#dl2').textContent='';
     $('#cue').innerHTML='Açmak için dokunun';$('#cnt2').textContent=`${idx+1} / ${res.length}`;
   }
@@ -1887,7 +1888,7 @@ function renderBattle(){if(!B)return;
   const pass=my&&!me.board.some(Boolean)&&!me.hand.some(x=>x.t==='c');
   $('#main').innerHTML=`<div class="ar2">
    <div class="b2top foe"><div class="lv" data-lv="foe">${hearts(fo.lives)}</div><b>RAKİP</b>${auraChips(fo.board)}<div class="b2pile"><img src="img/back.webp" alt=""><span>${fo.deck.length}</span></div></div>
-   <div class="b2fh">${fo.hand.map(()=>'<img src="img/back.webp" alt="">').join('')}</div>
+   <div class="b2fh">${fo.hand.map(x=>`<img src="img/${x.t==='c'&&setOf(x.c)===2?'back2':'back'}.webp" alt="">`).join('')}</div>
    <div class="b2row foe">${fo.board.map((f,i)=>bk(f,'foe',i)).join('')}</div>
    <div class="b2mid"><div class="b2bar ${B.turn}${B.over?' end':''}"><span class="b2t">${TI(t)}</span><span class="b2clk${clockLeft()<=15&&!B.over?' low':''}" id="clk">${clockTxt()}</span></div><div class="b2log">${info}</div>${pass?'<button class="btn alt b2pass" id="bpass">Pas geç</button>':''}</div>
    <div class="b2row me">${me.board.map((f,i)=>bk(f,'me',i)).join('')}</div>
@@ -1908,10 +1909,11 @@ function renderBattle(){if(!B)return;
 async function flyTo(fromEl,toEl,html,dur=480){if(!fromEl||!toEl)return;const a=fromEl.getBoundingClientRect(),b=toEl.getBoundingClientRect(),d=document.createElement('div');d.className='bfly';d.innerHTML=html;document.body.appendChild(d);
   d.style.cssText=`left:${a.left}px;top:${a.top}px;width:${a.width}px;height:${a.height}px`;
   await d.animate([{transform:'none'},{transform:`translate(${b.left+b.width/2-a.left-a.width/2}px,${b.top+b.height/2-a.top-a.height/2}px) scale(${b.width/a.width})`}],{duration:dur,easing:'cubic-bezier(.4,0,.2,1)',fill:'forwards'}).finished.catch(()=>{});d.remove()}
+const backHtml2='<img src="img/back2.webp" alt="" style="width:100%;height:100%;border-radius:6px;object-fit:cover">';
 const backHtml='<img src="img/back.webp" alt="" style="width:100%;height:100%;border-radius:6px;object-fit:cover">';
 async function placeAnim(s,j,i){const src=s==='me'?document.querySelector(`.hk[data-h="${j}"]`):document.querySelector('.b2fh img'),x=B[s].hand[j];
   const pk=auraKeys(B[s].board);B.log=`${s==='me'?'Sen':'Rakip'}: <b>${x.c.name}</b> sahaya çıktı`;
-  await flyTo(src,elOf(s,i),s==='me'?src.outerHTML.replace('class="hk','class="hk fl'):backHtml);if(!B||B.over)return;
+  await flyTo(src,elOf(s,i),s==='me'?src.outerHTML.replace('class="hk','class="hk fl'):(setOf(x.c)===2?backHtml2:backHtml));if(!B||B.over)return;
   placeX(B,s,j,i);if(s==='me'&&B.tut&&B.tstep===0)B.tstep=1;renderBattle();const e=elOf(s,i);if(e)e.classList.add('drawn');SFX.flip();newCardFx(s);
   setTimeout(()=>{if(B)announceAuras(s,pk)},300);setTimeout(()=>{if(B)exEnter(s,i)},600)}
 async function supAnim(s,j,i){const src=s==='me'?document.querySelector(`.hk[data-h="${j}"]`):document.querySelector('.b2fh img'),x=B[s].hand[j],f=B[s].board[i],who=s==='me'?'Sen':'Rakip';
@@ -2325,13 +2327,13 @@ document.addEventListener('pointerdown',e=>{if(e.target.closest('.btn,.tgo,nav b
 
 // görselleri önceden indir: başlangıç ekranında beklerken arka planda, sırayla
 // dosyaları telefonda saklayan servis: içeriği değişen bir görsel/ses olursa ASSET_V artırılır
-const ASSET_V=6;try{if('serviceWorker' in navigator&&location.protocol==='https:'||location.hostname==='localhost')navigator.serviceWorker.register('sw.js?v='+ASSET_V).catch(()=>{})}catch(e){}
+const ASSET_V=8;try{if('serviceWorker' in navigator&&location.protocol==='https:'||location.hostname==='localhost')navigator.serviceWorker.register('sw.js?v='+ASSET_V).catch(()=>{})}catch(e){}
 (function prefetch(){
   // önce kart resimleri (önce sahip olunanlar), sonra çerçeveler ve arka planlar
   const own=ALLC().filter(c=>owned(c.id)).map(c=>c.id),rest=ALLC().map(c=>c.id).filter(id=>!own.includes(id));
   const L=[...own,...rest].map(id=>`img/t/${id}.webp`);
   L.push('img/back.webp','img/pack.webp','img/packbg.jpg','img/menubg.jpg','img/arena2.jpg','img/lgbg.jpg','img/fr_leg.webp','img/panel.webp','img/ic/chest.webp','img/ic/gift.webp','img/ic/legmed.webp');
-  ['fire','water','earth','air','light','shadow'].forEach(e=>['a','b','c'].forEach(v=>L.push(`img/fr_${e}_${v}.webp`)));L.push('img/pack2.webp');for(let k=0;k<6;k++)L.push(`img/lg/${k}.webp`);
+  ['fire','water','earth','air','light','shadow'].forEach(e=>['a','b','c'].forEach(v=>L.push(`img/fr_${e}_${v}.webp`)));L.push('img/pack2.webp','img/back2.webp');for(let k=0;k<6;k++)L.push(`img/lg/${k}.webp`);
   let i=0;const next=()=>{if(i>=L.length)return;const im=new Image();im.decoding='async';im.onload=im.onerror=()=>setTimeout(next,0);im.src=L[i++]};
   setTimeout(()=>{for(let k=0;k<5;k++)next()},150)})();
 
