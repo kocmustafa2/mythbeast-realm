@@ -510,7 +510,12 @@ async function handleApi(req, env, path) {
       await db.prepare('UPDATE card_reqs SET got = got - 1, closed = 0 WHERE id = ?').bind(rq.id).run();
       return ue(e) || (() => { throw e; })();
     }
-    await mutateState(db, env, rq.user_id, st => MR.donateGet(st, rq.card));
+    try { await mutateState(db, env, rq.user_id, st => MR.donateGet(st, rq.card)); }
+    catch (e) {   // alıcıya yazılamadı: bağışçının kartını iade et, ayrılan yeri geri ver
+      await db.prepare('UPDATE card_reqs SET got = got - 1, closed = 0 WHERE id = ?').bind(rq.id).run();
+      try { await mutateState(db, env, user.id, st => { st.owned[rq.card] = (st.owned[rq.card] || 0) + 1; }); } catch (e2) {}
+      return err('Bağış şu an tamamlanamadı, kartın iade edildi. Tekrar dene.', 503);
+    }
     await feedAdd(db, await sameClan(db, user.id, rq.user_id), 'donate', user.id, rq.user_id, rq.card);
     return json({ ok: true, r: give.r, got: slot.got, need: slot.need, save: give.st, rev: give.rev });
   }
