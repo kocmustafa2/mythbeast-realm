@@ -6,6 +6,7 @@ const EZ_IDS = new Set(['83', '84', '85']);           // sadece oyunun sahibine 
 const PBKDF2_ITER = 20000;                            // ücretsiz planın işlemci sınırına uygun
 const SESSION_DAYS = 180;
 const MAX_SAVE = 512 * 1024;                          // bir kaydın en büyük boyutu (bayt)
+const MAX_FRIENDS = 50, MAX_PENDING = 30;
 const USER_RE = /^[A-Za-z0-9_çğıöşüÇĞİÖŞÜ]{3,16}$/;
 
 let schemaReady = null;
@@ -15,6 +16,14 @@ function ensureSchema(db) {
     db.prepare(`CREATE TABLE IF NOT EXISTS sessions (token TEXT PRIMARY KEY, user_id INTEGER NOT NULL, expires INTEGER NOT NULL)`),
     db.prepare(`CREATE TABLE IF NOT EXISTS saves (user_id INTEGER PRIMARY KEY, data TEXT NOT NULL, t INTEGER NOT NULL, updated INTEGER NOT NULL)`),
     db.prepare(`CREATE TABLE IF NOT EXISTS fails (ukey TEXT PRIMARY KEY, n INTEGER NOT NULL, until INTEGER NOT NULL)`),
+    // arkadaşlar: a = isteği gönderen, b = alan; status 'pending' ya da 'ok'
+    db.prepare(`CREATE TABLE IF NOT EXISTS friends (a INTEGER NOT NULL, b INTEGER NOT NULL, status TEXT NOT NULL, t INTEGER NOT NULL, PRIMARY KEY (a, b))`),
+    db.prepare(`CREATE INDEX IF NOT EXISTS friends_b ON friends (b)`),
+    // arkadaşların görebildiği özet: istatistikler ve arena destesi
+    db.prepare(`CREATE TABLE IF NOT EXISTS pub (user_id INTEGER PRIMARY KEY, stats TEXT NOT NULL, deck TEXT NOT NULL, updated INTEGER NOT NULL)`),
+    // arkadaş destesine karşı yapılan savaşlar
+    db.prepare(`CREATE TABLE IF NOT EXISTS duels (id INTEGER PRIMARY KEY AUTOINCREMENT, from_id INTEGER NOT NULL, to_id INTEGER NOT NULL, win INTEGER NOT NULL, t INTEGER NOT NULL)`),
+    db.prepare(`CREATE INDEX IF NOT EXISTS duels_to ON duels (to_id, t)`),
   ]).catch(e => { schemaReady = null; throw e; });
   return schemaReady;
 }
@@ -72,6 +81,26 @@ async function readBody(req) {
   if (txt.length > MAX_SAVE + 1024) throw new Error('too_big');
   try { return JSON.parse(txt || '{}'); } catch { throw new Error('bad_json'); }
 }
+
+// Arkadaşın görebileceği istatistikler: sadece beklenen alanlar, sınırlı değerler.
+function cleanStats(st) {
+  const n = (v, max) => Math.max(0, Math.min(max, Math.floor(Number(v) || 0)));
+  st = st && typeof st === 'object' ? st : {};
+  return { tr: n(st.tr, 1e6), lg: n(st.lg, 50), lvl: n(st.lvl, 1000), col: n(st.col, 5000), tot: n(st.tot, 5000), w: n(st.w, 1e7), l: n(st.l, 1e7) };
+}
+function cleanDeck(deck, owner) {
+  if (!Array.isArray(deck)) return [];
+  return deck.slice(0, 30).filter(k => (typeof k === 'number' && Number.isInteger(k) && k > 0 && k < 100000 && (owner || !EZ_IDS.has(String(k))))
+    || (typeof k === 'string' && /^s:[a-z]{2,12}$/.test(k)));
+}
+async function userByName(db, u) {
+  if (typeof u !== 'string' || !USER_RE.test(u)) return null;
+  return db.prepare('SELECT id, name FROM users WHERE ukey = ?').bind(ukeyOf(u)).first();
+}
+async function friendRow(db, x, y) {   // iki kişi arasındaki ilişki (yön fark etmez)
+  return db.prepare('SELECT a, b, status FROM friends WHERE (a = ? AND b = ?) OR (a = ? AND b = ?)').bind(x, y, y, x).first();
+}
+async function areFriends(db, x, y) { const r = await friendRow(db, x, y); return !!r && r.status === 'ok'; }
 
 async function handleApi(req, env, path) {
   const db = env.DB;
@@ -136,9 +165,78 @@ async function handleApi(req, env, path) {
     const txt = JSON.stringify(fixEz(data, owner));
     if (txt.length > MAX_SAVE) return err('Kayıt çok büyük.', 413);
     const t = Number(data.t) || Date.now();
-    await db.prepare('INSERT INTO saves (user_id, data, t, updated) VALUES (?, ?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET data = excluded.data, t = excluded.t, updated = excluded.updated')
-      .bind(user.id, txt, t, Date.now()).run();
+    const ops = [db.prepare('INSERT INTO saves (user_id, data, t, updated) VALUES (?, ?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET data = excluded.data, t = excluded.t, updated = excluded.updated')
+      .bind(user.id, txt, t, Date.now())];
+    if (body.pub) ops.push(db.prepare('INSERT INTO pub (user_id, stats, deck, updated) VALUES (?, ?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET stats = excluded.stats, deck = excluded.deck, updated = excluded.updated')
+      .bind(user.id, JSON.stringify(cleanStats(body.pub)), JSON.stringify(cleanDeck(body.deck, owner)), Date.now()));
+    await db.batch(ops);
     return json({ ok: true, t });
+  }
+
+  // ---------- ARKADAŞLAR ----------
+  if (path === '/api/friends' && method === 'GET') {
+    const rows = (await db.prepare(`SELECT f.a, f.b, f.status, u.id AS oid, u.name, p.stats, p.updated
+      FROM friends f JOIN users u ON u.id = CASE WHEN f.a = ?1 THEN f.b ELSE f.a END
+      LEFT JOIN pub p ON p.user_id = u.id WHERE f.a = ?1 OR f.b = ?1`).bind(user.id).all()).results || [];
+    const friends = [], incoming = [], outgoing = [];
+    for (const r of rows) {
+      if (r.status === 'ok') friends.push({ name: r.name, stats: r.stats ? JSON.parse(r.stats) : null, seen: r.updated || 0 });
+      else if (r.b === user.id) incoming.push(r.name); else outgoing.push(r.name);
+    }
+    const duels = ((await db.prepare(`SELECT u.name, d.win, d.t FROM duels d JOIN users u ON u.id = d.from_id
+      WHERE d.to_id = ? ORDER BY d.t DESC LIMIT 15`).bind(user.id).all()).results || []).map(d => ({ name: d.name, win: !!d.win, t: d.t }));
+    return json({ friends, incoming, outgoing, duels });
+  }
+  if (path === '/api/friends/request' && method === 'POST') {
+    const { u } = await readBody(req);
+    const o = await userByName(db, u);
+    if (!o) return err('Bu kullanıcı adıyla oyuncu bulunamadı.', 404);
+    if (o.id === user.id) return err('Kendini arkadaş olarak ekleyemezsin.');
+    const r = await friendRow(db, user.id, o.id);
+    if (r && r.status === 'ok') return err(`${o.name} zaten arkadaşın.`);
+    if (r && r.a === user.id) return err(`${o.name} kişisine zaten istek gönderdin.`);
+    const cnt = n => db.prepare(`SELECT COUNT(*) AS n FROM friends WHERE status = 'ok' AND (a = ? OR b = ?)`).bind(n, n).first();
+    if ((await cnt(user.id)).n >= MAX_FRIENDS) return err(`En fazla ${MAX_FRIENDS} arkadaşın olabilir.`);
+    if (r && r.b === user.id) {           // o da sana istek göndermişse direkt arkadaş olursunuz
+      await db.prepare(`UPDATE friends SET status = 'ok', t = ? WHERE a = ? AND b = ?`).bind(Date.now(), o.id, user.id).run();
+      return json({ ok: true, accepted: true, name: o.name });
+    }
+    const pend = await db.prepare(`SELECT COUNT(*) AS n FROM friends WHERE status = 'pending' AND a = ?`).bind(user.id).first();
+    if (pend.n >= MAX_PENDING) return err('Çok fazla bekleyen isteğin var.');
+    await db.prepare(`INSERT INTO friends (a, b, status, t) VALUES (?, ?, 'pending', ?)`).bind(user.id, o.id, Date.now()).run();
+    return json({ ok: true, accepted: false, name: o.name });
+  }
+  if (path === '/api/friends/accept' && method === 'POST') {
+    const { u } = await readBody(req);
+    const o = await userByName(db, u);
+    if (!o) return err('Oyuncu bulunamadı.', 404);
+    const r = await db.prepare(`UPDATE friends SET status = 'ok', t = ? WHERE a = ? AND b = ? AND status = 'pending'`).bind(Date.now(), o.id, user.id).run();
+    if (!r.meta.changes) return err('Bu kişiden bekleyen istek yok.', 404);
+    return json({ ok: true, name: o.name });
+  }
+  if ((path === '/api/friends/decline' || path === '/api/friends/remove') && method === 'POST') {
+    const { u } = await readBody(req);
+    const o = await userByName(db, u);
+    if (!o) return err('Oyuncu bulunamadı.', 404);
+    await db.prepare('DELETE FROM friends WHERE (a = ? AND b = ?) OR (a = ? AND b = ?)').bind(user.id, o.id, o.id, user.id).run();
+    return json({ ok: true });
+  }
+  if (path === '/api/friends/deck' && method === 'GET') {
+    const o = await userByName(db, new URL(req.url).searchParams.get('u'));
+    if (!o || !(await areFriends(db, user.id, o.id))) return err('Sadece arkadaşlarının destesiyle savaşabilirsin.', 403);
+    const p = await db.prepare('SELECT stats, deck FROM pub WHERE user_id = ?').bind(o.id).first();
+    const deck = p ? JSON.parse(p.deck) : [];
+    if (deck.filter(k => typeof k === 'number').length < 3) return err(`${o.name} henüz arena destesi kaydetmemiş.`, 404);
+    return json({ name: o.name, deck, stats: JSON.parse(p.stats) });
+  }
+  if (path === '/api/duel' && method === 'POST') {
+    const { u, win } = await readBody(req);
+    const o = await userByName(db, u);
+    if (!o || !(await areFriends(db, user.id, o.id))) return err('Arkadaş değilsiniz.', 403);
+    const last = await db.prepare('SELECT t FROM duels WHERE from_id = ? ORDER BY t DESC LIMIT 1').bind(user.id).first();
+    if (last && Date.now() - last.t < 20000) return json({ ok: true, skipped: true });   // aşırı hızlı kayıtları yok say
+    await db.prepare('INSERT INTO duels (from_id, to_id, win, t) VALUES (?, ?, ?, ?)').bind(user.id, o.id, win ? 1 : 0, Date.now()).run();
+    return json({ ok: true });
   }
   return err('Bulunamadı.', 404);
 }
