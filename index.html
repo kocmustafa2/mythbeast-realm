@@ -2420,7 +2420,7 @@ async function api(path,o={}){const a=accGet(),h={'content-type':'application/js
   catch(e){throw Object.assign(new Error('İnternet bağlantısı yok.'),{status:0})}
   let j={};try{j=await r.json()}catch(e){}
   if(r.status===401&&a.tok&&!/\/api\/(login|register)$/.test(path)){accSet(null);window.__ezOwner=false}
-  if(!r.ok)throw Object.assign(new Error(j.error||'Sunucuya ulaşılamadı.'),{status:r.status});
+  if(!r.ok)throw Object.assign(new Error(j.error||'Sunucuya ulaşılamadı.'),{status:r.status,data:j});
   return j}
 // Özel kartlar (Ezeli) sadece oyunun sahibinde kalır; sunucu da aynı kuralı uygular.
 function stripEz(d,owner){if(!d||!d.owned||typeof d.owned!=='object')return d;
@@ -2430,20 +2430,32 @@ function stripEz(d,owner){if(!d||!d.owned||typeof d.owned!=='object')return d;
 function cloudQ(){if(!cloudOn())return;clearTimeout(window.__cqT);window.__cqT=setTimeout(()=>cloudPush(),1500)}
 async function cloudPush(now){if(!cloudOn())return;
   if(window.__cqBusy){if(!now)cloudQ();return}window.__cqBusy=1;clearTimeout(window.__cqT);
-  try{await api('/api/save',{m:'PUT',b:{data:S,pub:{tr:S.trophy||0,lg:lgOf(S.trophy||0),lvl:S.lvl||1,col:uniq(),tot:N,w:S.wins||0,l:S.losses||0},deck:deckKeys()}})}catch(e){if(e.status!==401&&!now)window.__cqT=setTimeout(()=>cloudPush(),20000)}
+  try{const r=await api('/api/save',{m:'PUT',b:{data:S,rev:accGet().rev||0,pub:{tr:S.trophy||0,lg:lgOf(S.trophy||0),lvl:S.lvl||1,col:uniq(),tot:N,w:S.wins||0,l:S.losses||0},deck:deckKeys()}});accRev(r.rev)}
+  catch(e){if(e.status===409&&e.data&&e.data.save)cloudConflict(e.data.save);else if(e.status!==401&&!now)window.__cqT=setTimeout(()=>cloudPush(),20000)}
   finally{window.__cqBusy=0}}
+function accRev(rev){const a=accGet();if(a.tok&&Number.isInteger(rev)){a.rev=rev;accSet(a)}}
+// Aynı hesap başka cihazda daha yeni kaydedilmiş: sunucudaki kayıt geçerli olur, bu cihazdaki .bak olarak yedeklenir.
+function cloudConflict(sv){takeSave(stripEz(sv.data,!!accGet().owner));accRev(sv.rev);
+  toast('Hesabın başka bir cihazda oynandı, en güncel kayıt yüklendi');if(!B)render();else renderTop()}
+// Sekmeye/uygulamaya dönünce başka cihazdaki yeni ilerlemeyi çek (savaş sırasında değil).
+async function cloudPull(){if(!cloudOn()||(B&&!B.over))return;
+  try{const j=await api('/api/me'),sv=j.save;if(sv&&sv.rev>(accGet().rev||0))cloudConflict(sv)}catch(e){}}
 function takeSave(d){try{localStorage.setItem(KEY+'.bak',JSON.stringify(S))}catch(e){}
   S={...fresh(),...d};if(!S.sid)S.sid=Math.random().toString(36).slice(2,10);initTut();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 // Giriş/kayıt ya da açılışta oturum doğrulandıktan sonra: hangi kayıt kullanılacak?
-function afterAuth(j,login){const a=accGet();accSet({tok:j.token||a.tok,user:j.user,owner:!!j.owner});window.__ezOwner=!!j.owner;
-  const r=j.save&&j.save.data;
-  if(r&&(login||(r.t||0)>(S.t||0)))takeSave(r);
+function afterAuth(j,login){const a=accGet(),sv=j.save,r=sv&&sv.data;
+  // giriş yapınca ya da sunucu bu cihazın bildiğinden yeni bir sürüme sahipse sunucudaki kayıt geçerli
+  const take=!!r&&(login||(sv.rev||0)>(a.rev||0));
+  accSet({tok:j.token||a.tok,user:j.user,owner:!!j.owner,rev:sv?(sv.rev||0):0});window.__ezOwner=!!j.owner;
+  if(take)takeSave(r);
   stripEz(S,!!j.owner);try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}
-  if(!r||!(login||(r.t||0)>(S.t||0)))cloudPush();
+  if(!take)cloudPush();
   if(!B)render();frBadge()}
-async function cloudInit(){if(window.claude||!accGet().tok)return;
-  try{afterAuth(await api('/api/me'),false)}catch(e){}
-  addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')cloudPush(true)})}
+async function cloudInit(){if(window.claude)return;
+  // giriş sonradan yapılsa da çalışsın diye dinleyici her zaman kurulur; içeride oturum kontrol edilir
+  addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')cloudPush(true);else cloudPull()});
+  if(!accGet().tok)return;
+  try{afterAuth(await api('/api/me'),false)}catch(e){}}
 function openAccount(){const ov=$('#ov');ov.className='ov on';
   ov.innerHTML=`<div class="fp setp"><div class="sth"><b>Hesap</b><button class="stx" id="accback" aria-label="Geri">✕</button></div>
     <input class="accin" id="accu" placeholder="Kullanıcı adı" autocomplete="username" autocapitalize="off" spellcheck="false" maxlength="16">

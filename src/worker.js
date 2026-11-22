@@ -24,7 +24,11 @@ function ensureSchema(db) {
     // arkadaş destesine karşı yapılan savaşlar
     db.prepare(`CREATE TABLE IF NOT EXISTS duels (id INTEGER PRIMARY KEY AUTOINCREMENT, from_id INTEGER NOT NULL, to_id INTEGER NOT NULL, win INTEGER NOT NULL, t INTEGER NOT NULL)`),
     db.prepare(`CREATE INDEX IF NOT EXISTS duels_to ON duels (to_id, t)`),
-  ]).catch(e => { schemaReady = null; throw e; });
+  ]).then(async () => {
+    // kayıt sürümü: iki cihaz aynı anda oynarsa eski sürüm yenisinin üstüne yazamaz
+    try { await db.prepare('ALTER TABLE saves ADD COLUMN rev INTEGER NOT NULL DEFAULT 0').run(); }
+    catch (e) { if (!/duplicate column/i.test(String(e && e.message))) throw e; }
+  }).catch(e => { schemaReady = null; throw e; });
   return schemaReady;
 }
 
@@ -141,9 +145,9 @@ async function handleApi(req, env, path) {
     }
     if (f) await db.prepare('DELETE FROM fails WHERE ukey = ?').bind(ukey).run();
     const user = { id: row.id, name: row.name }, owner = isOwner(env, user);
-    const sv = await db.prepare('SELECT data, t FROM saves WHERE user_id = ?').bind(row.id).first();
+    const sv = await db.prepare('SELECT data, t, rev FROM saves WHERE user_id = ?').bind(row.id).first();
     return json({ token: await newSession(db, row.id), user: row.name, owner,
-      save: sv ? { data: fixEz(JSON.parse(sv.data), owner), t: sv.t } : null });
+      save: sv ? { data: fixEz(JSON.parse(sv.data), owner), t: sv.t, rev: sv.rev } : null });
   }
 
   const user = await authUser(req, db);
@@ -155,8 +159,8 @@ async function handleApi(req, env, path) {
     return json({ ok: true });
   }
   if (path === '/api/me' && method === 'GET') {
-    const sv = await db.prepare('SELECT data, t FROM saves WHERE user_id = ?').bind(user.id).first();
-    return json({ user: user.name, owner, save: sv ? { data: fixEz(JSON.parse(sv.data), owner), t: sv.t } : null });
+    const sv = await db.prepare('SELECT data, t, rev FROM saves WHERE user_id = ?').bind(user.id).first();
+    return json({ user: user.name, owner, save: sv ? { data: fixEz(JSON.parse(sv.data), owner), t: sv.t, rev: sv.rev } : null });
   }
   if (path === '/api/save' && method === 'PUT') {
     const body = await readBody(req);
@@ -164,13 +168,30 @@ async function handleApi(req, env, path) {
     if (!data || typeof data !== 'object' || typeof data.owned !== 'object') return err('Kayıt geçersiz.');
     const txt = JSON.stringify(fixEz(data, owner));
     if (txt.length > MAX_SAVE) return err('Kayıt çok büyük.', 413);
-    const t = Number(data.t) || Date.now();
-    const ops = [db.prepare('INSERT INTO saves (user_id, data, t, updated) VALUES (?, ?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET data = excluded.data, t = excluded.t, updated = excluded.updated')
-      .bind(user.id, txt, t, Date.now())];
+    const t = Number(data.t) || Date.now(), now = Date.now();
+    let rev;
+    if (Number.isInteger(body.rev)) {
+      // sadece cihazın bildiği sürüm hâlâ en güncelse yazılır
+      const up = await db.prepare('UPDATE saves SET data = ?, t = ?, updated = ?, rev = rev + 1 WHERE user_id = ? AND rev = ? RETURNING rev')
+        .bind(txt, t, now, user.id, body.rev).first();
+      if (up) rev = up.rev;
+      else {
+        const cur = await db.prepare('SELECT data, t, rev FROM saves WHERE user_id = ?').bind(user.id).first();
+        if (cur) return json({ error: 'Bu hesap başka bir cihazda oynandı.', conflict: true,
+          save: { data: fixEz(JSON.parse(cur.data), owner), t: cur.t, rev: cur.rev } }, 409);
+        await db.prepare('INSERT INTO saves (user_id, data, t, updated, rev) VALUES (?, ?, ?, ?, 1)').bind(user.id, txt, t, now).run();
+        rev = 1;
+      }
+    } else {   // eski sürüm oyun sayfaları için (sürüm bilmeden yazar)
+      const r = await db.prepare('INSERT INTO saves (user_id, data, t, updated, rev) VALUES (?, ?, ?, ?, 1) ON CONFLICT(user_id) DO UPDATE SET data = excluded.data, t = excluded.t, updated = excluded.updated, rev = saves.rev + 1 RETURNING rev')
+        .bind(user.id, txt, t, now).first();
+      rev = r.rev;
+    }
+    const ops = [];
     if (body.pub) ops.push(db.prepare('INSERT INTO pub (user_id, stats, deck, updated) VALUES (?, ?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET stats = excluded.stats, deck = excluded.deck, updated = excluded.updated')
       .bind(user.id, JSON.stringify(cleanStats(body.pub)), JSON.stringify(cleanDeck(body.deck, owner)), Date.now()));
-    await db.batch(ops);
-    return json({ ok: true, t });
+    if (ops.length) await db.batch(ops);
+    return json({ ok: true, t, rev });
   }
 
   // ---------- ARKADAŞLAR ----------
