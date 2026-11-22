@@ -1,9 +1,16 @@
 {
-  // Mythbeast Realm: statik oyun dosyalarını Cloudflare Workers üzerinden yayınlar.
+  // Mythbeast Realm: oyun dosyaları (statik) + hesap ve bulut kaydı sunucusu (src/worker.js).
   "name": "mythbeast-realm",
+  "main": "src/worker.js",
   "compatibility_date": "2026-11-01",
   "assets": {
     "directory": "./",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"],
     "not_found_handling": "single-page-application"
-  }
+  },
+  "d1_databases": [
+    { "binding": "DB", "database_name": "mythbeast-db", "database_id": "bafb9fe6-ab5f-453d-a1a9-1235143bb311" }
+  ],
+  "vars": { "OWNER": "MinasXgod" }
 }

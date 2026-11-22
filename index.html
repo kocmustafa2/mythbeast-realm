@@ -709,6 +709,8 @@ body.inb main{padding:0 10px 16px}
 .siotx{width:100%;height:120px;resize:none;border-radius:12px;border:1px solid #ffffff2a;background:#0008;color:#e8eef3;font:12px/1.35 monospace;padding:10px;word-break:break-all}
 .sionote{font:13px/1.45 Rubik,sans-serif;color:#c9d3dc;margin:0}.sionote b{color:var(--gold)}
 .sioerr{font:600 13px Rubik,sans-serif;color:#ff8a7a;min-height:18px;margin:0}
+.accin{width:100%;box-sizing:border-box;padding:12px 14px;border-radius:12px;border:1px solid #ffffff2a;background:#0008;color:#fff;font:16px Rubik,sans-serif}
+.accin:focus{outline:none;border-color:var(--gold)}
 .rng{-webkit-appearance:none;appearance:none;width:100%;height:10px;border-radius:9px;background:linear-gradient(90deg,#d48a12,#ffcf4a var(--p,50%),#050a18 var(--p,50%));box-shadow:inset 0 1px 3px #000,0 0 0 1px #c9972f88;outline:none}
 .rng::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff6c0,#ffcf4a 50%,#c48010);box-shadow:0 2px 6px #000a;border:0}
 .rng::-moz-range-thumb{width:26px;height:26px;border-radius:50%;background:#ffcf4a;border:0}
@@ -1122,7 +1124,7 @@ let S=fresh();
 try{const j=JSON.parse(localStorage.getItem(KEY));if(j&&typeof j==='object')S={...S,...j}}catch(e){}
 
 let dbRef=null,saveTimer=null,saving=false;
-function save(){S.t=Date.now();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}clearTimeout(saveTimer);saveTimer=setTimeout(pushDb,800)}
+function save(){S.t=Date.now();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}clearTimeout(saveTimer);saveTimer=setTimeout(pushDb,800);cloudQ()}
 async function pushDb(){if(!dbRef)return;if(saving){saveTimer=setTimeout(pushDb,800);return}saving=true;try{await dbRef.set(JSON.parse(JSON.stringify(S)))}catch(e){}saving=false}
 // kayıt seçimi: aynı kaydın iki kopyasıysa yenisi kazanır; farklı kayıtlarsa (biri sıfırdan başlamışsa) İLERLEMESİ FAZLA olan kazanır.
 // böylece boş/yeni açılmış bir kayıt hiçbir zaman buluttaki ilerlemenin üstüne yazılmaz. Değiştirilen kayıt her zaman yedeğe alınır.
@@ -2338,6 +2340,60 @@ const ASSET_V=8;try{if('serviceWorker' in navigator&&location.protocol==='https:
   setTimeout(()=>{for(let k=0;k<5;k++)next()},150)})();
 
 /* ---------- AYARLAR ---------- */
+/* ---------- HESAP VE BULUT KAYDI (Cloudflare sürümü) ----------
+   Artifact içinde (window.claude varken) Claude'un kendi bulutu kullanılır, bu kısım çalışmaz.
+   Sunucu: src/worker.js — /api/register, /api/login, /api/logout, /api/me, /api/save */
+const escH=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function accGet(){try{return JSON.parse(localStorage.getItem('mr.acc'))||{}}catch(e){return{}}}
+function accSet(a){try{a?localStorage.setItem('mr.acc',JSON.stringify(a)):localStorage.removeItem('mr.acc')}catch(e){}}
+function cloudOn(){return !window.claude&&!!accGet().tok}
+async function api(path,o={}){const a=accGet(),h={'content-type':'application/json'};if(a.tok)h.authorization='Bearer '+a.tok;
+  let r;try{r=await fetch(path,{method:o.m||'GET',headers:h,body:o.b?JSON.stringify(o.b):undefined,cache:'no-store'})}
+  catch(e){throw Object.assign(new Error('İnternet bağlantısı yok.'),{status:0})}
+  let j={};try{j=await r.json()}catch(e){}
+  if(r.status===401&&a.tok&&!/\/api\/(login|register)$/.test(path)){accSet(null);window.__ezOwner=false}
+  if(!r.ok)throw Object.assign(new Error(j.error||'Sunucuya ulaşılamadı.'),{status:r.status});
+  return j}
+// Özel kartlar (Ezeli) sadece oyunun sahibinde kalır; sunucu da aynı kuralı uygular.
+function stripEz(d,owner){if(!d||!d.owned||typeof d.owned!=='object')return d;
+  const ids=new Set(EZC.map(c=>String(c.id)));
+  Object.keys(d.owned).forEach(k=>{const b=String(k).match(/^\d+/);if(b&&ids.has(b[0])&&!owner)delete d.owned[k]});
+  if(owner)EZC.forEach(c=>{if(!d.owned[c.id])d.owned[c.id]=1});return d}
+function cloudQ(){if(!cloudOn())return;clearTimeout(window.__cqT);window.__cqT=setTimeout(()=>cloudPush(),1500)}
+async function cloudPush(now){if(!cloudOn())return;
+  if(window.__cqBusy){if(!now)cloudQ();return}window.__cqBusy=1;clearTimeout(window.__cqT);
+  try{await api('/api/save',{m:'PUT',b:{data:S}})}catch(e){if(e.status!==401&&!now)window.__cqT=setTimeout(()=>cloudPush(),20000)}
+  finally{window.__cqBusy=0}}
+function takeSave(d){try{localStorage.setItem(KEY+'.bak',JSON.stringify(S))}catch(e){}
+  S={...fresh(),...d};if(!S.sid)S.sid=Math.random().toString(36).slice(2,10);initTut();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+// Giriş/kayıt ya da açılışta oturum doğrulandıktan sonra: hangi kayıt kullanılacak?
+function afterAuth(j,login){const a=accGet();accSet({tok:j.token||a.tok,user:j.user,owner:!!j.owner});window.__ezOwner=!!j.owner;
+  const r=j.save&&j.save.data;
+  if(r&&(login||(r.t||0)>(S.t||0)))takeSave(r);
+  stripEz(S,!!j.owner);try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}
+  if(!r||!(login||(r.t||0)>(S.t||0)))cloudPush();
+  if(!B)render()}
+async function cloudInit(){if(window.claude||!accGet().tok)return;
+  try{afterAuth(await api('/api/me'),false)}catch(e){}
+  addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')cloudPush(true)})}
+function openAccount(){const ov=$('#ov');ov.className='ov on';
+  ov.innerHTML=`<div class="fp setp"><div class="sth"><b>Hesap</b><button class="stx" id="accback" aria-label="Geri">✕</button></div>
+    <input class="accin" id="accu" placeholder="Kullanıcı adı" autocomplete="username" autocapitalize="off" spellcheck="false" maxlength="16">
+    <input class="accin" id="accp" type="password" placeholder="Şifre (en az 6 karakter)" autocomplete="current-password" maxlength="64">
+    <p class="sioerr" id="accerr"></p>
+    <div class="stsv2"><button class="btn" id="acclog">Giriş yap</button><button class="btn alt" id="accreg">Kayıt ol</button></div>
+    <p class="sionote"><b>Kayıt ol:</b> bu cihazdaki ilerlemen yeni hesabına aktarılır.<br><b>Giriş yap:</b> hesabındaki kayıt yüklenir.</p>
+    <button class="btn alt" id="accdone">Geri</button></div>`;
+  const er=$('#accerr'),bl=$('#acclog'),br=$('#accreg');
+  const go=async reg=>{const u=$('#accu').value.trim(),p=$('#accp').value;er.textContent='';
+    if(!u||!p){er.textContent='Kullanıcı adı ve şifre yaz.';return}
+    bl.disabled=br.disabled=true;
+    try{const j=await api(reg?'/api/register':'/api/login',{m:'POST',b:{u,p}});afterAuth(j,!reg);
+      toast(reg?'Hesap açıldı, ilerlemen buluta kaydedildi':'Hoş geldin, '+j.user);openSettings()}
+    catch(e){er.textContent=e.message}finally{bl.disabled=br.disabled=false}};
+  bl.onclick=()=>go(false);br.onclick=()=>go(true);
+  $('#accp').onkeydown=e=>{if(e.key==='Enter')go(false)};
+  const back=()=>openSettings();$('#accback').onclick=back;$('#accdone').onclick=back}
 /* ---------- KAYIT DIŞA / İÇE AKTARMA ---------- */
 // Kod biçimi: "MR1." + JSON kaydının base64 hali. Başka cihaza / adrese ilerleme taşımak için.
 const SAVE_PFX='MR1.';
@@ -2379,6 +2435,7 @@ function openSaveIO(mode){const ov=$('#ov');ov.className='ov on';
     $('#siofi').onchange=e=>{const f=e.target.files&&e.target.files[0];if(!f)return;f.text().then(t=>{ta.value=t.trim();er.textContent=''})};
     ta.oninput=()=>{er.textContent='';delete go.dataset.ok;go.textContent='Yükle'};
     go.onclick=async()=>{let d;try{d=parseSaveCode(ta.value)}catch(e){er.textContent=e.message;return}
+      stripEz(d,!!(window.__ezOwner||accGet().owner));
       if(!go.dataset.ok){go.dataset.ok=1;er.textContent='';go.textContent=`${Object.keys(d.owned).length} kartlı kayıt yüklensin mi? Tekrar bas`;return}
       try{localStorage.setItem(KEY+'.bak',JSON.stringify(S))}catch(e){}
       S={...fresh(),...d};S.t=Date.now();save();
@@ -2392,6 +2449,7 @@ function openSettings(){const ov=$('#ov');ov.className='ov on';
     <div class="strow tg"><div class="stl"><span class="sic">${sndIco()}</span><b>Ses</b></div><button class="tgl ${SFX.on()?'on':''}" id="stsnd"><i></i></button></div>
     ${row('stmv','Müzik','<span class="sic">♫</span>',mvol())}
     ${row('stsv','Efektler','<span class="sic">✦</span>',svol())}
+    ${window.claude?'':(()=>{const a=accGet();return `<div class="stsv"><b>Hesap</b>${a.user?`<p class="sionote">Giriş yapıldı: <b>${escH(a.user)}</b>. İlerlemen buluta kaydediliyor, başka cihazdan da devam edebilirsin.</p><button class="btn alt" id="stout">Çıkış yap</button>`:`<p class="sionote">Giriş yaparsan ilerlemen buluta kaydedilir; telefon değişse bile kaybolmaz.</p><button class="btn" id="stacc">Giriş yap / Kayıt ol</button>`}</div>`})()}
     <div class="stsv"><b>Kayıt</b><div class="stsv2"><button class="btn alt" id="stexp">Dışa aktar</button><button class="btn alt" id="stimp">İçe aktar</button></div></div>
     <div class="stinfo">Mythbeast Realm · Seri 1<br><small>Müzik ve ses efektleri: kendi parçaların ve OpenGameArt (CC0)</small></div>
     <button class="btn alt" id="stok">Tamam</button></div>`;
@@ -2400,7 +2458,12 @@ function openSettings(){const ov=$('#ov');ov.className='ov on';
   $('#stsv').oninput=e=>{S.sv=e.target.value/100;upd();SFX.setVol()};$('#stsv').onchange=()=>{save();SFX.hit('fire','')};
   $('#stsnd').onclick=e=>{SFX.toggle();e.currentTarget.classList.toggle('on',SFX.on());e.currentTarget.parentNode.querySelector('.sic').innerHTML=sndIco();upd();const ts=$('#tsnd');if(ts)ts.innerHTML=sndIco()};
   const cl=()=>{ov.className='ov';ov.innerHTML='';if(tab==='rules')render()};$('#stclose').onclick=cl;$('#stok').onclick=cl;
-  $('#stexp').onclick=()=>openSaveIO('exp');$('#stimp').onclick=()=>openSaveIO('imp')}
+  $('#stexp').onclick=()=>openSaveIO('exp');$('#stimp').onclick=()=>openSaveIO('imp');
+  if($('#stacc'))$('#stacc').onclick=openAccount;
+  const so=$('#stout');if(so)so.onclick=async()=>{if(!so.dataset.ok){so.dataset.ok=1;so.textContent='Emin misin? Tekrar bas';return}
+    try{await cloudPush(true)}catch(e){}try{await api('/api/logout',{m:'POST'})}catch(e){}
+    accSet(null);window.__ezOwner=false;stripEz(S,false);try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}
+    toast('Çıkış yapıldı');openSettings();if(!B)render()}}
 $('#gear').onclick=()=>{if(B&&!B.over&&B.busy)return;openSettings()};
 
 /* ---------- GÜNLÜK GÖREVLER ---------- */
@@ -2524,6 +2587,7 @@ const sndIco=()=>SFX.on()?'<svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H
  $('#tgo').onclick=()=>{setTimeout(()=>{musGo=true;musicSync()},2500);t.classList.add('out');setTimeout(()=>t.remove(),600);if(S.tut===1)setTimeout(showWelcome,350)}}
 render();
 connectDb();
+cloudInit();
 }
 </script>
 </body>
