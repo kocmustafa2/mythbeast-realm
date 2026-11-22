@@ -26,6 +26,20 @@ function ensureSchema(db) {
     // arkadaş destesine karşı yapılan savaşlar
     db.prepare(`CREATE TABLE IF NOT EXISTS duels (id INTEGER PRIMARY KEY AUTOINCREMENT, from_id INTEGER NOT NULL, to_id INTEGER NOT NULL, win INTEGER NOT NULL, t INTEGER NOT NULL)`),
     db.prepare(`CREATE INDEX IF NOT EXISTS duels_to ON duels (to_id, t)`),
+    // klanlar: role 'leader' | 'co' | 'member'
+    db.prepare(`CREATE TABLE IF NOT EXISTS clans (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, nkey TEXT UNIQUE NOT NULL, descr TEXT NOT NULL DEFAULT '', created INTEGER NOT NULL)`),
+    db.prepare(`CREATE TABLE IF NOT EXISTS clan_members (user_id INTEGER PRIMARY KEY, clan_id INTEGER NOT NULL, role TEXT NOT NULL, joined INTEGER NOT NULL)`),
+    db.prepare(`CREATE INDEX IF NOT EXISTS clan_members_c ON clan_members (clan_id)`),
+    db.prepare(`CREATE TABLE IF NOT EXISTS clan_joins (user_id INTEGER NOT NULL, clan_id INTEGER NOT NULL, t INTEGER NOT NULL, PRIMARY KEY (user_id, clan_id))`),
+    db.prepare(`CREATE INDEX IF NOT EXISTS clan_joins_c ON clan_joins (clan_id)`),
+    // kart istekleri
+    db.prepare(`CREATE TABLE IF NOT EXISTS card_reqs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, card INTEGER NOT NULL, need INTEGER NOT NULL, got INTEGER NOT NULL DEFAULT 0, created INTEGER NOT NULL, expires INTEGER NOT NULL, closed INTEGER NOT NULL DEFAULT 0)`),
+    db.prepare(`CREATE INDEX IF NOT EXISTS card_reqs_u ON card_reqs (user_id, closed)`),
+    // akış: kind = duel | donate | request | join | leave | clan_create | kick
+    db.prepare(`CREATE TABLE IF NOT EXISTS feed (id INTEGER PRIMARY KEY AUTOINCREMENT, clan_id INTEGER, kind TEXT NOT NULL, a INTEGER NOT NULL, b INTEGER, card INTEGER, win INTEGER, t INTEGER NOT NULL)`),
+    db.prepare(`CREATE INDEX IF NOT EXISTS feed_c ON feed (clan_id, t)`),
+    db.prepare(`CREATE INDEX IF NOT EXISTS feed_a ON feed (a, t)`),
+    db.prepare(`CREATE INDEX IF NOT EXISTS feed_b ON feed (b, t)`),
   ]).then(async () => {
     // kayıt sürümü: iki cihaz aynı anda oynarsa eski sürüm yenisinin üstüne yazamaz
     try { await db.prepare('ALTER TABLE saves ADD COLUMN rev INTEGER NOT NULL DEFAULT 0').run(); }
@@ -107,6 +121,15 @@ async function friendRow(db, x, y) {   // iki kişi arasındaki ilişki (yön fa
   return db.prepare('SELECT a, b, status FROM friends WHERE (a = ? AND b = ?) OR (a = ? AND b = ?)').bind(x, y, y, x).first();
 }
 async function areFriends(db, x, y) { const r = await friendRow(db, x, y); return !!r && r.status === 'ok'; }
+const myClan = (db, uid) => db.prepare('SELECT m.clan_id, m.role, c.name FROM clan_members m JOIN clans c ON c.id = m.clan_id WHERE m.user_id = ?').bind(uid).first();
+async function sameClan(db, x, y) {
+  const r = await db.prepare('SELECT a.clan_id FROM clan_members a JOIN clan_members b ON a.clan_id = b.clan_id WHERE a.user_id = ? AND b.user_id = ?').bind(x, y).first();
+  return r ? r.clan_id : null;
+}
+// arkadaşlar ya da aynı klandakiler birbirinin destesiyle savaşabilir, birbirine kart bağışlayabilir
+async function canDuel(db, x, y) { return (await areFriends(db, x, y)) || !!(await sameClan(db, x, y)); }
+const feedAdd = (db, clan, kind, a, b = null, card = null, win = null) =>
+  db.prepare('INSERT INTO feed (clan_id, kind, a, b, card, win, t) VALUES (?, ?, ?, ?, ?, ?, ?)').bind(clan, kind, a, b, card, win, Date.now()).run();
 
 // kriptografik rastgele sayı (0-1): paketleri ve sandıkları sunucu açar
 function cryptoRng() { const a = new Uint32Array(2); crypto.getRandomValues(a); return (a[0] * 2 ** 21 + (a[1] >>> 11)) / 2 ** 53; }
@@ -133,6 +156,23 @@ async function storePub(db, uid, st, deck, owner) {
     .bind(uid, JSON.stringify(MR.pubStats(st)), JSON.stringify(cleanDeck(deck, owner).filter(own)), Date.now()).run();
 }
 const ctxOf = (uid, extra) => ({ rng: cryptoRng, now: Date.now(), uid, ...extra });
+// Bir oyuncunun kaydını sunucuda değiştirir (çakışmada yeniden dener). fn hata fırlatırsa kayıt değişmez.
+async function mutateState(db, env, uid, fn) {
+  const u = await db.prepare('SELECT name FROM users WHERE id = ?').bind(uid).first();
+  const owner = !!u && isOwner(env, { name: u.name });
+  for (let tries = 0; tries < 6; tries++) {
+    const cur = await loadState(db, uid), st = cur.st, ctx = ctxOf(uid, {});
+    MR.normalize(st, ctx); fixEz(st, owner);
+    const r = fn(st, ctx.now);
+    fixEz(st, owner);
+    const rev = await storeState(db, uid, st, cur.rev, cur.exists);
+    if (rev !== false) return { r, st, rev };
+  }
+  throw new Error('busy');
+}
+const feedRows = async (db, sql, ...args) => ((await db.prepare(sql).bind(...args).all()).results || []).map(f => ({
+  kind: f.kind, a: f.an, b: f.bn, card: f.card, win: f.win == null ? null : !!f.win, t: f.t }));
+const FEED_SEL = `SELECT f.kind, f.card, f.win, f.t, ua.name AS an, ub.name AS bn FROM feed f JOIN users ua ON ua.id = f.a LEFT JOIN users ub ON ub.id = f.b`;
 
 async function handleApi(req, env, path) {
   const db = env.DB;
@@ -213,7 +253,7 @@ async function handleApi(req, env, path) {
     let friendOk = false;
     if (a === 'battle_start' && body.mode === 'friend') {
       const o = await userByName(db, body.fr);
-      friendOk = !!o && await areFriends(db, user.id, o.id);
+      friendOk = !!o && await canDuel(db, user.id, o.id);
     }
     for (let tries = 0; tries < 4; tries++) {
       const cur = await loadState(db, user.id);
@@ -285,7 +325,7 @@ async function handleApi(req, env, path) {
   }
   if (path === '/api/friends/deck' && method === 'GET') {
     const o = await userByName(db, new URL(req.url).searchParams.get('u'));
-    if (!o || !(await areFriends(db, user.id, o.id))) return err('Sadece arkadaşlarının destesiyle savaşabilirsin.', 403);
+    if (!o || !(await canDuel(db, user.id, o.id))) return err('Sadece arkadaşlarının ya da klan üyelerinin destesiyle savaşabilirsin.', 403);
     const p = await db.prepare('SELECT stats, deck FROM pub WHERE user_id = ?').bind(o.id).first();
     const deck = p ? JSON.parse(p.deck) : [];
     if (deck.filter(k => typeof k === 'number').length < 3) return err(`${o.name} henüz arena destesi kaydetmemiş.`, 404);
@@ -294,12 +334,201 @@ async function handleApi(req, env, path) {
   if (path === '/api/duel' && method === 'POST') {
     const { u, win } = await readBody(req);
     const o = await userByName(db, u);
-    if (!o || !(await areFriends(db, user.id, o.id))) return err('Arkadaş değilsiniz.', 403);
+    if (!o || !(await canDuel(db, user.id, o.id))) return err('Arkadaş ya da klan üyesi değilsiniz.', 403);
     const last = await db.prepare('SELECT t FROM duels WHERE from_id = ? ORDER BY t DESC LIMIT 1').bind(user.id).first();
     if (last && Date.now() - last.t < 20000) return json({ ok: true, skipped: true });   // aşırı hızlı kayıtları yok say
     await db.prepare('INSERT INTO duels (from_id, to_id, win, t) VALUES (?, ?, ?, ?)').bind(user.id, o.id, win ? 1 : 0, Date.now()).run();
+    await feedAdd(db, await sameClan(db, user.id, o.id), 'duel', user.id, o.id, null, win ? 1 : 0);
     return json({ ok: true });
   }
+
+  // ---------- KLAN ----------
+  const CL = MR.CLAN;
+  const memberCount = async cid => (await db.prepare('SELECT COUNT(*) AS n FROM clan_members WHERE clan_id = ?').bind(cid).first()).n;
+  const clanByName = async n => typeof n === 'string' ? db.prepare('SELECT id, name FROM clans WHERE nkey = ?').bind(ukeyOf(n.trim())).first() : null;
+  const officer = async () => { const m = await myClan(db, user.id); if (!m) throw Object.assign(new Error('Bir klanda değilsin.'), { user: true });
+    if (m.role !== 'leader' && m.role !== 'co') throw Object.assign(new Error('Bunun için lider ya da yardımcı olmalısın.'), { user: true, status: 403 }); return m; };
+  const ue = e => e && e.user ? err(e.message, e.status || 400) : null;
+
+  if (path === '/api/clan' && method === 'GET') {
+    const m = await myClan(db, user.id);
+    if (!m) {
+      const pend = ((await db.prepare('SELECT c.name FROM clan_joins j JOIN clans c ON c.id = j.clan_id WHERE j.user_id = ?').bind(user.id).all()).results || []).map(r => r.name);
+      return json({ clan: null, pending: pend, cost: CL.cost });
+    }
+    const c = await db.prepare('SELECT id, name, descr, created FROM clans WHERE id = ?').bind(m.clan_id).first();
+    const members = ((await db.prepare(`SELECT u.name, m.role, m.joined, p.stats FROM clan_members m JOIN users u ON u.id = m.user_id
+      LEFT JOIN pub p ON p.user_id = m.user_id WHERE m.clan_id = ?`).bind(c.id).all()).results || [])
+      .map(r => ({ name: r.name, role: r.role, joined: r.joined, stats: r.stats ? JSON.parse(r.stats) : null }))
+      .sort((x, y) => ((y.stats || {}).tr || 0) - ((x.stats || {}).tr || 0));
+    const joins = (m.role === 'leader' || m.role === 'co') ? ((await db.prepare(`SELECT u.name, p.stats FROM clan_joins j JOIN users u ON u.id = j.user_id
+      LEFT JOIN pub p ON p.user_id = j.user_id WHERE j.clan_id = ? ORDER BY j.t`).bind(c.id).all()).results || []).map(r => ({ name: r.name, stats: r.stats ? JSON.parse(r.stats) : null })) : [];
+    const feed = await feedRows(db, FEED_SEL + ' WHERE f.clan_id = ? ORDER BY f.t DESC LIMIT 50', c.id);
+    return json({ clan: { name: c.name, descr: c.descr, created: c.created, max: CL.max, total: members.reduce((t, x) => t + ((x.stats || {}).tr || 0), 0) },
+      role: m.role, members, joins, feed });
+  }
+  if (path === '/api/clan/search' && method === 'GET') {
+    const q = (new URL(req.url).searchParams.get('q') || '').trim().toLocaleLowerCase('tr').slice(0, 20).replace(/[%_]/g, '');
+    const rows = ((await db.prepare(`SELECT c.name, c.descr, COUNT(m.user_id) AS n, COALESCE(SUM(json_extract(p.stats, '$.tr')), 0) AS tr
+      FROM clans c LEFT JOIN clan_members m ON m.clan_id = c.id LEFT JOIN pub p ON p.user_id = m.user_id
+      WHERE c.nkey LIKE ? GROUP BY c.id ORDER BY tr DESC, n DESC LIMIT 20`).bind('%' + q + '%').all()).results || []);
+    return json({ clans: rows.map(r => ({ name: r.name, descr: r.descr, n: r.n, tr: r.tr, full: r.n >= CL.max })) });
+  }
+  if (path === '/api/clan/create' && method === 'POST') {
+    const { name, descr } = await readBody(req);
+    const nm = typeof name === 'string' ? name.trim().replace(/\s+/g, ' ') : '';
+    if (nm.length < CL.nameMin || nm.length > CL.nameMax || !/^[A-Za-z0-9 _çğıöşüÇĞİÖŞÜ-]+$/.test(nm)) return err(`Klan adı ${CL.nameMin}-${CL.nameMax} karakter olmalı: harf, rakam, boşluk, - ya da _`);
+    const ds = typeof descr === 'string' ? descr.trim().slice(0, CL.descMax) : '';
+    if (await myClan(db, user.id)) return err('Zaten bir klandasın. Önce ayrılmalısın.');
+    if (await clanByName(nm)) return err('Bu klan adı alınmış.', 409);
+    let res;
+    try { res = await mutateState(db, env, user.id, st => MR.clanPay(st)); } catch (e) { return ue(e) || (() => { throw e; })(); }
+    let cid;
+    try { cid = (await db.prepare('INSERT INTO clans (name, nkey, descr, created) VALUES (?, ?, ?, ?) RETURNING id').bind(nm, ukeyOf(nm), ds, Date.now()).first()).id; }
+    catch { await mutateState(db, env, user.id, st => { st.gold += CL.cost; }); return err('Bu klan adı alınmış.', 409); }
+    await db.batch([db.prepare('INSERT INTO clan_members (user_id, clan_id, role, joined) VALUES (?, ?, ?, ?)').bind(user.id, cid, 'leader', Date.now()),
+      db.prepare('DELETE FROM clan_joins WHERE user_id = ?').bind(user.id)]);
+    await feedAdd(db, cid, 'clan_create', user.id);
+    const st = (await loadState(db, user.id));
+    return json({ ok: true, name: nm, save: st.st, rev: st.rev });
+  }
+  if (path === '/api/clan/join' && method === 'POST') {
+    const { name } = await readBody(req);
+    if (await myClan(db, user.id)) return err('Zaten bir klandasın.');
+    const c = await clanByName(name);
+    if (!c) return err('Klan bulunamadı.', 404);
+    if (await memberCount(c.id) >= CL.max) return err(`Klan dolu (${CL.max} üye).`);
+    const pend = await db.prepare('SELECT COUNT(*) AS n FROM clan_joins WHERE user_id = ?').bind(user.id).first();
+    if (pend.n >= 5) return err('En fazla 5 klana aynı anda istek gönderebilirsin.');
+    await db.prepare('INSERT INTO clan_joins (user_id, clan_id, t) VALUES (?, ?, ?) ON CONFLICT DO NOTHING').bind(user.id, c.id, Date.now()).run();
+    return json({ ok: true, name: c.name });
+  }
+  if (path === '/api/clan/cancel' && method === 'POST') {
+    const { name } = await readBody(req); const c = await clanByName(name);
+    if (c) await db.prepare('DELETE FROM clan_joins WHERE user_id = ? AND clan_id = ?').bind(user.id, c.id).run();
+    return json({ ok: true });
+  }
+  if ((path === '/api/clan/accept' || path === '/api/clan/decline') && method === 'POST') {
+    let m; try { m = await officer(); } catch (e) { return ue(e); }
+    const { u } = await readBody(req); const o = await userByName(db, u);
+    if (!o) return err('Oyuncu bulunamadı.', 404);
+    const j = await db.prepare('SELECT 1 FROM clan_joins WHERE user_id = ? AND clan_id = ?').bind(o.id, m.clan_id).first();
+    if (!j) return err('Bu oyuncunun bekleyen isteği yok.', 404);
+    if (path === '/api/clan/decline') { await db.prepare('DELETE FROM clan_joins WHERE user_id = ? AND clan_id = ?').bind(o.id, m.clan_id).run(); return json({ ok: true }); }
+    if (await myClan(db, o.id)) { await db.prepare('DELETE FROM clan_joins WHERE user_id = ?').bind(o.id).run(); return err(`${o.name} başka bir klana katılmış.`); }
+    if (await memberCount(m.clan_id) >= CL.max) return err(`Klan dolu (${CL.max} üye).`);
+    try { await db.prepare('INSERT INTO clan_members (user_id, clan_id, role, joined) VALUES (?, ?, ?, ?)').bind(o.id, m.clan_id, 'member', Date.now()).run(); }
+    catch { return err(`${o.name} başka bir klana katılmış.`); }
+    await db.prepare('DELETE FROM clan_joins WHERE user_id = ?').bind(o.id).run();
+    if (await memberCount(m.clan_id) > CL.max) {   // aynı anda iki onay: fazlayı geri al
+      await db.prepare('DELETE FROM clan_members WHERE user_id = ?').bind(o.id).run(); return err(`Klan dolu (${CL.max} üye).`);
+    }
+    await feedAdd(db, m.clan_id, 'join', o.id, user.id);
+    return json({ ok: true, name: o.name });
+  }
+  if (path === '/api/clan/leave' && method === 'POST') {
+    const m = await myClan(db, user.id); if (!m) return err('Bir klanda değilsin.');
+    await db.prepare('DELETE FROM clan_members WHERE user_id = ?').bind(user.id).run();
+    const left = await memberCount(m.clan_id);
+    if (!left) {      // son üye: klan silinir
+      await db.batch([db.prepare('DELETE FROM clans WHERE id = ?').bind(m.clan_id), db.prepare('DELETE FROM clan_joins WHERE clan_id = ?').bind(m.clan_id),
+        db.prepare('DELETE FROM feed WHERE clan_id = ?').bind(m.clan_id)]);
+      return json({ ok: true, deleted: true });
+    }
+    if (m.role === 'leader') {   // liderlik en eski yardımcıya, yoksa en eski üyeye geçer
+      const nx = await db.prepare(`SELECT user_id FROM clan_members WHERE clan_id = ? ORDER BY CASE role WHEN 'co' THEN 0 ELSE 1 END, joined LIMIT 1`).bind(m.clan_id).first();
+      await db.prepare(`UPDATE clan_members SET role = 'leader' WHERE user_id = ?`).bind(nx.user_id).run();
+    }
+    await feedAdd(db, m.clan_id, 'leave', user.id);
+    return json({ ok: true });
+  }
+  if (path === '/api/clan/kick' && method === 'POST') {
+    let m; try { m = await officer(); } catch (e) { return ue(e); }
+    const { u } = await readBody(req); const o = await userByName(db, u);
+    if (!o || o.id === user.id) return err('Bu oyuncuyu atamazsın.');
+    const t = await db.prepare('SELECT role FROM clan_members WHERE user_id = ? AND clan_id = ?').bind(o.id, m.clan_id).first();
+    if (!t) return err('Bu oyuncu klanında değil.', 404);
+    if (t.role === 'leader' || (m.role === 'co' && t.role === 'co')) return err('Bu oyuncuyu atma yetkin yok.', 403);
+    await db.prepare('DELETE FROM clan_members WHERE user_id = ?').bind(o.id).run();
+    await feedAdd(db, m.clan_id, 'kick', o.id, user.id);
+    return json({ ok: true });
+  }
+  if (path === '/api/clan/role' && method === 'POST') {
+    const m = await myClan(db, user.id);
+    if (!m || m.role !== 'leader') return err('Sadece lider rol değiştirebilir.', 403);
+    const { u, role } = await readBody(req); const o = await userByName(db, u);
+    if (!o || o.id === user.id || (role !== 'co' && role !== 'member')) return err('Geçersiz istek.');
+    const r = await db.prepare('UPDATE clan_members SET role = ? WHERE user_id = ? AND clan_id = ? AND role != ?').bind(role, o.id, m.clan_id, 'leader').run();
+    if (!r.meta.changes) return err('Bu oyuncu klanında değil.', 404);
+    return json({ ok: true });
+  }
+  if (path === '/api/clan/edit' && method === 'POST') {
+    const m = await myClan(db, user.id);
+    if (!m || m.role !== 'leader') return err('Sadece lider açıklamayı değiştirebilir.', 403);
+    const { descr } = await readBody(req);
+    await db.prepare('UPDATE clans SET descr = ? WHERE id = ?').bind(typeof descr === 'string' ? descr.trim().slice(0, CL.descMax) : '', m.clan_id).run();
+    return json({ ok: true });
+  }
+
+  // ---------- KART İSTEKLERİ VE BAĞIŞ ----------
+  const RQ = MR.REQ;
+  if (path === '/api/reqs' && method === 'GET') {
+    const now = Date.now(), m = await myClan(db, user.id);
+    const rows = ((await db.prepare(`SELECT r.id, r.card, r.need, r.got, r.expires, r.user_id, u.name FROM card_reqs r JOIN users u ON u.id = r.user_id
+      WHERE r.closed = 0 AND r.expires > ?1 AND (r.user_id = ?2
+        OR r.user_id IN (SELECT CASE WHEN a = ?2 THEN b ELSE a END FROM friends WHERE status = 'ok' AND (a = ?2 OR b = ?2))
+        OR r.user_id IN (SELECT user_id FROM clan_members WHERE clan_id = ?3))
+      ORDER BY r.created DESC LIMIT 60`).bind(now, user.id, m ? m.clan_id : -1).all()).results || []);
+    const cur = await loadState(db, user.id), st = cur.st;
+    return json({ reqs: rows.map(r => ({ id: r.id, card: r.card, need: r.need, got: r.got, expires: r.expires, name: r.name, mine: r.user_id === user.id,
+      have: (st.owned || {})[r.card] || 0 })), next: Math.max(0, (st.rqT || 0) + RQ.every - now), left: MR.dnLeft(st, now), daily: RQ.daily });
+  }
+  if (path === '/api/reqs/open' && method === 'POST') {
+    const { card } = await readBody(req), id = Math.floor(Number(card)), now = Date.now();
+    let res;
+    try { res = await mutateState(db, env, user.id, (st, t) => MR.reqOpen(st, id, t)); } catch (e) { return ue(e) || (() => { throw e; })(); }
+    await db.prepare('UPDATE card_reqs SET closed = 1 WHERE user_id = ? AND closed = 0').bind(user.id).run();
+    await db.prepare('INSERT INTO card_reqs (user_id, card, need, created, expires) VALUES (?, ?, ?, ?, ?)').bind(user.id, id, res.r.need, now, now + RQ.dur).run();
+    const m = await myClan(db, user.id);
+    await feedAdd(db, m ? m.clan_id : null, 'request', user.id, null, id);
+    return json({ ok: true, save: res.st, rev: res.rev });
+  }
+  if (path === '/api/reqs/donate' && method === 'POST') {
+    const { id } = await readBody(req), now = Date.now();
+    const rq = await db.prepare('SELECT id, user_id, card, need, got, expires, closed FROM card_reqs WHERE id = ?').bind(Math.floor(Number(id))).first();
+    if (!rq || rq.closed || rq.expires <= now || rq.got >= rq.need) return err('Bu istek kapanmış.', 404);
+    if (rq.user_id === user.id) return err('Kendi isteğine bağış yapamazsın.');
+    if (!(await canDuel(db, user.id, rq.user_id))) return err('Sadece arkadaşlarına ve klan üyelerine bağış yapabilirsin.', 403);
+    { const cur = await loadState(db, user.id); try { MR.normalize(cur.st, ctxOf(user.id, {})); MR.donateCheck(cur.st, rq.card, now); } catch (e) { return ue(e) || (() => { throw e; })(); } }
+    // yer ayır: aynı anda gelen bağışlar hedefi aşamaz
+    const slot = await db.prepare('UPDATE card_reqs SET got = got + 1, closed = CASE WHEN got + 1 >= need THEN 1 ELSE 0 END WHERE id = ? AND closed = 0 AND got < need AND expires > ? RETURNING got, need')
+      .bind(rq.id, now).first();
+    if (!slot) return err('Bu istek doldu.', 409);
+    let give;
+    try { give = await mutateState(db, env, user.id, (st, t) => MR.donateGive(st, rq.card, t)); }
+    catch (e) {   // bağışçı tarafı olmadı: ayrılan yeri geri ver
+      await db.prepare('UPDATE card_reqs SET got = got - 1, closed = 0 WHERE id = ?').bind(rq.id).run();
+      return ue(e) || (() => { throw e; })();
+    }
+    await mutateState(db, env, rq.user_id, st => MR.donateGet(st, rq.card));
+    await feedAdd(db, await sameClan(db, user.id, rq.user_id), 'donate', user.id, rq.user_id, rq.card);
+    return json({ ok: true, r: give.r, got: slot.got, need: slot.need, save: give.st, rev: give.rev });
+  }
+
+  // ---------- AKIŞ VE BİLDİRİM ----------
+  if (path === '/api/feed' && method === 'GET') {   // arkadaş akışı: sen ve arkadaşların arasındaki maçlar ve bağışlar
+    const feed = await feedRows(db, FEED_SEL + ` WHERE f.kind IN ('duel','donate') AND (f.a IN (SELECT ?1 UNION SELECT CASE WHEN a = ?1 THEN b ELSE a END FROM friends WHERE status = 'ok' AND (a = ?1 OR b = ?1))
+      OR f.b IN (SELECT ?1 UNION SELECT CASE WHEN a = ?1 THEN b ELSE a END FROM friends WHERE status = 'ok' AND (a = ?1 OR b = ?1))) ORDER BY f.t DESC LIMIT 50`, user.id);
+    return json({ feed });
+  }
+  if (path === '/api/notify' && method === 'GET') {
+    const since = Math.floor(Number(new URL(req.url).searchParams.get('since')) || 0), m = await myClan(db, user.id);
+    const fr = (await db.prepare(`SELECT COUNT(*) AS n FROM friends WHERE b = ? AND status = 'pending'`).bind(user.id).first()).n;
+    const cj = m && (m.role === 'leader' || m.role === 'co') ? (await db.prepare('SELECT COUNT(*) AS n FROM clan_joins WHERE clan_id = ?').bind(m.clan_id).first()).n : 0;
+    const dn = (await db.prepare(`SELECT COUNT(*) AS n FROM feed WHERE kind = 'donate' AND b = ? AND t > ?`).bind(user.id, since).first()).n;
+    return json({ fr, cj, dn, clan: m ? m.name : null });
+  }
+
   return err('Bulunamadı.', 404);
 }
 
@@ -311,6 +540,7 @@ export default {
       catch (e) {
         if (e && e.message === 'too_big') return err('Kayıt çok büyük.', 413);
         if (e && e.message === 'bad_json') return err('İstek bozuk.');
+        if (e && e.message === 'busy') return err('İşlem şu an yapılamadı, tekrar dene.', 503);
         return err('Sunucu hatası.', 500);
       }
     }

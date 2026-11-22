@@ -663,7 +663,18 @@ body.inb main{padding:0 10px 16px}
 .frr .nm small{color:#c9d3dc;font:12px/1.3 Rubik,sans-serif;white-space:normal}.frr .btn{margin:0;padding:7px 10px;font-size:13px;width:auto;flex:none}
 .frx{border:0;background:#ffffff14;color:#c9d3dc;border-radius:8px;padding:6px 8px;font:12px Rubik,sans-serif}
 .frh{font:700 13px Rubik,sans-serif;color:var(--gold);margin:6px 0 0}.frem{color:var(--mute);font:13px Rubik,sans-serif;text-align:center;padding:10px}
-.frd{font:12.5px Rubik,sans-serif;color:#c9d3dc;padding:4px 2px}.frd b{color:#fff}.frd .w{color:#7ee05a}.frd .l{color:#ff8a7a}
+.frd{font:12.5px Rubik,sans-serif;color:#c9d3dc;padding:4px 2px}
+.fdi{display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:7px 10px;border-radius:10px;background:#ffffff0a}.fdi small{margin-left:auto;color:var(--mute);font-size:11px}
+.fcd{width:26px;height:26px;border-radius:6px;object-fit:cover;vertical-align:middle}.frr .fcd{width:44px;height:44px}
+.fre{font-size:30px;width:46px;text-align:center}
+.frtabs button{font-size:12px;padding:9px 2px}
+.rqb{position:relative;height:14px;border-radius:7px;background:#0008;overflow:hidden;margin-top:4px}.rqb i{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,#7ee05a,#f5c451)}
+.rqb span{position:relative;display:block;text-align:center;font:700 10px/14px Rubik,sans-serif;color:#fff;text-shadow:0 1px 2px #000}
+.rqg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.rqc{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px;border:1px solid #ffffff1f;border-radius:10px;background:#ffffff0d;color:#fff}
+.rqc img{width:100%;aspect-ratio:1;border-radius:8px;object-fit:cover}.rqc span{font:700 10.5px Rubik,sans-serif;text-align:center;line-height:1.1}.rqc small{font:10px Rubik,sans-serif;color:var(--mute)}.rqc.r1{border-color:#5fb0ff88}
+.frr.cm{gap:5px;padding:7px 8px}.frr.cm .btn{padding:6px 8px;font-size:12px}.frr.cm .frx{padding:6px 6px}.frr.cm .lgb2 img{width:24px;height:24px}.frr.cm .rk{width:16px}
+.clh{display:flex;justify-content:space-between;align-items:center;gap:8px;font:12px Rubik,sans-serif;color:#c9d3dc}.clh span{font-weight:700;color:var(--gold);white-space:nowrap}
+.rlb{font:700 10px Rubik,sans-serif;font-style:normal;padding:1px 6px;border-radius:6px;background:#ffffff1f;color:#c9d3dc;vertical-align:middle}.rlb.leader{background:var(--gold);color:#1a1206}.frd b{color:#fff}.frd .w{color:#7ee05a}.frd .l{color:#ff8a7a}
 .endb .ensb{display:flex;align-items:center;justify-content:center;gap:5px;font:700 12.5px Rubik,sans-serif;color:#ffb347}.endb .ensb .flm{width:18px;height:18px}.endb .ensb.off{color:var(--mute)}
 .endb .ench{display:flex;flex-direction:column;align-items:center;gap:2px;background:#ffc84a1a;border:1px solid #ffc84a66;border-radius:12px;padding:8px}.endb .ench .chsv{width:64px;height:64px;animation:chg 1.2s infinite}.endb .ench b{font:18px 'MRDisplay',sans-serif;color:var(--gold)}.endb .ench small{font:600 11px Rubik,sans-serif;color:var(--mute)}
 .chbig .chsv{width:min(60vw,250px);height:min(60vw,250px);filter:drop-shadow(0 10px 30px #000a)}
@@ -1604,11 +1615,11 @@ function leagueCard(){const t=S.trophy||0,i=lgOf(t),L=LEAGUES[i],nx=LEAGUES[i+1]
 function renderArena(){
   if(B)return renderBattle();
   const n=uniq();
-  $('#main').innerHTML=`<h2>Arena</h2>${leagueCard()}${friendsCard()}${arenaStrip()}${deckView()}${n?`<button class="btn fightb" id="fight">Savaşa gir</button>`:`<div class="empty">Arena için en az 1 kartın olmalı. Önce bir paket aç.</div>`}<p class="sub">Galibiyet <b>+${TROPHY.win}</b> kupa ve ${ECON.win+LEAGUES[lgOf(S.trophy||0)].gold} altın, mağlubiyet ${TROPHY.loss} kupa ve ${ECON.loss} altın. Lig tabanının altına düşmezsin. Üst üste galibiyetler ek kupa ve altın verir. Her 3 galibiyette bir zafer sandığı kazanırsın. (${S.wins} G · ${S.losses} M)</p>
+  $('#main').innerHTML=`<h2>Arena</h2>${leagueCard()}${friendsCard()}${clanCard()}${arenaStrip()}${deckView()}${n?`<button class="btn fightb" id="fight">Savaşa gir</button>`:`<div class="empty">Arena için en az 1 kartın olmalı. Önce bir paket aç.</div>`}<p class="sub">Galibiyet <b>+${TROPHY.win}</b> kupa ve ${ECON.win+LEAGUES[lgOf(S.trophy||0)].gold} altın, mağlubiyet ${TROPHY.loss} kupa ve ${ECON.loss} altın. Lig tabanının altına düşmezsin. Üst üste galibiyetler ek kupa ve altın verir. Her 3 galibiyette bir zafer sandığı kazanırsın. (${S.wins} G · ${S.losses} M)</p>
   <div class="box"><p><b>Deste 15 kart:</b> yaratıklar ve destek kartları karışık durur. Elinde en fazla 5 kart olur. Bir kartı oynadığında (yaratık koyunca ya da destek kullanınca) yerine desteden yenisi gelir.</p><p><b>Sahada 3 yaratık</b> savaşır. Boş yere elinden yaratık koyabilirsin. Her tur en fazla 1 destek kartı oynar, sonra bir yaratığınla saldırırsın; saldırı turu bitirir.</p><p><b>Destek kartları:</b> Tür taşı aynı türden yaratığa +30 can ve +10 hasar verir. Evrim Taşı temel yaratığı yenilene kadar evrimleştirir; evrimli hali koleksiyonunda olmalı.</p><p><b>6 can:</b> yenilen her yaratık 1 can götürür (EX 2 can). Canı biten kaybeder. <b>Toplam süre 3 dakika:</b> süre bitince canı fazla olan, eşitse daha çok hasar veren kazanır.</p><p>Bir tur saldırmayan yaratık <b>dolar</b> ve sonraki vuruşunda güçlü ikinci saldırısını kullanır. Tür destekleri (Toprak kalkan, Su can, Ateş hasar, Işık arınma, Gölge zayıflatma, Hava çift vuruş) sahadaki kendi kartlarına etki eder.</p></div>
   ${typeChart()}
   `;
-  const f=$('#fight');if(f)f.onclick=()=>startBattle();const fb=$('#frbtn');if(fb)fb.onclick=()=>openFriends();const oc=$('#opench');if(oc)oc.onclick=openChest;
+  const f=$('#fight');if(f)f.onclick=()=>startBattle();const fb=$('#frbtn');if(fb)fb.onclick=()=>openFriends();const cb=$('#clbtn');if(cb)cb.onclick=()=>openClan();const oc=$('#opench');if(oc)oc.onclick=openChest;
   const ed=$('#editdeck');if(ed)ed.onclick=openDeckEditor;
 }
 function side(entries){return{deck:entries.slice(),hand:[],board:[null,null,null],lives:BAT.lives}}
@@ -2158,8 +2169,100 @@ const ASSET_V=8;try{if('serviceWorker' in navigator&&location.protocol==='https:
 /* ---------- ARKADAŞLAR, LİDERLİK TABLOSU, ARKADAŞ DESTESİYLE SAVAŞ ---------- */
 function friendsCard(){if(window.claude)return '';const a=accGet(),n=window.__frInc||0;
   return `<button class="frc" id="frbtn"><img class="fri" src="img/ic/friends.webp" alt=""><b>Arkadaşlar</b><small>${a.user?'Tablo · İstekler · Savaş':'Giriş yapınca açılır'}</small>${n?`<span class="frbd">${n}</span>`:''}</button>`}
-async function frBadge(){if(!cloudOn())return;try{const j=await api('/api/friends');window.__frInc=j.incoming.length;
+function clanCard(){if(window.claude)return '';const a=accGet(),n=window.__clBd||0,cn=window.__clName;
+  return `<button class="frc" id="clbtn"><img class="fri" src="img/ic/clan.webp" alt="" onerror="this.outerHTML='<span class=&quot;fri fre&quot;>🛡️</span>'"><b>Klan</b><small>${a.user?(cn?escH(cn):'Klan kur ya da katıl'):'Giriş yapınca açılır'}</small>${n?`<span class="frbd">${n}</span>`:''}</button>`}
+// rozetler: arkadaşlık istekleri (Arkadaşlar), klan katılım istekleri ve sana gelen bağışlar (Klan)
+async function frBadge(){if(!cloudOn())return;try{const j=await api('/api/notify?since='+(+localStorage.getItem('mr.dnSeen')||0));
+  window.__frInc=j.fr;window.__clBd=j.cj+j.dn;window.__clName=j.clan;if(j.dn)cloudPull();
   if(!B&&tab==='arena'&&!$('#ov').classList.contains('on'))renderArena()}catch(e){}}
+const dnSeen=()=>{try{localStorage.setItem('mr.dnSeen',Date.now())}catch(e){}};
+const cardImg=id=>BY[id]?`<img class="fcd" src="img/t/${id}.webp" alt="">`:'';
+const cardNm=id=>BY[id]?escH(BY[id].name):'kart';
+// akış satırları (klan ve arkadaş akışı aynı biçimi kullanır)
+function feedHTML(rows){if(!rows.length)return '<p class="frem">Henüz bir şey olmadı. Maç yapın, kart bağışlayın!</p>';
+  const N2=x=>`<b>${escH(x||'?')}</b>`;
+  return `<div class="frl">${rows.map(f=>{let t='';switch(f.kind){
+    case 'duel':t=`${N2(f.a)}, ${N2(f.b)} adlı oyuncunun destesine karşı <span class="${f.win?'w':'l'}">${f.win?'kazandı':'kaybetti'}</span>`;break;
+    case 'donate':t=`${N2(f.a)}, ${N2(f.b)} için ${cardImg(f.card)} <b>${cardNm(f.card)}</b> gönderdi`;break;
+    case 'request':t=`${N2(f.a)} ${cardImg(f.card)} <b>${cardNm(f.card)}</b> istiyor`;break;
+    case 'join':t=`${N2(f.a)} klana katıldı`;break;
+    case 'leave':t=`${N2(f.a)} klandan ayrıldı`;break;
+    case 'kick':t=`${N2(f.a)} klandan çıkarıldı`;break;
+    case 'clan_create':t=`${N2(f.a)} klanı kurdu`;break;default:t=escH(f.kind)}
+    return `<div class="frd fdi">${t}<small>${agoTxt(f.t)}</small></div>`}).join('')}</div>`}
+const hmTxt=ms=>{const m=Math.ceil(ms/6e4);return m>=60?Math.floor(m/60)+' sa '+(m%60)+' dk':m+' dk'};
+// kart istekleri ekranı: arkadaşların ve klan üyelerinin istekleri; bağış ve kendi isteğini açma
+async function renderReqs(box,again){box.innerHTML='<p class="frem">Yükleniyor...</p>';let j;
+  try{j=await api('/api/reqs')}catch(e){box.innerHTML=`<p class="sioerr">${escH(e.message)}</p>`;return}
+  dnSeen();window.__clBd=0;
+  const mine=j.reqs.find(r=>r.mine),others=j.reqs.filter(r=>!r.mine);
+  const bar=r=>`<div class="rqb"><i style="width:${r.got/r.need*100}%"></i><span>${r.got}/${r.need}</span></div>`;
+  box.innerHTML=`<div class="frr me">${mine?`${cardImg(mine.card)}<div class="nm"><b>İsteğin: ${cardNm(mine.card)}</b>${bar(mine)}<small>${hmTxt(mine.expires-Date.now())} sonra kapanır</small></div>`
+      :j.next>0?`<div class="nm"><b>Kart iste</b><small>Yeni istek için ${hmTxt(j.next)} kaldı</small></div>`
+      :`<div class="nm"><b>Kart iste</b><small>Yaygın kart 10, Nadir kart 4 kopya gelir</small></div><button class="btn" id="rqnew">Kart seç</button>`}</div>
+    ${mine&&j.next<=0?'<button class="btn alt" id="rqnew">Yeni istek aç (eskisi kapanır)</button>':''}
+    <p class="frh">Arkadaşlarının ve klanının istekleri <small style="color:#c9d3dc;font-weight:400">· bugün ${j.left}/${j.daily} bağış hakkın var</small></p>
+    <div class="frl">${others.length?others.map(r=>`<div class="frr">${cardImg(r.card)}<div class="nm"><b>${escH(r.name)}</b><small>${cardNm(r.card)} · sende ${r.have}</small>${bar(r)}</div>
+      <button class="btn" data-dn="${r.id}" ${r.have>=MR.REQ.donorMin&&j.left>0?'':'disabled'}>Gönder</button></div>`).join(''):'<p class="frem">Şu an açık istek yok.</p>'}</div>
+    <p class="sionote">Bağış için karttan en az ${MR.REQ.donorMin} kopyan olmalı. Her bağış Yaygın için ${MR.REQ.reward[0].g} altın + ${MR.REQ.reward[0].xp} XP, Nadir için ${MR.REQ.reward[1].g} altın + ${MR.REQ.reward[1].xp} XP kazandırır.</p>`;
+  box.querySelectorAll('[data-dn]').forEach(b=>b.onclick=async()=>{b.disabled=true;
+    try{const r=await api('/api/reqs/donate',{m:'POST',b:{id:+b.dataset.dn}});applySrv(r.save);accRev(r.rev);renderTop();toast(`Kart gönderildi · +${r.r.g} altın`)}catch(e){toast(e.message)}again()});
+  const nb=box.querySelector('#rqnew');if(nb)nb.onclick=()=>pickReq(box,again)}
+function pickReq(box,again){const L=CARDS.filter(c=>MR.reqable(c)&&owned(c.id)>0).sort((a,b)=>b.r-a.r||a.id-b.id);
+  box.innerHTML=`<p class="frh">Hangi kartı istiyorsun?</p><div class="rqg">${L.map(c=>`<button class="rqc r${c.r}" data-pk="${c.id}"><img src="img/t/${c.id}.webp" alt=""><span>${escH(c.name)}</span><small>${c.r?'Nadir · 4':'Yaygın · 10'}</small></button>`).join('')||'<p class="frem">İstenebilecek kartın yok. Önce paket aç.</p>'}</div><button class="btn alt" id="rqback">Geri</button>`;
+  box.querySelector('#rqback').onclick=again;
+  box.querySelectorAll('[data-pk]').forEach(b=>b.onclick=async()=>{b.disabled=true;
+    try{const r=await api('/api/reqs/open',{m:'POST',b:{card:+b.dataset.pk}});applySrv(r.save);accRev(r.rev);toast('İstek açıldı')}catch(e){toast(e.message)}again()})}
+async function openClan(view){const ov=$('#ov');ov.className='ov on';view=view||window.__clView||'feed';window.__clView=view;
+  const shell=(body,title)=>{ov.innerHTML=`<div class="fp setp frp"><div class="sth"><b>${title||'Klan'}</b><button class="stx" id="clclose" aria-label="Kapat">✕</button></div>${body}</div>`;
+    $('#clclose').onclick=()=>{ov.className='ov';ov.innerHTML='';if(!B&&tab==='arena')renderArena()}};
+  if(!accGet().user){shell(`<p class="sionote">Klana katılmak için hesabına giriş yap.</p><button class="btn" id="cllogin">Giriş yap / Kayıt ol</button>`);$('#cllogin').onclick=openAccount;return}
+  shell('<p class="frem">Yükleniyor...</p>');
+  let j;try{j=await api('/api/clan')}catch(e){shell(`<p class="sioerr">${escH(e.message)}</p><button class="btn alt" id="clre">Tekrar dene</button>`);$('#clre').onclick=()=>openClan(view);return}
+  window.__clName=j.clan?j.clan.name:null;
+  if(!j.clan){   // klanı yok: ara, katıl ya da kur
+    shell(`<p class="sionote">Klana katıl, üyelerle kart takas et ve maçlarını herkes görsün.</p>
+      <input class="accin" id="clq" placeholder="Klan ara" maxlength="20"><div class="frl" id="cllist"><p class="frem">Yükleniyor...</p></div>
+      ${j.pending.length?`<p class="frh">Bekleyen isteklerin</p>${j.pending.map(n=>`<div class="frr"><div class="nm"><b>${escH(n)}</b><small>Onay bekleniyor</small></div><button class="frx" data-ccl="${escH(n)}">İptal</button></div>`).join('')}`:''}
+      <p class="frh">Kendi klanını kur · ${j.cost} altın</p>
+      <input class="accin" id="clnm" placeholder="Klan adı (3-20 karakter)" maxlength="20"><input class="accin" id="clds" placeholder="Kısa açıklama (isteğe bağlı)" maxlength="80">
+      <p class="sioerr" id="clerr"></p><button class="btn" id="clmk">Klanı kur</button>`);
+    const list=async q=>{const L=$('#cllist');try{const r=await api('/api/clan/search?q='+encodeURIComponent(q||''));
+      L.innerHTML=r.clans.length?r.clans.map(c=>`<div class="frr"><div class="nm"><b>${escH(c.name)}</b><small>${c.n}/${MR.CLAN.max} üye · 🏆 ${c.tr}${c.descr?' · '+escH(c.descr):''}</small></div>${j.pending.includes(c.name)?'<small>İstek gönderildi</small>':`<button class="btn" data-jn="${escH(c.name)}" ${c.full?'disabled':''}>${c.full?'Dolu':'Katıl'}</button>`}</div>`).join(''):'<p class="frem">Klan bulunamadı.</p>';
+      L.querySelectorAll('[data-jn]').forEach(b=>b.onclick=async()=>{b.disabled=true;try{await api('/api/clan/join',{m:'POST',b:{name:b.dataset.jn}});toast('Katılma isteği gönderildi')}catch(e){toast(e.message)}openClan()})}catch(e){L.innerHTML=`<p class="sioerr">${escH(e.message)}</p>`}};
+    list('');let qt;$('#clq').oninput=e=>{clearTimeout(qt);qt=setTimeout(()=>list(e.target.value.trim()),300)};
+    ov.querySelectorAll('[data-ccl]').forEach(b=>b.onclick=async()=>{try{await api('/api/clan/cancel',{m:'POST',b:{name:b.dataset.ccl}})}catch(e){}openClan()});
+    $('#clmk').onclick=async()=>{const er=$('#clerr'),b=$('#clmk');er.textContent='';b.disabled=true;
+      try{const r=await api('/api/clan/create',{m:'POST',b:{name:$('#clnm').value,descr:$('#clds').value}});applySrv(r.save);accRev(r.rev);renderTop();toast(r.name+' kuruldu');openClan('mem')}
+      catch(e){er.textContent=e.message;b.disabled=false}};
+    return}
+  const C=j.clan,off=j.role==='leader'||j.role==='co',me=accGet().user,RL={leader:'Lider',co:'Yardımcı',member:''};
+  const tabs=`<div class="frtabs"><button data-v="feed" class="${view==='feed'?'on':''}">Akış</button><button data-v="mem" class="${view==='mem'?'on':''}">Üyeler${off&&j.joins.length?` (${j.joins.length})`:''}</button><button data-v="req" class="${view==='req'?'on':''}">Kartlar</button><button data-v="set" class="${view==='set'?'on':''}">Ayarlar</button></div>`;
+  const head=`<div class="clh"><small>${C.descr?escH(C.descr):'&nbsp;'}</small><span>🏆 ${C.total} · ${j.members.length}/${C.max} üye</span></div>`;
+  let body='';
+  if(view==='feed')body=feedHTML(j.feed);
+  else if(view==='mem')body=`${off&&j.joins.length?`<p class="frh">Katılma istekleri</p><div class="frl">${j.joins.map(x=>`<div class="frr"><div class="nm"><b>${escH(x.name)}</b><small>${x.stats?`🏆 ${x.stats.tr} · Sv ${x.stats.lvl}`:'Yeni oyuncu'}</small></div><button class="btn" data-cja="${escH(x.name)}">Kabul</button><button class="frx" data-cjd="${escH(x.name)}">Reddet</button></div>`).join('')}</div><p class="frh">Üyeler</p>`:''}
+    <div class="frl">${j.members.map((m,i)=>{const st=m.stats||{},isMe=m.name===me;return `<div class="frr cm${isMe?' me':''}"><span class="rk">${i+1}</span>${lgBadge(Math.min(st.lg||0,LEAGUES.length-1))}
+      <div class="nm"><b>${escH(m.name)}${RL[m.role]?` <em class="rlb ${m.role}">${RL[m.role]}</em>`:''}</b><small>${m.stats?`🏆 ${st.tr} · Sv ${st.lvl} · ${st.col}/${st.tot} kart`:'Henüz oynamadı'}</small></div>
+      ${isMe?'':`<button class="btn" data-fight="${escH(m.name)}">Savaş</button>`}
+      ${!isMe&&j.role==='leader'&&m.role!=='leader'?`<button class="frx" data-crl="${escH(m.name)}" data-to="${m.role==='co'?'member':'co'}" title="${m.role==='co'?'Yardımcılığı al':'Yardımcı yap'}">${m.role==='co'?'★−':'★+'}</button>`:''}
+      ${!isMe&&off&&m.role!=='leader'&&!(j.role==='co'&&m.role==='co')?`<button class="frx" data-ckk="${escH(m.name)}" aria-label="Klandan çıkar">✕</button>`:''}</div>`}).join('')}</div>`;
+  else if(view==='req')body='<div id="clreq"></div>';
+  else body=`${j.role==='leader'?`<p class="frh">Klan açıklaması</p><input class="accin" id="cldsc" maxlength="80" value="${escH(C.descr||'')}"><button class="btn alt" id="cldsv">Kaydet</button>`:''}
+    <p class="sionote">Rolün: <b>${RL[j.role]||'Üye'}</b>. Lider ayrılırsa liderlik en eski yardımcıya, yoksa en eski üyeye geçer. Son üye ayrılırsa klan silinir.</p><button class="btn alt" id="clleave">Klandan ayrıl</button>`;
+  shell(head+tabs+body,escH(C.name));
+  ov.querySelectorAll('.frtabs button').forEach(b=>b.onclick=()=>openClan(b.dataset.v));
+  if(view==='req')renderReqs($('#clreq'),()=>openClan('req'));
+  if(view==='feed'&&j.feed.some(f=>f.kind==='donate'))dnSeen();
+  ov.querySelectorAll('[data-fight]').forEach(b=>b.onclick=()=>friendBattle(b.dataset.fight,b));
+  const post=async(url,body,msg,v)=>{try{await api(url,{m:'POST',b:body});if(msg)toast(msg)}catch(e){toast(e.message)}openClan(v)};
+  ov.querySelectorAll('[data-cja]').forEach(b=>b.onclick=()=>{b.disabled=true;post('/api/clan/accept',{u:b.dataset.cja},b.dataset.cja+' klana katıldı','mem')});
+  ov.querySelectorAll('[data-cjd]').forEach(b=>b.onclick=()=>{b.disabled=true;post('/api/clan/decline',{u:b.dataset.cjd},'','mem')});
+  ov.querySelectorAll('[data-crl]').forEach(b=>b.onclick=()=>post('/api/clan/role',{u:b.dataset.crl,role:b.dataset.to},'Rol değişti','mem'));
+  ov.querySelectorAll('[data-ckk]').forEach(b=>b.onclick=()=>{if(!b.dataset.ok){b.dataset.ok=1;b.textContent='Emin?';return}post('/api/clan/kick',{u:b.dataset.ckk},'Klandan çıkarıldı','mem')});
+  const sv=$('#cldsv');if(sv)sv.onclick=()=>post('/api/clan/edit',{descr:$('#cldsc').value},'Kaydedildi','set');
+  const lv=$('#clleave');if(lv)lv.onclick=async()=>{if(!lv.dataset.ok){lv.dataset.ok=1;lv.textContent='Emin misin? Tekrar bas';return}
+    try{const r=await api('/api/clan/leave',{m:'POST'});toast(r.deleted?'Klan silindi':'Klandan ayrıldın');window.__clName=null}catch(e){toast(e.message)}openClan('feed')}}
 function frDeck(keys){return shuffle(keys.map(k=>isS(k)?{t:'s',k:k.slice(2)}:BY[k]?{t:'c',c:BY[k]}:null).filter(Boolean))}
 const agoTxt=t=>{const m=Math.floor((Date.now()-t)/6e4);return m<1?'az önce':m<60?m+' dk önce':m<1440?Math.floor(m/60)+' sa önce':Math.floor(m/1440)+' gün önce'};
 async function friendBattle(name,btn){if(btn){btn.disabled=true;btn.textContent='...'}
@@ -2173,7 +2276,7 @@ async function openFriends(view){const ov=$('#ov');ov.className='ov on';view=vie
   shell(`<p class="frem">Yükleniyor...</p>`);
   let j;try{j=await api('/api/friends')}catch(e){shell(`<p class="sioerr">${escH(e.message)}</p><button class="btn alt" id="frre">Tekrar dene</button>`);$('#frre').onclick=()=>openFriends(view);return}
   window.__frInc=j.incoming.length;
-  const tabs=`<div class="frtabs"><button data-v="tbl" class="${view==='tbl'?'on':''}"><img src="img/ic/leader.webp" alt="">Tablo</button><button data-v="req" class="${view==='req'?'on':''}">İstekler${j.incoming.length?` (${j.incoming.length})`:''}</button><button data-v="add" class="${view==='add'?'on':''}">Ekle</button></div>`;
+  const tabs=`<div class="frtabs"><button data-v="tbl" class="${view==='tbl'?'on':''}"><img src="img/ic/leader.webp" alt="">Tablo</button><button data-v="feed" class="${view==='feed'?'on':''}">Akış</button><button data-v="cards" class="${view==='cards'?'on':''}">Kartlar</button><button data-v="req" class="${view==='req'?'on':''}">İstekler${j.incoming.length?` (${j.incoming.length})`:''}</button><button data-v="add" class="${view==='add'?'on':''}">Ekle</button></div>`;
   let body='';
   if(view==='tbl'){
     const me={name:accGet().user,me:1,stats:{tr:S.trophy||0,lg:lgOf(S.trophy||0),lvl:S.lvl||1,col:uniq(),tot:N}};
@@ -2184,6 +2287,7 @@ async function openFriends(view){const ov=$('#ov');ov.className='ov on';view=vie
       ${j.friends.length?'':'<p class="frem">Henüz arkadaşın yok. <b>Ekle</b> sekmesinden kullanıcı adıyla istek gönder.</p>'}
       ${j.duels.length?`<p class="frh">Senin destene karşı savaşlar</p>${j.duels.map(d=>`<div class="frd"><b>${escH(d.name)}</b> destenle savaştı ve <span class="${d.win?'w':'l'}">${d.win?'kazandı':'kaybetti'}</span> · ${agoTxt(d.t)}</div>`).join('')}`:''}
       <p class="sionote">Savaş: arkadaşının arena destesini yapay zekâ oynar. Dostluk maçıdır, kupa ve altın değişmez.</p>`}
+  else if(view==='feed'||view==='cards')body='<div id="frbox"></div>';
   else if(view==='req'){
     body=`<p class="frh">Gelen istekler</p><div class="frl">${j.incoming.length?j.incoming.map(n=>`<div class="frr"><div class="nm"><b>${escH(n)}</b></div><button class="btn" data-acc="${escH(n)}">Kabul et</button><button class="frx" data-dec="${escH(n)}">Reddet</button></div>`).join(''):'<p class="frem">Gelen istek yok.</p>'}</div>
       <p class="frh">Gönderdiğin istekler</p><div class="frl">${j.outgoing.length?j.outgoing.map(n=>`<div class="frr"><div class="nm"><b>${escH(n)}</b><small>Onay bekleniyor</small></div><button class="frx" data-dec="${escH(n)}">İptal</button></div>`).join(''):'<p class="frem">Bekleyen isteğin yok.</p>'}</div>`}
@@ -2194,6 +2298,8 @@ async function openFriends(view){const ov=$('#ov');ov.className='ov on';view=vie
       <p class="sionote">Senin kullanıcı adın: <b>${escH(accGet().user)}</b>. Arkadaşına bunu söyle.</p>`}
   shell(tabs+body);
   ov.querySelectorAll('.frtabs button').forEach(b=>b.onclick=()=>openFriends(b.dataset.v));
+  if(view==='cards')renderReqs($('#frbox'),()=>openFriends('cards'));
+  if(view==='feed'){const bx=$('#frbox');bx.innerHTML='<p class="frem">Yükleniyor...</p>';api('/api/feed').then(r=>{bx.innerHTML='<p class="sionote">Sen ve arkadaşlarının maçları ve kart bağışları.</p>'+feedHTML(r.feed)}).catch(e=>{bx.innerHTML=`<p class="sioerr">${escH(e.message)}</p>`})}
   ov.querySelectorAll('[data-fight]').forEach(b=>b.onclick=()=>friendBattle(b.dataset.fight,b));
   ov.querySelectorAll('[data-rm]').forEach(b=>b.onclick=async()=>{if(!b.dataset.ok){b.dataset.ok=1;b.textContent='Emin misin?';return}
     try{await api('/api/friends/remove',{m:'POST',b:{u:b.dataset.rm}});toast('Arkadaşlıktan çıkarıldı')}catch(e){toast(e.message)}openFriends('tbl')});
@@ -2244,7 +2350,8 @@ function cloudConflict(sv){takeSave(sv.data);accRev(sv.rev);
   toast('Hesabın başka bir cihazda oynandı, en güncel kayıt yüklendi');if(!B)render();else renderTop()}
 // Sekmeye/uygulamaya dönünce başka cihazdaki yeni ilerlemeyi çek (savaş sırasında değil).
 async function cloudPull(){if(!cloudOn()||(B&&!B.over))return;
-  try{const j=await api('/api/me'),sv=j.save;if(sv&&sv.rev>(accGet().rev||0))cloudConflict(sv)}catch(e){}}
+  // ekonomi sunucuya ait: yeni sürümde (ör. gelen bağış ya da başka cihaz) ekonomi alanları sessizce alınır
+  try{const j=await api('/api/me'),sv=j.save;if(sv&&sv.rev>(accGet().rev||0)){applySrv(sv.data);accRev(sv.rev);if(!B)render();else renderTop()}}catch(e){}}
 function takeSave(d){try{localStorage.setItem(KEY+'.bak',JSON.stringify(S))}catch(e){}
   S={...fresh(),...d};if(!S.sid)S.sid=Math.random().toString(36).slice(2,10);initTut();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 // Giriş/kayıt ya da açılışta oturum doğrulandıktan sonra: hangi kayıt kullanılacak?

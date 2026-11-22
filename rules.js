@@ -240,7 +240,7 @@ const fresh=()=>({gold:ECON.startGold,dust:0,free:ECON.freePacks,owned:{},pity:0
    ===================================================================== */
 // Sunucunun sahip olduğu alanlar: istemcinin kaydetme isteği bunları DEĞİŞTİREMEZ.
 const ECON_KEYS=['gold','dust','free','owned','shiny','sup','supV','supV2','pity','xp','lvl','opened','trophy','bestLg','wins','losses',
-  'streak','chest','chests','hist','gift','gt','advC','advV','exB','dq','rare','tp','uidN','tut','bt','bl'];
+  'streak','chest','chests','hist','gift','gt','advC','advV','exB','rqT','dn','dq','rare','tp','uidN','tut','bt','bl'];
 // İstemcinin değiştirebildiği zararsız alanlar (ayarlar, deste seçimi, ipuçları).
 const CLIENT_KEYS=['mv','sv','snd','deck','deck2','shOff','pset','th','sid','t'];
 const TUT_CLIENT_MAX=2;            // istemci öğreticiyi en fazla bu adıma kendisi ilerletebilir (hoş geldin → paket aç)
@@ -368,7 +368,7 @@ function act(st,a,p,ctx){p=p||{};const rng=ctx.rng,now=ctx.now;normalize(st,ctx)
   case 'battle_start':{const mode=p.mode==='adv'?'adv':p.mode==='friend'?'friend':'arena';let adv=null;
     if(mode==='adv'){adv=Math.floor(+p.adv);const c=st.advC||0;
       const ok=adv>=0&&(adv<ADV_N?adv<=c:(adv>=100&&adv<100+ADV_CH.length&&c>=(adv-99)*ADV_P));if(!ok)throw uerr('Bu bölüm henüz açılmadı.')}
-    if(mode==='friend'&&!ctx.friendOk)throw uerr('Sadece arkadaşlarının destesiyle savaşabilirsin.');
+    if(mode==='friend'&&!ctx.friendOk)throw uerr('Sadece arkadaşlarının ya da klan üyelerinin destesiyle savaşabilirsin.');
     const fo=forfeit(st,now);
     const id=Math.floor(rng()*2**52).toString(36);st.bt={id,mode,adv,t0:now,tut:mode==='arena'&&st.tut===6?1:0};
     return{id,forfeit:fo}}
@@ -376,6 +376,24 @@ function act(st,a,p,ctx){p=p||{};const rng=ctx.rng,now=ctx.now;normalize(st,ctx)
   }
   throw uerr('Bilinmeyen işlem.');
 }
+/* ---------- KLAN VE KART İSTEME ---------- */
+const CLAN={cost:500,max:30,nameMin:3,nameMax:20,descMax:80};
+// kart isteği: 8 saatte bir, 24 saat açık; Yaygın 10, Nadir 4 kopya; bağışçının en az 2 kopyası olmalı
+const REQ={every:8*3600e3,dur:24*3600e3,need:[10,4],donorMin:2,reward:[{g:5,xp:1},{g:15,xp:3}],daily:20};
+const reqable=c=>!!c&&c.r<=1&&!c.ex&&!c.ez;
+function reqCheck(st,id,now){const c=BY[id];if(!reqable(c))throw uerr('Sadece Yaygın ve Nadir kartlar istenebilir.');
+  if(!(own(st,id)>0))throw uerr('Sadece sahip olduğun bir kartı isteyebilirsin.');
+  const wait=(st.rqT||0)+REQ.every-now;if(wait>0)throw uerr(`Yeni istek için ${Math.ceil(wait/6e4)} dakika beklemelisin.`);return c}
+function reqOpen(st,id,now){const c=reqCheck(st,id,now);st.rqT=now;return{need:REQ.need[c.r]}}
+const dnLeft=(st,now)=>{const d=dayKey(now);return st.dn&&st.dn.day===d?Math.max(0,REQ.daily-st.dn.n):REQ.daily};
+function donateCheck(st,id,now){const c=BY[id];if(!reqable(c))throw uerr('Bu kart bağışlanamaz.');
+  if(own(st,id)<REQ.donorMin)throw uerr(`Bağış için bu karttan en az ${REQ.donorMin} kopyan olmalı.`);
+  if(dnLeft(st,now)<=0)throw uerr(`Bugünkü bağış sınırına ulaştın (${REQ.daily} kart).`);return c}
+function donateGive(st,id,now){const c=donateCheck(st,id,now),R=REQ.reward[c.r],d=dayKey(now);
+  st.owned[id]-=1;st.gold+=R.g;const ups=addXp(st,R.xp);st.dn=st.dn&&st.dn.day===d?{day:d,n:st.dn.n+1}:{day:d,n:1};return{g:R.g,xp:R.xp,ups}}
+function donateGet(st,id){st.owned[id]=own(st,id)+1}
+function clanPay(st){if((st.gold||0)<CLAN.cost)throw uerr(`Klan kurmak için ${CLAN.cost} altın gerekli.`);st.gold-=CLAN.cost}
+
 // arkadaşların göreceği özet (sunucu hesaplar)
 function pubStats(st){return{tr:st.trophy||0,lg:lgOf(st.trophy||0),lvl:st.lvl||1,col:CARDS.filter(c=>own(st,c.id)>0).length,tot:N,w:st.wins||0,l:st.losses||0}}
 
@@ -383,6 +401,7 @@ const MR={ELS,round5,round10,RAR,TYPE_HP,TYPE_RET,DMG,ATK,FXV,FX,atkDmg,PACK,XP,
   EXA,EXCOST,EXD,EXC,exOf,EZA,EZDR,EZC,POOL,POOLS,EVO_NEED,STAGE_W,cw,SHINY,LEAGUES,lgOf,TROPHY,STREAK,strkB,CHEST,GIFT,DQP,DQB,srnd,SUPK,
   ADV_CH,ADV_RULE,ADV_N,ADV_P,advStage,advStageX,TUT,fresh,
   ECON_KEYS,CLIENT_KEYS,BATTLE_MIN_MS,BATTLE_PER_HOUR,own,tutOn,roll,drawCard,rollPack,copies,canEvo,canAwaken,giveSup,rndSup,addXp,
-  giftTick,dayKey,dqList,dqInc,normalize,mergeClient,act,pubStats};
+  giftTick,dayKey,dqList,dqInc,normalize,mergeClient,act,pubStats,
+  CLAN,REQ,reqable,reqCheck,reqOpen,dnLeft,donateCheck,donateGive,donateGet,clanPay};
 G.MR=MR;
 })(typeof globalThis!=='undefined'?globalThis:this);
