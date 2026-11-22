@@ -1,0 +1,9 @@
+{
+  // Mythbeast Realm: statik oyun dosyalarını Cloudflare Workers üzerinden yayınlar.
+  "name": "mythbeast-realm",
+  "compatibility_date": "2026-11-01",
+  "assets": {
+    "directory": "./",
+    "not_found_handling": "single-page-application"
+  }
+}
