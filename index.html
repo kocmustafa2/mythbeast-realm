@@ -2359,11 +2359,11 @@ function openSaveIO(mode){const ov=$('#ov');ov.className='ov on';
       <p class="sionote">Bu kod tüm ilerlemeni taşır: <b>${own} kart</b>, altın, kupa ve seviye. Kopyala, oyunun yeni adresinde <b>Ayarlar → İçe aktar</b>'a yapıştır.</p>
       <textarea class="siotx" id="siotx" readonly></textarea>
       <p class="sioerr" id="sioerr"></p>
-      <div class="stsv2"><button class="btn" id="siocopy">Kopyala</button><button class="btn alt" id="siofile">Dosya indir</button></div>
+      <div class="stsv2"><button class="btn" id="siocopy">Kopyala</button>${window.claude?'':'<button class="btn alt" id="siofile">Dosya indir</button>'}</div>
       <button class="btn alt" id="siodone">Geri</button></div>`;
     const ta=$('#siotx');ta.value=saveCode();ta.onclick=()=>{ta.select()};
     $('#siocopy').onclick=()=>copyTxt(ta).then(ok=>{if(ok)toast('Kayıt kodu kopyalandı');else $('#sioerr').textContent='Otomatik kopyalanamadı. Kutuya basılı tutup tümünü seç ve kopyala.'});
-    $('#siofile').onclick=()=>{try{const b=new Blob([ta.value],{type:'text/plain'}),a=document.createElement('a');
+    if($('#siofile'))$('#siofile').onclick=()=>{try{const b=new Blob([ta.value],{type:'text/plain'}),a=document.createElement('a');
       a.href=URL.createObjectURL(b);a.download='mythbeast-kayit-'+new Date().toISOString().slice(0,10)+'.txt';document.body.appendChild(a);a.click();
       setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500)}catch(e){$('#sioerr').textContent='Dosya indirilemedi. Kopyala düğmesini kullan.'}};
   }else{
