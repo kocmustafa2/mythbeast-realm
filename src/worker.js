@@ -32,6 +32,9 @@ function ensureSchema(db) {
     db.prepare(`CREATE INDEX IF NOT EXISTS clan_members_c ON clan_members (clan_id)`),
     db.prepare(`CREATE TABLE IF NOT EXISTS clan_joins (user_id INTEGER NOT NULL, clan_id INTEGER NOT NULL, t INTEGER NOT NULL, PRIMARY KEY (user_id, clan_id))`),
     db.prepare(`CREATE INDEX IF NOT EXISTS clan_joins_c ON clan_joins (clan_id)`),
+    // klan davetleri: lider/yardımcı bir oyuncuyu davet eder, oyuncu kabul edince doğrudan katılır
+    db.prepare(`CREATE TABLE IF NOT EXISTS clan_invites (user_id INTEGER NOT NULL, clan_id INTEGER NOT NULL, by_id INTEGER NOT NULL, t INTEGER NOT NULL, PRIMARY KEY (user_id, clan_id))`),
+    db.prepare(`CREATE INDEX IF NOT EXISTS clan_invites_c ON clan_invites (clan_id)`),
     // kart istekleri
     db.prepare(`CREATE TABLE IF NOT EXISTS card_reqs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, card INTEGER NOT NULL, need INTEGER NOT NULL, got INTEGER NOT NULL DEFAULT 0, created INTEGER NOT NULL, expires INTEGER NOT NULL, closed INTEGER NOT NULL DEFAULT 0)`),
     db.prepare(`CREATE INDEX IF NOT EXISTS card_reqs_u ON card_reqs (user_id, closed)`),
@@ -354,7 +357,9 @@ async function handleApi(req, env, path) {
     const m = await myClan(db, user.id);
     if (!m) {
       const pend = ((await db.prepare('SELECT c.name FROM clan_joins j JOIN clans c ON c.id = j.clan_id WHERE j.user_id = ?').bind(user.id).all()).results || []).map(r => r.name);
-      return json({ clan: null, pending: pend, cost: CL.cost });
+      const invites = ((await db.prepare(`SELECT c.name, u.name AS by FROM clan_invites i JOIN clans c ON c.id = i.clan_id JOIN users u ON u.id = i.by_id
+        WHERE i.user_id = ? ORDER BY i.t DESC`).bind(user.id).all()).results || []).map(r => ({ name: r.name, by: r.by }));
+      return json({ clan: null, pending: pend, invites, cost: CL.cost });
     }
     const c = await db.prepare('SELECT id, name, descr, created FROM clans WHERE id = ?').bind(m.clan_id).first();
     const members = ((await db.prepare(`SELECT u.name, m.role, m.joined, p.stats FROM clan_members m JOIN users u ON u.id = m.user_id
@@ -364,7 +369,12 @@ async function handleApi(req, env, path) {
     const joins = (m.role === 'leader' || m.role === 'co') ? ((await db.prepare(`SELECT u.name, p.stats FROM clan_joins j JOIN users u ON u.id = j.user_id
       LEFT JOIN pub p ON p.user_id = j.user_id WHERE j.clan_id = ? ORDER BY j.t`).bind(c.id).all()).results || []).map(r => ({ name: r.name, stats: r.stats ? JSON.parse(r.stats) : null })) : [];
     const feed = await feedRows(db, FEED_SEL + ' WHERE f.clan_id = ? ORDER BY f.t DESC LIMIT 50', c.id);
-    return json({ clan: { name: c.name, descr: c.descr, created: c.created, max: CL.max, total: members.reduce((t, x) => t + ((x.stats || {}).tr || 0), 0) },
+    // davet edilebilecek arkadaşlar: hiçbir klanda olmayanlar
+    const invitable = (m.role === 'leader' || m.role === 'co') ? ((await db.prepare(`SELECT u.name, (SELECT 1 FROM clan_invites i WHERE i.user_id = u.id AND i.clan_id = ?2) AS inv
+      FROM friends f JOIN users u ON u.id = CASE WHEN f.a = ?1 THEN f.b ELSE f.a END
+      WHERE f.status = 'ok' AND (f.a = ?1 OR f.b = ?1) AND u.id NOT IN (SELECT user_id FROM clan_members)`).bind(user.id, c.id).all()).results || [])
+      .map(r => ({ name: r.name, invited: !!r.inv })) : [];
+    return json({ invitable, clan: { name: c.name, descr: c.descr, created: c.created, max: CL.max, total: members.reduce((t, x) => t + ((x.stats || {}).tr || 0), 0) },
       role: m.role, members, joins, feed });
   }
   if (path === '/api/clan/search' && method === 'GET') {
@@ -419,19 +429,45 @@ async function handleApi(req, env, path) {
     if (await memberCount(m.clan_id) >= CL.max) return err(`Klan dolu (${CL.max} üye).`);
     try { await db.prepare('INSERT INTO clan_members (user_id, clan_id, role, joined) VALUES (?, ?, ?, ?)').bind(o.id, m.clan_id, 'member', Date.now()).run(); }
     catch { return err(`${o.name} başka bir klana katılmış.`); }
-    await db.prepare('DELETE FROM clan_joins WHERE user_id = ?').bind(o.id).run();
+    await db.batch([db.prepare('DELETE FROM clan_joins WHERE user_id = ?').bind(o.id), db.prepare('DELETE FROM clan_invites WHERE user_id = ?').bind(o.id)]);
     if (await memberCount(m.clan_id) > CL.max) {   // aynı anda iki onay: fazlayı geri al
       await db.prepare('DELETE FROM clan_members WHERE user_id = ?').bind(o.id).run(); return err(`Klan dolu (${CL.max} üye).`);
     }
     await feedAdd(db, m.clan_id, 'join', o.id, user.id);
     return json({ ok: true, name: o.name });
   }
+  if (path === '/api/clan/invite' && method === 'POST') {
+    let m; try { m = await officer(); } catch (e) { return ue(e); }
+    const { u } = await readBody(req); const o = await userByName(db, u);
+    if (!o) return err('Bu kullanıcı adıyla oyuncu bulunamadı.', 404);
+    if (o.id === user.id) return err('Kendini davet edemezsin.');
+    if (await myClan(db, o.id)) return err(`${o.name} zaten bir klanda.`);
+    const n = await db.prepare('SELECT COUNT(*) AS n FROM clan_invites WHERE clan_id = ?').bind(m.clan_id).first();
+    if (n.n >= 50) return err('Çok fazla bekleyen davet var.');
+    await db.prepare('INSERT INTO clan_invites (user_id, clan_id, by_id, t) VALUES (?, ?, ?, ?) ON CONFLICT DO NOTHING').bind(o.id, m.clan_id, user.id, Date.now()).run();
+    return json({ ok: true, name: o.name });
+  }
+  if ((path === '/api/clan/invite_accept' || path === '/api/clan/invite_decline') && method === 'POST') {
+    const { name } = await readBody(req);
+    const c = await clanByName(name);
+    const inv = c && await db.prepare('SELECT by_id FROM clan_invites WHERE user_id = ? AND clan_id = ?').bind(user.id, c.id).first();
+    if (!inv) return err('Bu klandan bekleyen davetin yok.', 404);
+    if (path === '/api/clan/invite_decline') { await db.prepare('DELETE FROM clan_invites WHERE user_id = ? AND clan_id = ?').bind(user.id, c.id).run(); return json({ ok: true }); }
+    if (await myClan(db, user.id)) return err('Zaten bir klandasın.');
+    if (await memberCount(c.id) >= CL.max) return err(`Klan dolu (${CL.max} üye).`);
+    try { await db.prepare('INSERT INTO clan_members (user_id, clan_id, role, joined) VALUES (?, ?, ?, ?)').bind(user.id, c.id, 'member', Date.now()).run(); }
+    catch { return err('Zaten bir klandasın.'); }
+    await db.batch([db.prepare('DELETE FROM clan_joins WHERE user_id = ?').bind(user.id), db.prepare('DELETE FROM clan_invites WHERE user_id = ?').bind(user.id)]);
+    if (await memberCount(c.id) > CL.max) { await db.prepare('DELETE FROM clan_members WHERE user_id = ?').bind(user.id).run(); return err(`Klan dolu (${CL.max} üye).`); }
+    await feedAdd(db, c.id, 'join', user.id, inv.by_id);
+    return json({ ok: true, name: c.name });
+  }
   if (path === '/api/clan/leave' && method === 'POST') {
     const m = await myClan(db, user.id); if (!m) return err('Bir klanda değilsin.');
     await db.prepare('DELETE FROM clan_members WHERE user_id = ?').bind(user.id).run();
     const left = await memberCount(m.clan_id);
     if (!left) {      // son üye: klan silinir
-      await db.batch([db.prepare('DELETE FROM clans WHERE id = ?').bind(m.clan_id), db.prepare('DELETE FROM clan_joins WHERE clan_id = ?').bind(m.clan_id),
+      await db.batch([db.prepare('DELETE FROM clans WHERE id = ?').bind(m.clan_id), db.prepare('DELETE FROM clan_joins WHERE clan_id = ?').bind(m.clan_id), db.prepare('DELETE FROM clan_invites WHERE clan_id = ?').bind(m.clan_id),
         db.prepare('DELETE FROM feed WHERE clan_id = ?').bind(m.clan_id)]);
       return json({ ok: true, deleted: true });
     }
@@ -531,7 +567,8 @@ async function handleApi(req, env, path) {
     const fr = (await db.prepare(`SELECT COUNT(*) AS n FROM friends WHERE b = ? AND status = 'pending'`).bind(user.id).first()).n;
     const cj = m && (m.role === 'leader' || m.role === 'co') ? (await db.prepare('SELECT COUNT(*) AS n FROM clan_joins WHERE clan_id = ?').bind(m.clan_id).first()).n : 0;
     const dn = (await db.prepare(`SELECT COUNT(*) AS n FROM feed WHERE kind = 'donate' AND b = ? AND t > ?`).bind(user.id, since).first()).n;
-    return json({ fr, cj, dn, clan: m ? m.name : null });
+    const ci = m ? 0 : (await db.prepare('SELECT COUNT(*) AS n FROM clan_invites WHERE user_id = ?').bind(user.id).first()).n;
+    return json({ fr, cj, dn, ci, clan: m ? m.name : null });
   }
 
   return err('Bulunamadı.', 404);

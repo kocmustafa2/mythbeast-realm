@@ -2173,7 +2173,7 @@ function clanCard(){if(window.claude)return '';const a=accGet(),n=window.__clBd|
   return `<button class="frc" id="clbtn"><img class="fri" src="img/ic/clan.webp" alt="" onerror="this.outerHTML='<span class=&quot;fri fre&quot;>🛡️</span>'"><b>Klan</b><small>${a.user?(cn?escH(cn):'Klan kur ya da katıl'):'Giriş yapınca açılır'}</small>${n?`<span class="frbd">${n}</span>`:''}</button>`}
 // rozetler: arkadaşlık istekleri (Arkadaşlar), klan katılım istekleri ve sana gelen bağışlar (Klan)
 async function frBadge(){if(!cloudOn())return;try{const j=await api('/api/notify?since='+(+localStorage.getItem('mr.dnSeen')||0));
-  window.__frInc=j.fr;window.__clBd=j.cj+j.dn;window.__clName=j.clan;if(j.dn)cloudPull();
+  window.__frInc=j.fr;window.__clBd=j.cj+j.dn+(j.ci||0);window.__clName=j.clan;if(j.dn)cloudPull();
   if(!B&&tab==='arena'&&!$('#ov').classList.contains('on'))renderArena()}catch(e){}}
 const dnSeen=()=>{try{localStorage.setItem('mr.dnSeen',Date.now())}catch(e){}};
 const cardImg=id=>BY[id]?`<img class="fcd" src="img/t/${id}.webp" alt="">`:'';
@@ -2221,7 +2221,8 @@ async function openClan(view){const ov=$('#ov');ov.className='ov on';view=view||
   let j;try{j=await api('/api/clan')}catch(e){shell(`<p class="sioerr">${escH(e.message)}</p><button class="btn alt" id="clre">Tekrar dene</button>`);$('#clre').onclick=()=>openClan(view);return}
   window.__clName=j.clan?j.clan.name:null;
   if(!j.clan){   // klanı yok: ara, katıl ya da kur
-    shell(`<p class="sionote">Klana katıl, üyelerle kart takas et ve maçlarını herkes görsün.</p>
+    shell(`${(j.invites||[]).length?`<p class="frh">Klan davetlerin</p><div class="frl">${j.invites.map(v=>`<div class="frr"><div class="nm"><b>${escH(v.name)}</b><small>${escH(v.by)} seni davet etti</small></div><button class="btn" data-iva="${escH(v.name)}">Katıl</button><button class="frx" data-ivd="${escH(v.name)}">Reddet</button></div>`).join('')}</div>`:''}
+      <p class="sionote">Klana katıl, üyelerle kart takas et ve maçlarını herkes görsün.</p>
       <input class="accin" id="clq" placeholder="Klan ara" maxlength="20"><div class="frl" id="cllist"><p class="frem">Yükleniyor...</p></div>
       ${j.pending.length?`<p class="frh">Bekleyen isteklerin</p>${j.pending.map(n=>`<div class="frr"><div class="nm"><b>${escH(n)}</b><small>Onay bekleniyor</small></div><button class="frx" data-ccl="${escH(n)}">İptal</button></div>`).join('')}`:''}
       <p class="frh">Kendi klanını kur · ${j.cost} altın</p>
@@ -2232,6 +2233,8 @@ async function openClan(view){const ov=$('#ov');ov.className='ov on';view=view||
       L.querySelectorAll('[data-jn]').forEach(b=>b.onclick=async()=>{b.disabled=true;try{await api('/api/clan/join',{m:'POST',b:{name:b.dataset.jn}});toast('Katılma isteği gönderildi')}catch(e){toast(e.message)}openClan()})}catch(e){L.innerHTML=`<p class="sioerr">${escH(e.message)}</p>`}};
     list('');let qt;$('#clq').oninput=e=>{clearTimeout(qt);qt=setTimeout(()=>list(e.target.value.trim()),300)};
     ov.querySelectorAll('[data-ccl]').forEach(b=>b.onclick=async()=>{try{await api('/api/clan/cancel',{m:'POST',b:{name:b.dataset.ccl}})}catch(e){}openClan()});
+    ov.querySelectorAll('[data-iva]').forEach(b=>b.onclick=async()=>{b.disabled=true;try{const r=await api('/api/clan/invite_accept',{m:'POST',b:{name:b.dataset.iva}});toast(r.name+' klanına katıldın');window.__clBd=0;openClan('feed')}catch(e){toast(e.message);openClan()}});
+    ov.querySelectorAll('[data-ivd]').forEach(b=>b.onclick=async()=>{b.disabled=true;try{await api('/api/clan/invite_decline',{m:'POST',b:{name:b.dataset.ivd}})}catch(e){}openClan()});
     $('#clmk').onclick=async()=>{const er=$('#clerr'),b=$('#clmk');er.textContent='';b.disabled=true;
       try{const r=await api('/api/clan/create',{m:'POST',b:{name:$('#clnm').value,descr:$('#clds').value}});applySrv(r.save);accRev(r.rev);renderTop();toast(r.name+' kuruldu');openClan('mem')}
       catch(e){er.textContent=e.message;b.disabled=false}};
@@ -2246,7 +2249,9 @@ async function openClan(view){const ov=$('#ov');ov.className='ov on';view=view||
       <div class="nm"><b>${escH(m.name)}${RL[m.role]?` <em class="rlb ${m.role}">${RL[m.role]}</em>`:''}</b><small>${m.stats?`🏆 ${st.tr} · Sv ${st.lvl} · ${st.col}/${st.tot} kart`:'Henüz oynamadı'}</small></div>
       ${isMe?'':`<button class="btn" data-fight="${escH(m.name)}">Savaş</button>`}
       ${!isMe&&j.role==='leader'&&m.role!=='leader'?`<button class="frx" data-crl="${escH(m.name)}" data-to="${m.role==='co'?'member':'co'}" title="${m.role==='co'?'Yardımcılığı al':'Yardımcı yap'}">${m.role==='co'?'★−':'★+'}</button>`:''}
-      ${!isMe&&off&&m.role!=='leader'&&!(j.role==='co'&&m.role==='co')?`<button class="frx" data-ckk="${escH(m.name)}" aria-label="Klandan çıkar">✕</button>`:''}</div>`}).join('')}</div>`;
+      ${!isMe&&off&&m.role!=='leader'&&!(j.role==='co'&&m.role==='co')?`<button class="frx" data-ckk="${escH(m.name)}" aria-label="Klandan çıkar">✕</button>`:''}</div>`}).join('')}</div>
+    ${off?`<p class="frh">Arkadaşlarını davet et</p><div class="frl">${(j.invitable||[]).length?j.invitable.map(f=>`<div class="frr"><div class="nm"><b>${escH(f.name)}</b><small>${f.invited?'Davet gönderildi':'Klanı yok'}</small></div>${f.invited?'':`<button class="btn" data-civ="${escH(f.name)}">Davet et</button>`}</div>`).join(''):'<p class="frem">Davet edilecek arkadaşın yok (hepsi bir klanda ya da henüz arkadaşın yok).</p>'}</div>
+      <div class="stsv2"><input class="accin" id="civu" placeholder="Kullanıcı adıyla davet et" maxlength="16" autocapitalize="off"><button class="btn alt" id="civgo" style="flex:none;width:auto">Davet</button></div>`:''}`;
   else if(view==='req')body='<div id="clreq"></div>';
   else body=`${j.role==='leader'?`<p class="frh">Klan açıklaması</p><input class="accin" id="cldsc" maxlength="80" value="${escH(C.descr||'')}"><button class="btn alt" id="cldsv">Kaydet</button>`:''}
     <p class="sionote">Rolün: <b>${RL[j.role]||'Üye'}</b>. Lider ayrılırsa liderlik en eski yardımcıya, yoksa en eski üyeye geçer. Son üye ayrılırsa klan silinir.</p><button class="btn alt" id="clleave">Klandan ayrıl</button>`;
@@ -2257,6 +2262,8 @@ async function openClan(view){const ov=$('#ov');ov.className='ov on';view=view||
   ov.querySelectorAll('[data-fight]').forEach(b=>b.onclick=()=>friendBattle(b.dataset.fight,b));
   const post=async(url,body,msg,v)=>{try{await api(url,{m:'POST',b:body});if(msg)toast(msg)}catch(e){toast(e.message)}openClan(v)};
   ov.querySelectorAll('[data-cja]').forEach(b=>b.onclick=()=>{b.disabled=true;post('/api/clan/accept',{u:b.dataset.cja},b.dataset.cja+' klana katıldı','mem')});
+  ov.querySelectorAll('[data-civ]').forEach(b=>b.onclick=()=>{b.disabled=true;post('/api/clan/invite',{u:b.dataset.civ},b.dataset.civ+' davet edildi','mem')});
+  {const cg=$('#civgo');if(cg)cg.onclick=()=>{const u=$('#civu').value.trim();if(!u){toast('Kullanıcı adı yaz');return}cg.disabled=true;post('/api/clan/invite',{u},u+' davet edildi','mem')}}
   ov.querySelectorAll('[data-cjd]').forEach(b=>b.onclick=()=>{b.disabled=true;post('/api/clan/decline',{u:b.dataset.cjd},'','mem')});
   ov.querySelectorAll('[data-crl]').forEach(b=>b.onclick=()=>post('/api/clan/role',{u:b.dataset.crl,role:b.dataset.to},'Rol değişti','mem'));
   ov.querySelectorAll('[data-ckk]').forEach(b=>b.onclick=()=>{if(!b.dataset.ok){b.dataset.ok=1;b.textContent='Emin?';return}post('/api/clan/kick',{u:b.dataset.ckk},'Klandan çıkarıldı','mem')});
