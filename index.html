@@ -652,10 +652,10 @@ body.inb main{padding:0 10px 16px}
 .hst span i{font:700 8.5px Rubik,sans-serif;font-style:normal;margin-top:2px;letter-spacing:-.03em}.hst .w{background:#2e8a4a55;color:#8ff0a8}.hst .l{background:#a8323255;color:#ff9a9a}
 .fightb{width:100%;margin:12px 0 14px}
 .frc{display:flex;align-items:center;gap:10px;width:100%;margin:0 0 10px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:#0c1014cc;color:#fff;text-align:left;position:relative}
-.frc b{font:18px 'MRDisplay',sans-serif;flex:1}.frc small{color:var(--mute);font:12px Rubik,sans-serif}.frc .fri{font-size:22px}
+.frc b{font:18px 'MRDisplay',sans-serif;flex:1}.frc small{color:var(--mute);font:12px Rubik,sans-serif}.frc .fri{width:46px;height:46px;object-fit:contain;filter:drop-shadow(0 2px 4px #0009)}
 .frbd{position:absolute;top:-6px;right:-6px;min-width:22px;height:22px;border-radius:11px;background:#ff4d4d;color:#fff;font:700 12px/22px Rubik,sans-serif;text-align:center;padding:0 6px;box-shadow:0 2px 6px #0008}
-.frp{width:min(94vw,420px);max-height:86vh;overflow:auto}
-.frtabs{display:flex;gap:6px}.frtabs button{flex:1;border:0;border-radius:10px;padding:9px 4px;background:#ffffff12;color:#c9d3dc;font:700 13px Rubik,sans-serif}.frtabs button.on{background:var(--gold);color:#1a1206}
+.frp{width:min(94vw,420px);max-height:86vh;overflow:auto;border-image:url(img/panel.webp) 95 / 22px / 4px stretch;background:linear-gradient(180deg,#140a2a66 0,#140a2ad9 32%,#140a2af2 100%),url(img/frbg.jpg) center top/cover;background-clip:padding-box}
+.frtabs{display:flex;gap:6px}.frtabs button{flex:1;border:0;border-radius:10px;padding:9px 4px;background:#ffffff12;color:#c9d3dc;font:700 13px Rubik,sans-serif}.frtabs button.on{background:var(--gold);color:#1a1206}.frtabs button{display:flex;align-items:center;justify-content:center;gap:5px}.frtabs img{width:22px;height:22px;margin:-4px 0}
 .frl{display:flex;flex-direction:column;gap:6px}
 .frr{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:12px;background:#ffffff0d}.frr.me{background:#f5c45122;outline:1px solid #f5c45155}
 .frr .rk{font:700 14px Rubik,sans-serif;color:var(--gold);width:20px;text-align:center}.frr .lgb2 img{width:30px;height:30px}
@@ -2360,7 +2360,7 @@ const ASSET_V=8;try{if('serviceWorker' in navigator&&location.protocol==='https:
 /* ---------- AYARLAR ---------- */
 /* ---------- ARKADAŞLAR, LİDERLİK TABLOSU, ARKADAŞ DESTESİYLE SAVAŞ ---------- */
 function friendsCard(){if(window.claude)return '';const a=accGet(),n=window.__frInc||0;
-  return `<button class="frc" id="frbtn"><span class="fri">👥</span><b>Arkadaşlar</b><small>${a.user?'Tablo · İstekler · Savaş':'Giriş yapınca açılır'}</small>${n?`<span class="frbd">${n}</span>`:''}</button>`}
+  return `<button class="frc" id="frbtn"><img class="fri" src="img/ic/friends.webp" alt=""><b>Arkadaşlar</b><small>${a.user?'Tablo · İstekler · Savaş':'Giriş yapınca açılır'}</small>${n?`<span class="frbd">${n}</span>`:''}</button>`}
 async function frBadge(){if(!cloudOn())return;try{const j=await api('/api/friends');window.__frInc=j.incoming.length;
   if(!B&&tab==='arena'&&!$('#ov').classList.contains('on'))renderArena()}catch(e){}}
 function frDeck(keys){return shuffle(keys.map(k=>isS(k)?{t:'s',k:k.slice(2)}:BY[k]?{t:'c',c:BY[k]}:null).filter(Boolean))}
@@ -2376,7 +2376,7 @@ async function openFriends(view){const ov=$('#ov');ov.className='ov on';view=vie
   shell(`<p class="frem">Yükleniyor...</p>`);
   let j;try{j=await api('/api/friends')}catch(e){shell(`<p class="sioerr">${escH(e.message)}</p><button class="btn alt" id="frre">Tekrar dene</button>`);$('#frre').onclick=()=>openFriends(view);return}
   window.__frInc=j.incoming.length;
-  const tabs=`<div class="frtabs"><button data-v="tbl" class="${view==='tbl'?'on':''}">Tablo</button><button data-v="req" class="${view==='req'?'on':''}">İstekler${j.incoming.length?` (${j.incoming.length})`:''}</button><button data-v="add" class="${view==='add'?'on':''}">Ekle</button></div>`;
+  const tabs=`<div class="frtabs"><button data-v="tbl" class="${view==='tbl'?'on':''}"><img src="img/ic/leader.webp" alt="">Tablo</button><button data-v="req" class="${view==='req'?'on':''}">İstekler${j.incoming.length?` (${j.incoming.length})`:''}</button><button data-v="add" class="${view==='add'?'on':''}">Ekle</button></div>`;
   let body='';
   if(view==='tbl'){
     const me={name:accGet().user,me:1,stats:{tr:S.trophy||0,lg:lgOf(S.trophy||0),lvl:S.lvl||1,col:uniq(),tot:N}};
