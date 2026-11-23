@@ -382,7 +382,10 @@ th{color:var(--mute);font-weight:500}
 .pfn{flex:1;min-width:0}.pfn b{display:block;font:22px 'MRDisplay',sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pfn small{display:block;color:#c9d3dc;font:13px/1.4 Rubik,sans-serif}
 .pfst{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.pfst div{background:#ffffff0d;border-radius:10px;padding:7px 4px;text-align:center}.pfst b{display:block;font:700 16px Rubik,sans-serif;color:#fff}.pfst small{font:11px Rubik,sans-serif;color:#c9d3dc}
 .pfm{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:10px;background:#ffffff0a;font:13px Rubik,sans-serif}.pfm .md{width:22px;text-align:center}.pfm .op{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pfm .w{color:#7ee05a;font-weight:700}.pfm .l{color:#ff8a7a;font-weight:700}.pfm small{color:var(--mute);font-size:11px}
-.pfa{display:grid;grid-template-columns:1fr 1fr;gap:6px}.pfa div{background:#ffffff0a;border-radius:10px;padding:7px 8px;opacity:.62}.pfa div.ok{opacity:1;background:#f5c45122;outline:1px solid #f5c45166}
+.pfa{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.pfrw{display:block;margin-top:4px;color:var(--gold);font:600 11.5px Rubik,sans-serif}.pfrw.cl{color:#7ee05a}
+.pfcl{width:100%;margin:6px 0 0;padding:7px 6px;font-size:12.5px}
+#lvpill{position:relative}#lvpill.achdot::after{content:'';position:absolute;top:-2px;right:-2px;width:11px;height:11px;border-radius:50%;background:#ff4d4d;box-shadow:0 0 0 2px #0b0f14}.pfa div{background:#ffffff0a;border-radius:10px;padding:7px 8px;opacity:.62}.pfa div.ok{opacity:1;background:#f5c45122;outline:1px solid #f5c45166}
 .pfa b{display:block;font:700 12.5px Rubik,sans-serif}.pfa small{display:block;font:11px/1.3 Rubik,sans-serif;color:#c9d3dc}.pfa i{display:block;height:5px;border-radius:3px;background:#ffffff1a;margin-top:5px;overflow:hidden}.pfa i u{display:block;height:100%;background:var(--gold)}
 .pfbtn{display:flex;gap:8px}.pfbtn .btn{flex:1;margin:0}
 .avg{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.avg button{border:2px solid transparent;border-radius:50%;padding:0;background:none;aspect-ratio:1;overflow:hidden}.avg button.on{border-color:var(--gold)}.avg img{width:100%;height:100%;object-fit:cover;display:block}.lvw{position:relative;width:28px;height:28px;display:inline-block}.lvw img{width:100%;height:100%}
@@ -1207,7 +1210,7 @@ document.addEventListener('pointermove',e=>{
    6. EKRANLAR
    ===================================================================== */
 let tab='pack';
-function renderTop(){$('#lvl').textContent=S.lvl;{const lp=$('#lvpill'),av=!window.claude&&accGet().user;lp.classList.toggle('hasav',!!av);$('#lvimg').src=av?`img/t/${MR.avatarOf(S)}.webp`:'img/ic/level.webp';lp.onclick=av?()=>openProfile():null}$('#gold').textContent=S.gold;$('#dust').textContent=S.dust;const u=uniq();$('#ptxt').textContent=u+'/'+N;$('#pbar').style.width=(u/N*100)+'%'}
+function renderTop(){$('#lvl').textContent=S.lvl;{const lp=$('#lvpill'),av=!window.claude&&accGet().user;lp.classList.toggle('hasav',!!av);$('#lvimg').src=av?`img/t/${MR.avatarOf(S)}.webp`:'img/ic/level.webp';lp.onclick=av?()=>openProfile():null;lp.classList.toggle('achdot',!!av&&MR.achUnclaimed(S)>0)}$('#gold').textContent=S.gold;$('#dust').textContent=S.dust;const u=uniq();$('#ptxt').textContent=u+'/'+N;$('#pbar').style.width=(u/N*100)+'%'}
 function render(){
   renderTop();
   document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.tab===tab));
@@ -2228,8 +2231,13 @@ async function openProfile(name){if(window.claude)return;const ov=$('#ov');const
     <p class="frh">Son maçlar</p>
     <div class="frl">${j.matches.length?j.matches.map(m=>`<div class="pfm"><span class="md" title="${MODE_N[m.mode]||''}">${MODE_I[m.mode]||'⚔️'}</span><span class="op">${escH(m.opp||'')}</span><span class="${m.win?'w':'l'}">${m.win?'Galibiyet':'Yenilgi'}</span>${m.mode==='arena'&&m.dt?`<small>${m.dt>0?'+':''}${m.dt} 🏆</small>`:''}<small>${agoTxt(m.t)}</small></div>`).join(''):'<p class="frem">Henüz maç yok.</p>'}</div>
     <p class="frh">Başarımlar · ${done}/${j.ach.length}</p>
-    <div class="pfa">${j.ach.map(a=>`<div class="${a.done?'ok':''}"><b>${a.done?'🏅 ':''}${escH(a.n)}</b><small>${escH(a.d)}</small>${a.done?'':`<i><u style="width:${Math.round(a.v/a.g*100)}%"></u></i><small>${a.v}/${a.g}</small>`}</div>`).join('')}</div>`);
+    <div class="pfa">${j.ach.map(a=>{const rw=[a.rw.f?`${a.rw.f} paket`:'',a.rw.g?`${a.rw.g} altın`:''].filter(Boolean).join(' + ');
+      return `<div class="${a.done?'ok':''}"><b>${a.done?'🏅 ':''}${escH(a.n)}</b><small>${escH(a.d)}</small>${a.done?'':`<i><u style="width:${Math.round(a.v/a.g*100)}%"></u></i><small>${a.v}/${a.g}</small>`}
+        ${rw?(a.done&&j.rel.self?(a.cl?`<small class="pfrw cl">✓ Alındı · ${rw}</small>`:`<button class="btn pfcl" data-acl="${a.id}">🎁 ${rw}</button>`):`<small class="pfrw">🎁 ${rw}</small>`):''}</div>`}).join('')}</div>`);
   const pa=$('#pfav');if(pa)pa.onclick=()=>openAvatarPick(j.av);
+  ov.querySelectorAll('[data-acl]').forEach(b=>b.onclick=async()=>{b.disabled=true;
+    try{const r=await act('ach_claim',{id:b.dataset.acl});renderTop();toast('Ödül alındı: '+[r.f?r.f+' paket':'',r.g?r.g+' altın':''].filter(Boolean).join(' + '));openProfile()}
+    catch(e){toast(e.message);b.disabled=false}});
   const pf=$('#pffight');if(pf)pf.onclick=()=>friendBattle(j.name,pf);
   const pd=$('#pfadd');if(pd)pd.onclick=async()=>{pd.disabled=true;try{const r=await api('/api/friends/request',{m:'POST',b:{u:j.name}});toast(r.accepted?r.name+' artık arkadaşın':'Arkadaşlık isteği gönderildi');openProfile(j.name)}catch(e){toast(e.message);pd.disabled=false}}}
 // profil resmi seçimi: sahip olunan yaratıklar (en nadirden)

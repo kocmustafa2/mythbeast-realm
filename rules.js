@@ -241,7 +241,7 @@ const fresh=()=>({gold:ECON.startGold,dust:0,free:ECON.freePacks,owned:{},pity:0
 // Sunucunun sahip olduğu alanlar: istemcinin kaydetme isteği bunları DEĞİŞTİREMEZ.
 const ECON_KEYS=['gold','dust','free','owned','shiny','sup','supV','supV2','pity','xp','lvl','opened','trophy','bestLg','wins','losses',
   'streak','lstreak','chest','chests','hist','gift','gt','advC','advV','exB','rqT','dn','dq','rare','tp','uidN','tut','bt','bl',
-  'av','bestStk','dnTot','evoN','awkN','ssBest','ach'];
+  'av','bestStk','dnTot','evoN','awkN','ssBest','ach','achC'];
 // İstemcinin değiştirebildiği zararsız alanlar (ayarlar, deste seçimi, ipuçları).
 const CLIENT_KEYS=['mv','sv','snd','deck','deck2','shOff','pset','th','sid','t'];
 const TUT_CLIENT_MAX=2;            // istemci öğreticiyi en fazla bu adıma kendisi ilerletebilir (hoş geldin → paket aç)
@@ -375,6 +375,10 @@ function act(st,a,p,ctx){p=p||{};const rng=ctx.rng,now=ctx.now;normalize(st,ctx)
     const id=Math.floor(rng()*2**52).toString(36);st.bt={id,mode,adv,t0:now,tut:mode==='arena'&&st.tut===6?1:0};if(mode==='friend'&&typeof p.fr==='string')st.bt.fr=p.fr.slice(0,16);
     return{id,forfeit:fo}}
   case 'battle_end':return battleEnd(st,p,ctx);
+  case 'ach_claim':{const id=String(p.id||''),rw=ACH_RW[id];
+    if(!rw||!(st.ach||[]).includes(id))throw uerr('Bu başarım henüz tamamlanmadı.');
+    if((st.achC||[]).includes(id))throw uerr('Bu ödülü zaten aldın.');
+    st.achC=[...(st.achC||[]),id];st.gold=(st.gold||0)+(rw.g||0);st.free=(st.free||0)+(rw.f||0);return{g:rw.g||0,f:rw.f||0}}
   case 'avatar':{const id=Math.floor(+p.id),c=BY[id];if(!c||!(own(st,id)>0))throw uerr('Sadece sahip olduğun bir kartı profil resmi yapabilirsin.');st.av=id;return{av:id}}
   }
   throw uerr('Bilinmeyen işlem.');
@@ -437,7 +441,14 @@ const ACH=[
   {id:'d10',n:'Yardımsever',d:'10 kart bağışla',g:10,v:s=>s.dnTot||0},
   {id:'d100',n:'Cömert Kalp',d:'100 kart bağışla',g:100,v:s=>s.dnTot||0},
   {id:'ss3',n:'Sezon Şampiyonu',d:'Haftalık sezonu ilk 3\'te bitir',g:1,v:s=>s.ssBest&&s.ssBest<=3?1:0}];
-function achList(st,x){const done=new Set(st.ach||[]);return ACH.map(a=>{const v=Math.min(a.g,a.v(st,x)||0);return{id:a.id,n:a.n,d:a.d,g:a.g,v,done:done.has(a.id)||v>=a.g,lg:a.lg}})}
+// başarım ödülleri: g = altın, f = ücretsiz paket (ödül 'Ödülü al' ile bir kez alınır)
+const ACH_RW={w1:{g:100},w10:{g:300},w50:{f:2},w200:{f:5,g:1000},s5:{g:300},s10:{f:2},
+  lg1:{g:200},lg2:{f:1},lg3:{f:2},lg4:{f:3},lg5:{f:5},p10:{g:100},p50:{f:1},p200:{f:3},
+  c25:{f:1},c50:{f:3},c100:{f:5,g:1000},evo:{g:200},awk:{f:1},adv:{f:5,g:1000},clan:{g:200},d10:{g:200},d100:{f:2},ss3:{f:2}};
+function achList(st,x){const done=new Set(st.ach||[]),cl=new Set(st.achC||[]);return ACH.map(a=>{const v=Math.min(a.g,a.v(st,x)||0);
+  return{id:a.id,n:a.n,d:a.d,g:a.g,v,done:done.has(a.id)||v>=a.g,lg:a.lg,rw:ACH_RW[a.id]||{},cl:cl.has(a.id)}})}
+// alınmamış ödülü olan tamamlanmış başarım sayısı (rozet için)
+const achUnclaimed=st=>{const cl=new Set(st.achC||[]);return(st.ach||[]).filter(id=>ACH_RW[id]&&!cl.has(id)).length};
 // Yeni tamamlananları st.ach'a ekler (bir kez kazanılan rozet geri gitmez), yeni olanların adlarını döner.
 // x verilmezse (klan bilinmiyorsa) klan başarımı bu turda değerlendirilmez.
 function achSync(st,x){const have=new Set(st.ach||[]),nw=[];
@@ -448,7 +459,7 @@ const MR={ELS,round5,round10,RAR,TYPE_HP,TYPE_RET,DMG,ATK,FXV,FX,atkDmg,PACK,XP,
   EXA,EXCOST,EXD,EXC,exOf,EZA,EZDR,EZC,POOL,POOLS,EVO_NEED,STAGE_W,cw,SHINY,LEAGUES,lgOf,TROPHY,STREAK,strkB,CHEST,GIFT,DQP,DQB,srnd,SUPK,
   ADV_CH,ADV_RULE,ADV_N,ADV_P,advStage,advStageX,TUT,fresh,
   ECON_KEYS,CLIENT_KEYS,BATTLE_MIN_MS,BATTLE_PER_HOUR,own,tutOn,roll,drawCard,rollPack,copies,canEvo,canAwaken,giveSup,rndSup,addXp,
-  giftTick,dayKey,dqList,dqInc,normalize,mergeClient,act,pubStats,avatarOf,ACH,achList,achSync,
+  giftTick,dayKey,dqList,dqInc,normalize,mergeClient,act,pubStats,avatarOf,ACH,ACH_RW,achList,achSync,achUnclaimed,
   SEASON,seasonOf,seasonEnd,seasonRewardFor,seasonGive,
   CLAN,REQ,reqable,reqCheck,reqOpen,dnLeft,donateCheck,donateGive,donateGet,clanPay};
 G.MR=MR;
