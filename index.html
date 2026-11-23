@@ -757,6 +757,8 @@ body.inb main{padding:0 10px 16px}
 .amb{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:-1}.amb i{position:absolute;bottom:-10px;border-radius:50%;background:#ffcf7a;box-shadow:0 0 6px #ffb347;opacity:0;animation:ambf linear infinite}
 @keyframes ambf{0%{transform:translate(0,0);opacity:0}10%{opacity:.8}90%{opacity:.5}100%{transform:translate(var(--dx),-105vh);opacity:0}}
 
+.bellb{position:relative;margin-right:6px}.bellb svg{width:20px;height:20px}.bellb i{position:absolute;top:-5px;right:-5px;min-width:18px;height:18px;border-radius:9px;background:#ff4d4d;color:#fff;font:700 10.5px/18px Rubik,sans-serif;font-style:normal;padding:0 4px;box-shadow:0 0 0 2px #0b0f14}.bellb i[hidden]{display:none}
+.ibi{font-size:20px;width:26px;text-align:center;flex:none}.ibr .nm b{white-space:normal;overflow:visible}.ibr .nm small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .gearb{flex:none;width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--panel);color:#e8eef4;display:grid;place-items:center;padding:0}.gearb svg{width:22px;height:22px}.gearb:active{transform:rotate(40deg)}
 .setp{width:min(92vw,360px);display:flex;flex-direction:column;gap:14px;margin:0}
 .sth{display:flex;align-items:center;justify-content:space-between}.sth b{font:26px 'MRDisplay',sans-serif;color:var(--gold)}
@@ -975,6 +977,7 @@ body.inb main{padding:0 10px 16px}
       <div class="pill lvpill" id="lvpill"><span class="lvw"><img id="lvimg" src="img/ic/level.webp" alt=""><b id="lvl">1</b></span></div><div class="pill"><img class="pi" src="img/ic/gold.webp" alt=""><span id="gold">0</span></div>
       <div class="pill"><img class="pi" src="img/ic/dust.webp" alt=""><span id="dust">0</span></div>
     </div>
+    <button class="gearb bellb" id="bell" aria-label="Bildirimler" hidden><svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 1112 0v5l2 2H4l2-2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M10 20a2 2 0 004 0" fill="none" stroke="currentColor" stroke-width="2"/></svg><i id="belln"></i></button>
     <button class="gearb" id="gear" aria-label="Ayarlar"><svg viewBox="0 0 24 24"><path d="M12 8.5a3.5 3.5 0 100 7 3.5 3.5 0 000-7z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M19.4 13.5a7.6 7.6 0 000-3l2-1.6-2-3.4-2.4 1a7.5 7.5 0 00-2.6-1.5L14 2.5h-4l-.4 2.5A7.5 7.5 0 007 6.5l-2.4-1-2 3.4 2 1.6a7.6 7.6 0 000 3l-2 1.6 2 3.4 2.4-1a7.5 7.5 0 002.6 1.5l.4 2.5h4l.4-2.5a7.5 7.5 0 002.6-1.5l2.4 1 2-3.4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></button>
   </header>
   <div class="prog"><span>Seri 1</span><div class="bar"><i id="pbar"></i></div><b id="ptxt">0/28</b></div>
@@ -1223,7 +1226,7 @@ document.addEventListener('pointermove',e=>{
    6. EKRANLAR
    ===================================================================== */
 let tab='pack';
-function renderTop(){$('#lvl').textContent=S.lvl;{const lp=$('#lvpill'),av=!window.claude&&accGet().user;lp.classList.toggle('hasav',!!av);$('#lvimg').src=av?`img/t/${MR.avatarOf(S)}.webp`:'img/ic/level.webp';lp.onclick=av?()=>openProfile():null;lp.classList.toggle('achdot',!!av&&MR.achUnclaimed(S)>0)}$('#gold').textContent=S.gold;$('#dust').textContent=S.dust;const u=uniq();$('#ptxt').textContent=u+'/'+N;$('#pbar').style.width=(u/N*100)+'%'}
+function renderTop(){$('#lvl').textContent=S.lvl;{const lp=$('#lvpill'),av=!window.claude&&accGet().user;lp.classList.toggle('hasav',!!av);$('#lvimg').src=av?`img/t/${MR.avatarOf(S)}.webp`:'img/ic/level.webp';lp.onclick=av?()=>openProfile():null;lp.classList.toggle('achdot',!!av&&MR.achUnclaimed(S)>0);bellUpd()}$('#gold').textContent=S.gold;$('#dust').textContent=S.dust;const u=uniq();$('#ptxt').textContent=u+'/'+N;$('#pbar').style.width=(u/N*100)+'%'}
 function render(){
   renderTop();
   document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.tab===tab));
@@ -2303,7 +2306,7 @@ function clanCard(){if(window.claude)return '';const a=accGet(),n=window.__clBd|
   return `<button class="frc" id="clbtn"><img class="fri" src="img/ic/clan.webp" alt="" onerror="this.outerHTML='<span class=&quot;fri fre&quot;>🛡️</span>'"><b>Klan</b><small>${a.user?(cn?escH(cn):'Klan kur ya da katıl'):'Giriş yapınca açılır'}</small>${n?`<span class="frbd">${n}</span>`:''}</button>`}
 // rozetler: arkadaşlık istekleri (Arkadaşlar), klan katılım istekleri ve sana gelen bağışlar (Klan)
 async function frBadge(){if(!cloudOn())return;try{const j=await api('/api/notify?since='+(+localStorage.getItem('mr.dnSeen')||0));
-  window.__frInc=j.fr+(j.dm||0);window.__clBd=j.cj+j.dn+(j.ci||0)+(j.cm||0);navClanBadge();window.__clName=j.clan;if(j.dn)cloudPull();
+  window.__frInc=j.fr+(j.dm||0);window.__clBd=j.cj+j.dn+(j.ci||0)+(j.cm||0);window.__srvN=j.fr+j.cj+j.dn+(j.ci||0)+(j.cm||0)+(j.dm||0);bellUpd();navClanBadge();window.__clName=j.clan;if(j.dn)cloudPull();
   if(!B&&tab==='arena'&&!$('#ov').classList.contains('on'))renderArena()}catch(e){}}
 function navClanBadge(){const b=document.querySelector('nav button[data-tab=clan]');if(!b)return;let d=b.querySelector('.nbd');const n=window.__clBd||0;
   if(!n){if(d)d.remove();return}if(!d){d=document.createElement('span');d.className='nbd';b.appendChild(d)}d.textContent=n}
@@ -2404,6 +2407,42 @@ async function openClan(view){if(tab!=='clan'||(B&&!B.over))return;const ov=$('#
   const sv=$('#cldsv');if(sv)sv.onclick=()=>post('/api/clan/edit',{descr:$('#cldsc').value},'Kaydedildi','set');
   const lv=$('#clleave');if(lv)lv.onclick=async()=>{if(!lv.dataset.ok){lv.dataset.ok=1;lv.textContent='Emin misin? Tekrar bas';return}
     try{const r=await api('/api/clan/leave',{m:'POST'});toast(r.deleted?'Klan silindi':'Klandan ayrıldın');window.__clName=null}catch(e){toast(e.message)}openClan('feed')}}
+/* ---------- BİLDİRİM MERKEZİ ----------
+   Zil: sunucudan gelenler (mesajlar, istekler, davetler, bağışlar) + oyunun kendisinden (başarım ödülü, hediye, günlük görev). */
+function localNotes(){const n=[];if(window.claude||!accGet().user)return n;
+  const a=MR.achUnclaimed(S);if(a)n.push({ic:'🏅',t:`${a} başarım ödülün alınmayı bekliyor`,go:'prof'});
+  giftTick();if(S.gift>0)n.push({ic:'🎁',t:`Ücretsiz hediye paketin hazır (${S.gift})`,go:'pack'});
+  if(typeof dqReady==='function'&&dqReady())n.push({ic:'📜',t:'Günlük görev ödülün hazır',go:'pack'});
+  return n}
+function bellUpd(){const b=$('#bell');if(!b)return;b.onclick=()=>{if(B&&!B.over)return;openInbox()};const on=!window.claude&&!!accGet().user;b.hidden=!on;if(!on)return;
+  const n=(window.__srvN||0)+localNotes().length,i=$('#belln');i.textContent=n>99?'99+':n||'';i.hidden=!n}
+const goTab=t=>{const ov=$('#ov');ov.className='ov';ov.innerHTML='';const b=document.querySelector(`nav button[data-tab=${t}]`);if(b)b.click()};
+async function openInbox(){const ov=$('#ov');ov.className='ov on';
+  const shell=body=>{ov.innerHTML=`<div class="fp setp frp"><div class="sth"><b>🔔 Bildirimler</b><button class="stx" id="ibclose" aria-label="Kapat">✕</button></div>${body}</div>`;
+    $('#ibclose').onclick=()=>{ov.className='ov';ov.innerHTML='';frBadge()}};
+  shell('<p class="frem">Yükleniyor...</p>');
+  let j;try{j=await api('/api/inbox?since='+(+localStorage.getItem('mr.dnSeen')||0))}catch(e){shell(`<p class="sioerr">${escH(e.message)}</p>`);return}
+  const row=(ic,txt,sub,btns)=>`<div class="frr ibr"><span class="ibi">${ic}</span><div class="nm"><b>${txt}</b>${sub?`<small>${sub}</small>`:''}</div>${btns||''}</div>`;
+  const sec=(h,items)=>items.length?`<p class="frh">${h}</p><div class="frl">${items.join('')}</div>`:'';
+  const msgs=[...j.dms.map(d=>row('💬',`${escH(d.name)}${d.n>1?` · ${d.n} mesaj`:''}`,`${escH(d.txt||'')} · ${agoTxt(d.t)}`,`<button class="btn" data-ibdm="${escH(d.name)}">Aç</button>`)),
+    ...(j.clanChat?[row('🛡️',`${escH(j.clanChat.name)} sohbeti`,`${j.clanChat.n} yeni mesaj · ${agoTxt(j.clanChat.t)}`,'<button class="btn" data-ibgo="clanchat">Aç</button>')]:[])];
+  const reqs=[...j.fr.map(f=>row('👥',escH(f.name),'Arkadaşlık isteği gönderdi',`<button class="btn" data-ibfa="${escH(f.name)}">Kabul</button><button class="frx" data-ibfd="${escH(f.name)}">Reddet</button>`)),
+    ...j.ci.map(c=>row('✉️',escH(c.clan),`${escH(c.by)} seni klana davet etti`,`<button class="btn" data-ibca="${escH(c.clan)}">Katıl</button><button class="frx" data-ibcd="${escH(c.clan)}">Reddet</button>`)),
+    ...j.cj.map(c=>row('🛡️',escH(c.name),'Klanına katılmak istiyor','<button class="btn" data-ibgo="clanmem">Gör</button>'))];
+  const rew=[...j.dn.map(d=>row('🎁',`${escH(d.name)} sana kart bağışladı`,`${cardNm(d.card)} · ${agoTxt(d.t)}`,'')),
+    ...localNotes().map(n=>row(n.ic,escH(n.t),'',`<button class="btn" data-ibgo="${n.go}">${n.go==='prof'?'Al':'Git'}</button>`))];
+  const body=sec('Mesajlar',msgs)+sec('İstekler ve davetler',reqs)+sec('Ödüller',rew);
+  shell(body||'<p class="frem">Yeni bildirimin yok.</p>');
+  if(j.dn.length)dnSeen();
+  const re=()=>openInbox();
+  ov.querySelectorAll('[data-ibdm]').forEach(b=>b.onclick=()=>openDM(b.dataset.ibdm));
+  ov.querySelectorAll('[data-ibgo]').forEach(b=>b.onclick=()=>{const g=b.dataset.ibgo;
+    if(g==='prof'){openProfile();return}if(g==='clanchat'){window.__clView='chat';goTab('clan');return}if(g==='clanmem'){window.__clView='mem';goTab('clan');return}goTab(g)});
+  const post=async(b,url,body,msg)=>{b.disabled=true;try{await api(url,{m:'POST',b:body});if(msg)toast(msg)}catch(e){toast(e.message)}frBadge();re()};
+  ov.querySelectorAll('[data-ibfa]').forEach(b=>b.onclick=()=>post(b,'/api/friends/accept',{u:b.dataset.ibfa},b.dataset.ibfa+' artık arkadaşın'));
+  ov.querySelectorAll('[data-ibfd]').forEach(b=>b.onclick=()=>post(b,'/api/friends/decline',{u:b.dataset.ibfd}));
+  ov.querySelectorAll('[data-ibca]').forEach(b=>b.onclick=()=>post(b,'/api/clan/invite_accept',{name:b.dataset.ibca},b.dataset.ibca+' klanına katıldın'));
+  ov.querySelectorAll('[data-ibcd]').forEach(b=>b.onclick=()=>post(b,'/api/clan/invite_decline',{name:b.dataset.ibcd}))}
 /* ---------- SOHBET (klan + arkadaşla özel) ----------
    Sohbet açıkken 3 sn'de bir yeni mesajlar çekilir; ekran kapanınca durur. Küfür filtresi, hız sınırı ve engelleme sunucuda. */
 const hhmm=t=>{const d=new Date(t);return d.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})};

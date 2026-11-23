@@ -717,6 +717,25 @@ async function handleApi(req, env, path) {
     else await db.prepare('DELETE FROM blocks WHERE user_id = ? AND blocked = ?').bind(user.id, o.id).run();
     return json({ ok: true });
   }
+  // bildirim merkezi: okunmamış mesajlar, istekler, davetler ve bağışlar tek listede
+  if (path === '/api/inbox' && method === 'GET') {
+    const since = Math.floor(Number(new URL(req.url).searchParams.get('since')) || 0), m = await myClan(db, user.id);
+    const all = async (sql, ...a) => (await db.prepare(sql).bind(...a).all()).results || [];
+    const dms = await all(`SELECT x.name, x.n, x.t, (SELECT txt FROM chat WHERE id = x.mid) AS txt FROM (
+      SELECT u.name, COUNT(*) AS n, MAX(c.id) AS mid, MAX(c.t) AS t
+      FROM chat c JOIN users u ON u.id = c.user_id LEFT JOIN chat_read rd ON rd.user_id = ?1 AND rd.room = c.room
+      WHERE (c.room LIKE ?2 OR c.room LIKE ?3) AND c.user_id != ?1 AND c.del = 0 AND c.id > IFNULL(rd.last, 0)
+        AND c.user_id NOT IN (SELECT blocked FROM blocks WHERE user_id = ?1) GROUP BY c.user_id) x ORDER BY x.t DESC`, user.id, 'd:' + user.id + ':%', 'd:%:' + user.id);
+    let clanChat = null;
+    if (m) { const r = await db.prepare(`SELECT COUNT(*) AS n, MAX(c.t) AS t FROM chat c LEFT JOIN chat_read rd ON rd.user_id = ?1 AND rd.room = c.room
+      WHERE c.room = ?2 AND c.user_id != ?1 AND c.del = 0 AND c.id > IFNULL(rd.last, 0)`).bind(user.id, 'c:' + m.clan_id).first();
+      if (r.n) clanChat = { name: m.name, n: r.n, t: r.t }; }
+    const fr = await all(`SELECT u.name, f.t FROM friends f JOIN users u ON u.id = f.a WHERE f.b = ? AND f.status = 'pending' ORDER BY f.t DESC`, user.id);
+    const cj = m && (m.role === 'leader' || m.role === 'co') ? await all(`SELECT u.name, j.t FROM clan_joins j JOIN users u ON u.id = j.user_id WHERE j.clan_id = ? ORDER BY j.t DESC`, m.clan_id) : [];
+    const ci = m ? [] : await all(`SELECT c.name AS clan, u.name AS by, i.t FROM clan_invites i JOIN clans c ON c.id = i.clan_id JOIN users u ON u.id = i.by_id WHERE i.user_id = ? ORDER BY i.t DESC`, user.id);
+    const dn = await all(`SELECT u.name, f.card, f.t FROM feed f JOIN users u ON u.id = f.a WHERE f.kind = 'donate' AND f.b = ? AND f.t > ? ORDER BY f.t DESC LIMIT 20`, user.id, since);
+    return json({ dms: dms.map(d => ({ name: d.name, n: d.n, txt: d.txt, t: d.t })), clanChat, fr, cj, ci, dn });
+  }
   if (path === '/api/notify' && method === 'GET') {
     await seenAt(db, user.id);
     const since = Math.floor(Number(new URL(req.url).searchParams.get('since')) || 0), m = await myClan(db, user.id);
