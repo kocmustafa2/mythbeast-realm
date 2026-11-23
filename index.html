@@ -387,6 +387,8 @@ th{color:var(--mute);font-weight:500}
 .cht em{color:#9aa6b2}.chb small{font:10.5px Rubik,sans-serif;color:#9aa6b2;align-self:flex-end}.chb small a{color:#ff8a7a;cursor:pointer}
 .chi{display:flex;gap:6px}.chi .btn{flex:none;width:auto;margin:0;padding:10px 14px}
 .frdm{position:relative;font-size:15px}.frdm i{position:absolute;top:-6px;right:-6px;min-width:17px;height:17px;border-radius:9px;background:#ff4d4d;color:#fff;font:700 10px/17px Rubik,sans-serif;font-style:normal;padding:0 4px}
+.b2auto{margin:6px auto 0;display:block;border:1px solid #ffffff33;background:#0008;color:#c9d3dc;border-radius:99px;padding:6px 14px;font:700 12.5px Rubik,sans-serif}
+.b2auto.on{background:#3ddc5a33;border-color:#3ddc5a;color:#9ff0b0}.b2idle{text-align:center;color:#ffcf6b;font:700 12.5px Rubik,sans-serif;margin-top:4px}
 .onc{margin:0;font:600 13px Rubik,sans-serif;color:#c9d3dc}.onc b{color:#3ddc5a}.avw .avm{width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid #ffffff44;box-sizing:border-box}
 .avw .avlg{position:absolute;right:-5px;bottom:-4px;width:20px;height:20px;object-fit:contain;filter:drop-shadow(0 1px 2px #000)}
 [data-prof]{cursor:pointer}
@@ -1696,7 +1698,7 @@ async function startBattle(adv,fr){if(window.__btStart)return;window.__btStart=1
   const st=adv!=null?advStage(adv):null,md=myDeck();let fd;
   if(st){const hm=st.rule==='hp'?1.2:1,cr=[...st.deck,...st.deck.filter(c=>c!==st.boss).slice(0,4)].map(c=>{let k=hm;if(st.boss&&c===st.boss&&st.rule==='boss')k=1.5;return k===1?c:{...c,hp:Math.round(c.hp*k/5)*5}});
     const sp=st.el?[st.el,st.el,st.el,'evo']:['evo'];fd=shuffle([...cr.map(c=>({t:'c',c})),...sp.map(k=>({t:'s',k}))])}else fd=fr?frDeck(fr.deck):foeDeck(md);
-  B={me:side(md),foe:side(fd),turn:'me',sel:null,selH:null,supUsed:false,busy:true,over:false,win:null,adv:st?adv:null,mis:st?st.mis:null,st,dmg:{me:0,foe:0},log:fr?escH(fr.name)+' destesiyle dostluk maçı':'Eller dağıtıldı',fr:fr||null,bid,stats:{hit:{},weak:0,ko:0}};
+  B={me:side(md),foe:side(fd),turn:'me',sel:null,selH:null,supUsed:false,busy:true,auto:(()=>{try{return localStorage.getItem('mr.auto')==='1'}catch(e){return false}})(),lastAct:Date.now(),over:false,win:null,adv:st?adv:null,mis:st?st.mis:null,st,dmg:{me:0,foe:0},log:fr?escH(fr.name)+' destesiyle dostluk maçı':'Eller dağıtıldı',fr:fr||null,bid,stats:{hit:{},weak:0,ko:0}};
   if(!st&&!fr&&easyFoe()){B.easy=1;B.mis=Math.max(LEAGUES[lgOf(S.trophy||0)].mis,.45);B.log='Daha kolay bir rakip geldi';setTimeout(()=>toast('Üst üste kayıplar: bu sefer daha kolay bir rakip geldi'),900)}
   const tutB=S.tut===6&&!st&&!fr;
   if(tutB){// öğretici savaşı: kolay rakip; sahada Kıvılcık + 1 yaratık, 3. yer boş; elde 1 yaratık ve Evrim Taşı
@@ -1728,7 +1730,21 @@ function tutArenaIntro(go){const d=document.createElement('div');d.className='tu
   document.body.appendChild(d);d.querySelector('#tutgo').onclick=()=>{d.remove();go()}}
 const clockLeft=()=>!B||!B.t0?BAT.time:Math.max(0,BAT.time-((B.tEnd||Date.now())-B.t0)/1000);
 const clockTxt=()=>{const l=Math.ceil(clockLeft());return `${Math.floor(l/60)}:${String(l%60).padStart(2,'0')}`};
-function clockTick(){if(!B||B.over){if(B&&B.iv)clearInterval(B.iv);return}const c=$('#clk');if(c){c.textContent=clockTxt();c.classList.toggle('low',clockLeft()<=15)}if(clockLeft()<=0)timeUp()}
+// otomatik hamle: oyuncu 15 sn hamle yapmazsa ya da Otomatik açıksa, sıra oyuncudayken yapay zekâ oyuncunun yerine oynar
+const IDLE_MS=15000;
+function autoDue(){if(!B||B.over||B.busy||B.turn!=='me'||B.tut)return false;const idle=Date.now()-(B.lastAct||Date.now());return B.auto?idle>700:idle>=IDLE_MS}
+async function autoMove(){if(!autoDue()&&!(B&&B.auto&&!B.busy&&!B.over&&B.turn==='me'))return;B.busy=true;B.sel=null;B.selH=null;
+  if(!B.auto)B.log='Süre doldu · otomatik hamle yapıldı';
+  for(let m;B&&!B.over&&(m=bestFill(B,'me'));){await placeAnim('me',m.j,m.i);await wait(220)}
+  if(!B||B.over)return;
+  if(!B.supUsed){const ms=pickSup(B,'me',false);if(ms){await supAnim('me',ms.j,ms.i);if(!B||B.over)return}}
+  let best=null;B.me.board.forEach((a,ai)=>{if(!a)return;B.foe.board.forEach((d,di)=>{if(!d)return;const sc=aiScore(a,d,B.me.board,B.foe.board);if(!best||sc>best.sc)best={sc,ai,di}})});
+  if(best){if(await strike('me',best.ai,best.di))return}else{B.log='Saldıracak yaratık yok, sıra geçti';renderBattle();await wait(500)}
+  if(!B||B.over)return;await foeMove()}
+function clockTick(){if(!B||B.over){if(B&&B.iv)clearInterval(B.iv);return}
+  if(autoDue())autoMove();
+  else if(!B.auto&&B.turn==='me'&&!B.busy&&!B.tut){const left=Math.ceil((IDLE_MS-(Date.now()-(B.lastAct||Date.now())))/1000),lg=document.querySelector('.b2idle');
+    if(left<=5&&left>0){if(lg)lg.textContent=`${left} sn içinde hamle yapmazsan otomatik oynanacak`;else{const m=document.querySelector('.b2log');if(m)m.insertAdjacentHTML('afterend',`<div class="b2idle">${left} sn içinde hamle yapmazsan otomatik oynanacak</div>`)}}}const c=$('#clk');if(c){c.textContent=clockTxt();c.classList.toggle('low',clockLeft()<=15)}if(clockLeft()<=0)timeUp()}
 function timeUp(){if(!B||B.over)return;
   // süre tam bir vuruşun ortasında biterse, yenilmiş ama henüz sahadan kalkmamış yaratıkların canını da say
   const pend=sd=>B[sd].board.reduce((t,f)=>t+(f&&f.hp<=0?koL(f.c):0),0);
@@ -1772,7 +1788,7 @@ function renderBattle(){if(!B)return;
    <div class="b2top foe"><div class="lv" data-lv="foe">${hearts(fo.lives)}</div><b>${B.fr?escH(B.fr.name).toLocaleUpperCase('tr'):'RAKİP'}</b>${auraChips(fo.board)}<div class="b2pile"><img src="img/back.webp" alt=""><span>${fo.deck.length}</span></div></div>
    <div class="b2fh">${fo.hand.map(x=>`<img src="img/${x.t==='c'&&setOf(x.c)===2?'back2':'back'}.webp" alt="">`).join('')}</div>
    <div class="b2row foe">${fo.board.map((f,i)=>bk(f,'foe',i)).join('')}</div>
-   <div class="b2mid"><div class="b2bar ${B.turn}${B.over?' end':''}"><span class="b2t">${TI(t)}</span><span class="b2clk${clockLeft()<=15&&!B.over?' low':''}" id="clk">${clockTxt()}</span></div><div class="b2log">${info}</div>${pass?'<button class="btn alt b2pass" id="bpass">Pas geç</button>':''}</div>
+   <div class="b2mid"><div class="b2bar ${B.turn}${B.over?' end':''}"><span class="b2t">${TI(t)}</span><span class="b2clk${clockLeft()<=15&&!B.over?' low':''}" id="clk">${clockTxt()}</span></div><div class="b2log">${info}</div>${pass?'<button class="btn alt b2pass" id="bpass">Pas geç</button>':''}${!B.over&&!B.tut?`<button class="b2auto${B.auto?' on':''}" id="bauto">🤖 Otomatik${B.auto?' · açık':''}</button>`:''}</div>
    <div class="b2row me">${me.board.map((f,i)=>bk(f,'me',i)).join('')}</div>
    <div class="b2top me"><div class="lv" data-lv="me">${hearts(me.lives)}</div><b>SEN</b>${auraChips(me.board)}<div class="b2pile"><img src="img/back.webp" alt=""><span>${me.deck.length}</span></div></div>
    <div class="b2hand" id="b2hand">${(P=>me.hand.map((x,j)=>hk(x,j,P(j))).join(''))(handPos(me.hand.length))}</div>
@@ -1781,7 +1797,8 @@ function renderBattle(){if(!B)return;
   document.querySelectorAll('.bk[data-s]').forEach(el=>el.onclick=()=>tap(el.dataset.s,+el.dataset.i));
   document.querySelectorAll('.hk').forEach(el=>el.onclick=()=>tapHand(+el.dataset.h));
   {const h=$('#b2hand');if(h&&h.clientWidth&&h.clientWidth!==handW){handW=h.clientWidth;const P=handPos(h.children.length);[...h.children].forEach((e,k)=>{const m=P(k).match(/left:([\d.]+)px;--rot:([-\d.]+)deg/);e.style.left=m[1]+'px';e.style.setProperty('--rot',m[2]+'deg')})}}
-  {const bp=$('#bpass');if(bp)bp.onclick=async()=>{if(!B||B.busy)return;B.busy=true;B.log='Pas geçtin';await foeMove()}}
+  {const bp=$('#bpass');if(bp)bp.onclick=async()=>{if(!B||B.busy)return;B.busy=true;B.log='Pas geçtin';await foeMove()};
+  const ba=$('#bauto');if(ba)ba.onclick=()=>{if(!B)return;B.auto=!B.auto;try{localStorage.setItem('mr.auto',B.auto?'1':'')}catch(e){}B.lastAct=Date.now();renderBattle();if(B.auto&&autoDue())autoMove()}}
   if(B.justCharged&&B.justCharged.length){const l=B.justCharged;B.justCharged=null;setTimeout(()=>l.forEach(u=>{const el=document.querySelector(`.bk[data-u="${u}"]`);if(el){bnum(el,'DOLDU!','x');el.classList.add('chpop')}}),60)}
   const a=$('#again');if(a)a.onclick=()=>{B=null;startBattle()};
   {const fa=$('#fagain');if(fa)fa.onclick=()=>{const fr=B.fr;B=null;startBattle(undefined,fr)};
@@ -1809,7 +1826,7 @@ async function supAnim(s,j,i){const src=s==='me'?document.querySelector(`.hk[dat
   if(r.k==='evo'){B.log=`${who}: <b>${r.e.name}</b> sahada!`;renderBattle();const e2=elOf(s,i);if(e2)e2.animate([{filter:'brightness(4)',transform:'scale(1.12)'},{filter:'none',transform:'none'}],{duration:600});ringFx(elOf(s,i),'light','Evrimleşti!');SFX.reveal(2)}
   else{ringFx(e,r.k,'+30 can · +10 hasar');bnum(e,'+30','h');SFX.newCard()}
   await wait(600)}
-async function tapHand(j){if(!B||B.busy||B.over||B.turn!=='me')return;const x=B.me.hand[j];if(!x)return;
+async function tapHand(j){if(!B||B.busy||B.over||B.turn!=='me')return;B.lastAct=Date.now();const x=B.me.hand[j];if(!x)return;
   if(x.t==='c'){const i=B.me.board.findIndex(f=>!f);if(i<0){toast('Sahada boş yer yok');return}B.busy=true;B.sel=null;B.selH=null;await placeAnim('me',j,i);if(B){B.busy=false;renderBattle()}return}
   if(B.supUsed){toast('Bu tur destek kartı kullandın');return}
   if(!B.me.board.some(f=>f&&canSup(x.k,f,true)===true)){const f0=B.me.board.find(Boolean);toast(f0?canSup(x.k,B.me.board.find(f=>f&&canSup(x.k,f,true)!==true)||f0,true):'Sahada yaratığın yok');return}
@@ -1834,7 +1851,7 @@ function hitFx(el,k,tgt){const key=k==='w'?el+'S':el,C=FX2C[key];if(!tgt||!C)ret
   document.body.appendChild(d);const t0=performance.now(),n=C.b-C.a;
   (function step(t){const p=(t-t0)/C.d;if(p>=1||!d.isConnected){d.remove();return}const i=C.a+Math.min(n,Math.floor(p*(n+1)));d.style.backgroundPosition=`${(i%10)*100/9}% ${Math.floor(i/10)*100/(R-1)}%`;d.style.opacity=p>.75?(1-p)/.25:1;requestAnimationFrame(step)})(t0)}
 function newCardFx(s){if(s!=='me'||!B||B.me.hand.length<BAT.hand)return;const h=document.querySelector('#b2hand .hk:last-child');if(h)h.classList.add('newk')}
-function meTurnSetup(){B.turn='me';B.sel=null;B.selH=null;B.supUsed=false}
+function meTurnSetup(){B.turn='me';B.sel=null;B.selH=null;B.supUsed=false;B.lastAct=Date.now()}
 async function meTurn(first){if(!B||B.over)return;meTurnSetup();B.busy=true;
   if(first)B.justCharged=chargeStep(B,'me');else if(await beginTurn('me'))return;
   if(!B||B.over)return;if(rescue(B,'me')){B.log='Elinde yaratık kalmadı · bir destek kartın desteye döndü, yerine yaratık geldi';renderBattle();const h=document.querySelector('#b2hand .hk:last-child');if(h)h.classList.add('newk')}
@@ -2004,7 +2021,7 @@ function aiScore(a,d,atkB,defB){
   return sc+Math.random()*5;
 }
 async function tap(s,i){
-  if(!B||B.busy||B.over||B.turn!=='me')return;
+  if(!B||B.busy||B.over||B.turn!=='me')return;B.lastAct=Date.now();
   if(s==='me'&&B.selH!==null){const x=B.me.hand[B.selH],f=B.me.board[i];if(!f)return;const ok=canSup(x.k,f,true);if(ok!==true){toast(ok);return}
     B.busy=true;const j=B.selH;B.selH=null;await supAnim('me',j,i);if(B&&!B.over){B.busy=false;renderBattle()}return}
   if(s==='me'){if(!B.me.board[i])return;B.sel=B.sel===i?null:i;SFX.select();renderBattle();return}
