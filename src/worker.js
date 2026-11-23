@@ -8,6 +8,8 @@ const EZ_IDS = new Set(['83', '84', '85']);           // sadece oyunun sahibine 
 const PBKDF2_ITER = 20000;                            // ücretsiz planın işlemci sınırına uygun
 const SESSION_DAYS = 180;
 const MAX_SAVE = 512 * 1024;                          // bir kaydın en büyük boyutu (bayt)
+const ONLINE_MS = 150000;   // son 2,5 dakikada sinyal veren çevrimiçi sayılır
+const seenAt = (db, uid) => db.prepare('INSERT INTO presence (user_id, t) VALUES (?, ?) ON CONFLICT(user_id) DO UPDATE SET t = excluded.t').bind(uid, Date.now()).run();
 const MAX_FRIENDS = 50, MAX_PENDING = 30;
 const USER_RE = /^[A-Za-z0-9_çğıöşüÇĞİÖŞÜ]{3,16}$/;
 
@@ -22,6 +24,8 @@ function ensureSchema(db) {
     db.prepare(`CREATE TABLE IF NOT EXISTS friends (a INTEGER NOT NULL, b INTEGER NOT NULL, status TEXT NOT NULL, t INTEGER NOT NULL, PRIMARY KEY (a, b))`),
     db.prepare(`CREATE INDEX IF NOT EXISTS friends_b ON friends (b)`),
     // arkadaşların görebildiği özet: istatistikler ve arena destesi
+    // çevrimiçi durumu: oyun açıkken dakikada bir güncellenir
+    db.prepare(`CREATE TABLE IF NOT EXISTS presence (user_id INTEGER PRIMARY KEY, t INTEGER NOT NULL)`),
     db.prepare(`CREATE TABLE IF NOT EXISTS pub (user_id INTEGER PRIMARY KEY, stats TEXT NOT NULL, deck TEXT NOT NULL, updated INTEGER NOT NULL)`),
     // arkadaş destesine karşı yapılan savaşlar
     db.prepare(`CREATE TABLE IF NOT EXISTS duels (id INTEGER PRIMARY KEY AUTOINCREMENT, from_id INTEGER NOT NULL, to_id INTEGER NOT NULL, win INTEGER NOT NULL, t INTEGER NOT NULL)`),
@@ -241,6 +245,7 @@ async function handleApi(req, env, path) {
     return json({ ok: true });
   }
   if (path === '/api/me' && method === 'GET') {
+    await seenAt(db, user.id);
     const sv = await db.prepare('SELECT data, t, rev FROM saves WHERE user_id = ?').bind(user.id).first();
     return json({ user: user.name, owner, save: sv ? { data: fixEz(MR.normalize(JSON.parse(sv.data), ctxOf(user.id)), owner), t: sv.t, rev: sv.rev } : null });
   }
@@ -299,12 +304,12 @@ async function handleApi(req, env, path) {
 
   // ---------- ARKADAŞLAR ----------
   if (path === '/api/friends' && method === 'GET') {
-    const rows = (await db.prepare(`SELECT f.a, f.b, f.status, u.id AS oid, u.name, p.stats, p.updated
+    const rows = (await db.prepare(`SELECT f.a, f.b, f.status, u.id AS oid, u.name, p.stats, p.updated, pr.t AS last
       FROM friends f JOIN users u ON u.id = CASE WHEN f.a = ?1 THEN f.b ELSE f.a END
-      LEFT JOIN pub p ON p.user_id = u.id WHERE f.a = ?1 OR f.b = ?1`).bind(user.id).all()).results || [];
+      LEFT JOIN pub p ON p.user_id = u.id LEFT JOIN presence pr ON pr.user_id = u.id WHERE f.a = ?1 OR f.b = ?1`).bind(user.id).all()).results || [];
     const friends = [], incoming = [], outgoing = [];
     for (const r of rows) {
-      if (r.status === 'ok') friends.push({ name: r.name, stats: r.stats ? JSON.parse(r.stats) : null, seen: r.updated || 0 });
+      if (r.status === 'ok') friends.push({ name: r.name, stats: r.stats ? JSON.parse(r.stats) : null, seen: r.updated || 0, last: r.last || 0, on: !!r.last && Date.now() - r.last < ONLINE_MS });
       else if (r.b === user.id) incoming.push(r.name); else outgoing.push(r.name);
     }
     const duels = ((await db.prepare(`SELECT u.name, d.win, d.t FROM duels d JOIN users u ON u.id = d.from_id
@@ -382,9 +387,9 @@ async function handleApi(req, env, path) {
       return json({ clan: null, pending: pend, invites, cost: CL.cost });
     }
     const c = await db.prepare('SELECT id, name, descr, created FROM clans WHERE id = ?').bind(m.clan_id).first();
-    const members = ((await db.prepare(`SELECT u.name, m.role, m.joined, p.stats FROM clan_members m JOIN users u ON u.id = m.user_id
-      LEFT JOIN pub p ON p.user_id = m.user_id WHERE m.clan_id = ?`).bind(c.id).all()).results || [])
-      .map(r => ({ name: r.name, role: r.role, joined: r.joined, stats: r.stats ? JSON.parse(r.stats) : null }))
+    const members = ((await db.prepare(`SELECT u.name, m.role, m.joined, p.stats, pr.t AS last FROM clan_members m JOIN users u ON u.id = m.user_id
+      LEFT JOIN pub p ON p.user_id = m.user_id LEFT JOIN presence pr ON pr.user_id = m.user_id WHERE m.clan_id = ?`).bind(c.id).all()).results || [])
+      .map(r => ({ name: r.name, role: r.role, joined: r.joined, stats: r.stats ? JSON.parse(r.stats) : null, last: r.last || 0, on: !!r.last && Date.now() - r.last < ONLINE_MS }))
       .sort((x, y) => ((y.stats || {}).tr || 0) - ((x.stats || {}).tr || 0));
     const joins = (m.role === 'leader' || m.role === 'co') ? ((await db.prepare(`SELECT u.name, p.stats FROM clan_joins j JOIN users u ON u.id = j.user_id
       LEFT JOIN pub p ON p.user_id = j.user_id WHERE j.clan_id = ? ORDER BY j.t`).bind(c.id).all()).results || []).map(r => ({ name: r.name, stats: r.stats ? JSON.parse(r.stats) : null })) : [];
@@ -632,6 +637,7 @@ async function handleApi(req, env, path) {
     return json({ feed });
   }
   if (path === '/api/notify' && method === 'GET') {
+    await seenAt(db, user.id);
     const since = Math.floor(Number(new URL(req.url).searchParams.get('since')) || 0), m = await myClan(db, user.id);
     const fr = (await db.prepare(`SELECT COUNT(*) AS n FROM friends WHERE b = ? AND status = 'pending'`).bind(user.id).first()).n;
     const cj = m && (m.role === 'leader' || m.role === 'co') ? (await db.prepare('SELECT COUNT(*) AS n FROM clan_joins WHERE clan_id = ?').bind(m.clan_id).first()).n : 0;

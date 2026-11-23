@@ -374,7 +374,10 @@ th{color:var(--mute);font-weight:500}
 .lvpill{padding:2px 8px 2px 4px}
 .lvpill.hasav{padding:2px;cursor:pointer}.lvpill.hasav .lvw{width:36px;height:36px}.lvpill.hasav #lvimg{border-radius:50%;object-fit:cover;border:2px solid var(--gold);box-sizing:border-box;box-shadow:0 2px 6px #0008}
 .lvpill.hasav .lvw b{inset:auto -6px -5px auto;width:19px;height:19px;border-radius:50%;background:#2a1650;border:1.5px solid var(--gold);font-size:10px}
-.avw{position:relative;width:38px;height:38px;flex:none}.avw .avm{width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid #ffffff44;box-sizing:border-box}
+.avw{position:relative;width:38px;height:38px;flex:none}
+.avw.on::before{content:'';position:absolute;left:-1px;top:-1px;width:11px;height:11px;border-radius:50%;background:#3ddc5a;box-shadow:0 0 0 2px #140a2a;z-index:1}
+.onl{color:#5be37a;font-style:normal;font-weight:700;margin-right:6px}.ofl{color:#9aa6b2;font-style:normal;margin-right:6px}
+.onc{margin:0;font:600 13px Rubik,sans-serif;color:#c9d3dc}.onc b{color:#3ddc5a}.avw .avm{width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid #ffffff44;box-sizing:border-box}
 .avw .avlg{position:absolute;right:-5px;bottom:-4px;width:20px;height:20px;object-fit:contain;filter:drop-shadow(0 1px 2px #000)}
 [data-prof]{cursor:pointer}
 .pfh{display:flex;gap:12px;align-items:center}.pfav{position:relative;width:84px;height:84px;flex:none}.pfav img.pfi{width:84px;height:84px;border-radius:50%;object-fit:cover;border:3px solid var(--gold);box-sizing:border-box;box-shadow:0 3px 10px #000a}
@@ -2207,7 +2210,9 @@ const ASSET_V=8;try{if('serviceWorker' in navigator&&location.protocol==='https:
 /* ---------- AYARLAR ---------- */
 /* ---------- PROFİL: RESİM, İSTATİSTİK, MAÇ GEÇMİŞİ, BAŞARIMLAR ---------- */
 // listelerde küçük profil resmi + köşede lig rozeti
-function avW(av,lg){return `<span class="avw"><img class="avm" src="img/t/${av||MR.TUT.card}.webp" alt="">${lg!=null?`<img class="avlg" src="img/lg/${Math.min(lg||0,LEAGUES.length-1)}.webp" alt="">`:''}</span>`}
+// çevrimiçi durumu: yeşil nokta ya da son görülme yazısı
+const onTxt=f=>f.me?'':f.on?'<em class="onl">● Çevrimiçi</em>':f.last?`<em class="ofl">${agoTxt(f.last)}</em>`:'';
+function avW(av,lg,on){return `<span class="avw${on?' on':''}"><img class="avm" src="img/t/${av||MR.TUT.card}.webp" alt="">${lg!=null?`<img class="avlg" src="img/lg/${Math.min(lg||0,LEAGUES.length-1)}.webp" alt="">`:''}</span>`}
 function achToast(list){if(!list||!list.length)return;list.forEach((n,i)=>setTimeout(()=>{toast('🏅 Başarım: '+n);try{SFX.coins()}catch(e){}},400+i*1800))}
 // bir isme dokununca o oyuncunun profili açılır (tablolar, klan, akış)
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-prof]');if(!t||!t.dataset.prof||window.claude)return;
@@ -2362,8 +2367,8 @@ async function openClan(view){if(tab!=='clan'||(B&&!B.over))return;const ov=$('#
   let body='';
   if(view==='feed')body=feedHTML(j.feed);
   else if(view==='mem')body=`${off&&j.joins.length?`<p class="frh">Katılma istekleri</p><div class="frl">${j.joins.map(x=>`<div class="frr"><div class="nm"><b>${escH(x.name)}</b><small>${x.stats?`🏆 ${x.stats.tr} · Sv ${x.stats.lvl}`:'Yeni oyuncu'}</small></div><button class="btn" data-cja="${escH(x.name)}">Kabul</button><button class="frx" data-cjd="${escH(x.name)}">Reddet</button></div>`).join('')}</div><p class="frh">Üyeler</p>`:''}
-    <div class="frl">${j.members.map((m,i)=>{const st=m.stats||{},isMe=m.name===me;return `<div class="frr cm${isMe?' me':''}"><span class="rk">${i+1}</span>${avW(st.av,st.lg)}
-      <div class="nm"><b data-prof="${escH(m.name)}">${escH(m.name)}${RL[m.role]?` <em class="rlb ${m.role}">${RL[m.role]}</em>`:''}</b><small>${m.stats?`🏆 ${st.tr} · Sv ${st.lvl} · ${st.col}/${st.tot} kart`:'Henüz oynamadı'}</small></div>
+    <div class="frl">${j.members.map((m,i)=>{const st=m.stats||{},isMe=m.name===me;return `<div class="frr cm${isMe?' me':''}"><span class="rk">${i+1}</span>${avW(st.av,st.lg,!isMe&&m.on)}
+      <div class="nm"><b data-prof="${escH(m.name)}">${escH(m.name)}${RL[m.role]?` <em class="rlb ${m.role}">${RL[m.role]}</em>`:''}</b><small>${isMe?'':onTxt(m)}${m.stats?`🏆 ${st.tr} · Sv ${st.lvl} · ${st.col}/${st.tot} kart`:'Henüz oynamadı'}</small></div>
       ${isMe?'':`<button class="btn" data-fight="${escH(m.name)}">Savaş</button>`}
       ${!isMe&&j.role==='leader'&&m.role!=='leader'?`<button class="frx" data-crl="${escH(m.name)}" data-to="${m.role==='co'?'member':'co'}" title="${m.role==='co'?'Yardımcılığı al':'Yardımcı yap'}">${m.role==='co'?'★−':'★+'}</button>`:''}
       ${!isMe&&off&&m.role!=='leader'&&!(j.role==='co'&&m.role==='co')?`<button class="frx" data-ckk="${escH(m.name)}" aria-label="Klandan çıkar">✕</button>`:''}</div>`}).join('')}</div>
@@ -2404,9 +2409,9 @@ async function openFriends(view){const ov=$('#ov');ov.className='ov on';view=vie
   let body='';
   if(view==='tbl'){
     const me={name:accGet().user,me:1,stats:{tr:S.trophy||0,lg:lgOf(S.trophy||0),lvl:S.lvl||1,col:uniq(),tot:N,av:MR.avatarOf(S)}};
-    const all=[me,...j.friends].sort((x,y)=>((y.stats||{}).tr||0)-((x.stats||{}).tr||0));
-    body=`<div class="frl">${all.map((f,i)=>{const st=f.stats||{};return `<div class="frr${f.me?' me':''}"><span class="rk">${i+1}</span>${avW(st.av,st.lg)}
-      <div class="nm"><b data-prof="${escH(f.name)}">${escH(f.name)}${f.me?' (sen)':''}</b><small>${f.stats?`🏆 ${st.tr} · Sv ${st.lvl} · ${st.col}/${st.tot} kart`:'Henüz oynamadı'}</small></div>
+    const all=[me,...j.friends].sort((x,y)=>((y.stats||{}).tr||0)-((x.stats||{}).tr||0)),nOn=j.friends.filter(f=>f.on).length;
+    body=`${j.friends.length?`<p class="onc">${nOn?`<b>●</b> ${nOn} arkadaşın çevrimiçi`:'Şu an çevrimiçi arkadaşın yok'}</p>`:''}<div class="frl">${all.map((f,i)=>{const st=f.stats||{};return `<div class="frr${f.me?' me':''}"><span class="rk">${i+1}</span>${avW(st.av,st.lg,f.on)}
+      <div class="nm"><b data-prof="${escH(f.name)}">${escH(f.name)}${f.me?' (sen)':''}</b><small>${onTxt(f)}${f.stats?`🏆 ${st.tr} · Sv ${st.lvl} · ${st.col}/${st.tot} kart`:'Henüz oynamadı'}</small></div>
       ${f.me?'':`<button class="btn" data-fight="${escH(f.name)}">Savaş</button><button class="frx" data-rm="${escH(f.name)}" aria-label="Arkadaşlıktan çıkar">✕</button>`}</div>`}).join('')}</div>
       ${j.friends.length?'':'<p class="frem">Henüz arkadaşın yok. <b>Ekle</b> sekmesinden kullanıcı adıyla istek gönder.</p>'}
       ${j.duels.length?`<p class="frh">Senin destene karşı savaşlar</p>${j.duels.map(d=>`<div class="frd"><b>${escH(d.name)}</b> destenle savaştı ve <span class="${d.win?'w':'l'}">${d.win?'kazandı':'kaybetti'}</span> · ${agoTxt(d.t)}</div>`).join('')}`:''}
@@ -2489,7 +2494,9 @@ function afterAuth(j,login){const a=accGet(),sv=j.save,r=sv&&sv.data;
   if(!B)render();frBadge();seasonLoad()}
 async function cloudInit(){if(window.claude)return;
   // giriş sonradan yapılsa da çalışsın diye dinleyici her zaman kurulur; içeride oturum kontrol edilir
-  addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')cloudPush(true);else cloudPull()});
+  addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')cloudPush(true);else{cloudPull();frBadge()}});
+  // çevrimiçi sinyali: oyun ekranda açıkken dakikada bir (bildirim sayılarını da tazeler)
+  setInterval(()=>{if(cloudOn()&&document.visibilityState==='visible')frBadge()},60000);
   if(!accGet().tok){openAccount(true);return}   // hesap şart
   try{afterAuth(await api('/api/me'),false)}catch(e){if(e.status===401)openAccount(true)}}
 function openAccount(force){if(force&&$('#accu'))return;const ov=$('#ov');ov.className='ov on';window.__accForce=!!force;
