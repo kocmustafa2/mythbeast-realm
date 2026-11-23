@@ -33,6 +33,9 @@ function ensureSchema(db) {
     db.prepare(`CREATE TABLE IF NOT EXISTS clan_joins (user_id INTEGER NOT NULL, clan_id INTEGER NOT NULL, t INTEGER NOT NULL, PRIMARY KEY (user_id, clan_id))`),
     db.prepare(`CREATE INDEX IF NOT EXISTS clan_joins_c ON clan_joins (clan_id)`),
     // klan davetleri: lider/yardımcı bir oyuncuyu davet eder, oyuncu kabul edince doğrudan katılır
+    // haftalık sezon: arena puanı (net kupa) ve G/M; season_claims önceki sezon ödülünün bir kez verilmesini sağlar
+    db.prepare(`CREATE TABLE IF NOT EXISTS season_stats (user_id INTEGER NOT NULL, season INTEGER NOT NULL, pts INTEGER NOT NULL DEFAULT 0, wins INTEGER NOT NULL DEFAULT 0, losses INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (user_id, season))`),
+    db.prepare(`CREATE TABLE IF NOT EXISTS season_claims (user_id INTEGER NOT NULL, season INTEGER NOT NULL, t INTEGER NOT NULL, PRIMARY KEY (user_id, season))`),
     db.prepare(`CREATE TABLE IF NOT EXISTS clan_invites (user_id INTEGER NOT NULL, clan_id INTEGER NOT NULL, by_id INTEGER NOT NULL, t INTEGER NOT NULL, PRIMARY KEY (user_id, clan_id))`),
     db.prepare(`CREATE INDEX IF NOT EXISTS clan_invites_c ON clan_invites (clan_id)`),
     // kart istekleri
@@ -270,6 +273,11 @@ async function handleApi(req, env, path) {
       fixEz(st, owner);
       const rev = await storeState(db, user.id, st, cur.rev, cur.exists);
       if (rev === false) continue;          // aynı anda başka bir işlem yazdı: baştan dene
+      // sezon puanı: sadece arena (bitirilen ya da terk edilip yenilgi sayılan savaşlar)
+      const sAdd = (pts, w, l) => db.prepare('INSERT INTO season_stats (user_id, season, pts, wins, losses) VALUES (?, ?, ?, ?, ?) ON CONFLICT(user_id, season) DO UPDATE SET pts = pts + excluded.pts, wins = wins + excluded.wins, losses = losses + excluded.losses')
+        .bind(user.id, MR.seasonOf(Date.now()), pts, w, l).run();
+      if (a === 'battle_end' && r && r.mode === 'arena') await sAdd(r.dt || 0, r.win ? 1 : 0, r.win ? 0 : 1);
+      if (a === 'battle_start' && r && r.forfeit) await sAdd(r.forfeit.dt || 0, 0, 1);
       if (a === 'battle_end' || a === 'pack' || a === 'evo' || a === 'awaken' || a === 'craft' || a === 'chest')
         await db.prepare("INSERT INTO pub (user_id, stats, deck, updated) VALUES (?, ?, '[]', ?) ON CONFLICT(user_id) DO UPDATE SET stats = excluded.stats, updated = excluded.updated")
           .bind(user.id, JSON.stringify(MR.pubStats(st)), Date.now()).run();   // deste seçimine dokunmadan tabloyu güncelle
@@ -554,6 +562,33 @@ async function handleApi(req, env, path) {
     }
     await feedAdd(db, await sameClan(db, user.id, rq.user_id), 'donate', user.id, rq.user_id, rq.card);
     return json({ ok: true, r: give.r, got: slot.got, need: slot.need, save: give.st, rev: give.rev });
+  }
+
+  // ---------- HAFTALIK SEZON ----------
+  if (path === '/api/season' && method === 'GET') {
+    const now = Date.now(), cur = MR.seasonOf(now), prev = cur - 1;
+    // grup: ben + arkadaşlarım + klan üyelerim (tekrarsız)
+    const ids = new Set([user.id]);
+    for (const r of ((await db.prepare(`SELECT CASE WHEN a = ?1 THEN b ELSE a END AS id FROM friends WHERE status = 'ok' AND (a = ?1 OR b = ?1)`).bind(user.id).all()).results || [])) ids.add(r.id);
+    const mc = await myClan(db, user.id);
+    if (mc) for (const r of ((await db.prepare('SELECT user_id AS id FROM clan_members WHERE clan_id = ?').bind(mc.clan_id).all()).results || [])) ids.add(r.id);
+    const idl = [...ids], ph = idl.map(() => '?').join(',');
+    const rowsOf = async sid => ((await db.prepare(`SELECT u.id, u.name, p.stats, s.pts, s.wins, s.losses FROM users u LEFT JOIN pub p ON p.user_id = u.id
+      LEFT JOIN season_stats s ON s.user_id = u.id AND s.season = ? WHERE u.id IN (${ph})`).bind(sid, ...idl).all()).results || [])
+      .map(r => ({ id: r.id, name: r.name, me: r.id === user.id, lg: r.stats ? (JSON.parse(r.stats).lg || 0) : 0, pts: r.pts || 0, wins: r.wins || 0, losses: r.losses || 0 }));
+    // önceki sezonun ödülü: bir kez (season_claims satırı kilit görevi görür)
+    let reward = null, save = null, rev = null;
+    const lock = await db.prepare('INSERT INTO season_claims (user_id, season, t) VALUES (?, ?, ?) ON CONFLICT DO NOTHING').bind(user.id, prev, now).run();
+    if (lock.meta.changes) {
+      const rw = MR.seasonRewardFor(await rowsOf(prev));
+      if (rw && (rw.pk || rw.g)) {
+        try { const m = await mutateState(db, env, user.id, st => MR.seasonGive(st, rw)); save = m.st; rev = m.rev; reward = { ...rw, season: prev }; }
+        catch (e) { await db.prepare('DELETE FROM season_claims WHERE user_id = ? AND season = ?').bind(user.id, prev).run(); }
+      }
+    }
+    const rows = (await rowsOf(cur)).sort((a, b) => (b.pts - a.pts) || (b.wins - a.wins) || a.name.localeCompare(b.name, 'tr'))
+      .map(({ id, ...r }) => r);
+    return json({ season: cur, ends: MR.seasonEnd(cur), rows, rewards: MR.SEASON.rewards, part: MR.SEASON.part, minPlayers: MR.SEASON.minPlayers, reward, save, rev });
   }
 
   // ---------- AKIŞ VE BİLDİRİM ----------

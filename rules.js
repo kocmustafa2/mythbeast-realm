@@ -240,7 +240,7 @@ const fresh=()=>({gold:ECON.startGold,dust:0,free:ECON.freePacks,owned:{},pity:0
    ===================================================================== */
 // Sunucunun sahip olduğu alanlar: istemcinin kaydetme isteği bunları DEĞİŞTİREMEZ.
 const ECON_KEYS=['gold','dust','free','owned','shiny','sup','supV','supV2','pity','xp','lvl','opened','trophy','bestLg','wins','losses',
-  'streak','chest','chests','hist','gift','gt','advC','advV','exB','rqT','dn','dq','rare','tp','uidN','tut','bt','bl'];
+  'streak','lstreak','chest','chests','hist','gift','gt','advC','advV','exB','rqT','dn','dq','rare','tp','uidN','tut','bt','bl'];
 // İstemcinin değiştirebildiği zararsız alanlar (ayarlar, deste seçimi, ipuçları).
 const CLIENT_KEYS=['mv','sv','snd','deck','deck2','shOff','pset','th','sid','t'];
 const TUT_CLIENT_MAX=2;            // istemci öğreticiyi en fazla bu adıma kendisi ilerletebilir (hoş geldin → paket aç)
@@ -324,6 +324,7 @@ function battleEnd(st,p,ctx){const bt=st.bt,now=ctx.now;
   if(win){st.streak=(st.streak||0)+1;const sb=strkB(st.streak);if(sb.tr||sb.g){R.sb={n:st.streak,...sb};R.dt+=sb.tr;R.g+=sb.g;st.gold+=sb.g}
     st.chest=(st.chest||0)+1;if(st.chest>=CHEST.need){st.chest-=CHEST.need;st.chests=(st.chests||0)+1;R.chest=1}}
   else{R.lost=st.streak||0;st.streak=0}
+  st.lstreak=win?0:(st.lstreak||0)+1;   // üst üste arena yenilgisi: 3 ve üstünde sıradaki rakip kolaylaşır
   st.trophy=Math.max(0,(st.trophy||0)+R.dt);if(win)st.wins++;else st.losses++;
   st.hist=[...(st.hist||[]),{w:win?1:0,dt:R.dt}].slice(-5);
   R.tutEnd=0;if(st.tut===6){st.tut=8;st.free++;R.tutEnd=1}
@@ -333,7 +334,7 @@ function battleEnd(st,p,ctx){const bt=st.bt,now=ctx.now;
 // Bitmeden terk edilen arena savaşı yenilgi sayılır (kaybedeceğini görünce sayfayı yenileyip kaçmayı önler).
 function forfeit(st,now){const bt=st.bt;st.bt=null;if(!bt||bt.mode!=='arena'||bt.tut)return null;
   const lg0=lgOf(st.trophy||0),floor=LEAGUES[lg0].min,dt=Math.max(TROPHY.loss,floor-(st.trophy||0));
-  st.trophy=Math.max(0,(st.trophy||0)+dt);st.losses++;st.streak=0;st.hist=[...(st.hist||[]),{w:0,dt}].slice(-5);return{dt}}
+  st.trophy=Math.max(0,(st.trophy||0)+dt);st.losses++;st.streak=0;st.lstreak=(st.lstreak||0)+1;st.hist=[...(st.hist||[]),{w:0,dt}].slice(-5);return{dt}}
 
 // Tek giriş noktası: a = işlem adı, p = parametreler, ctx = {rng, now, uid?, friendOk?}
 function act(st,a,p,ctx){p=p||{};const rng=ctx.rng,now=ctx.now;normalize(st,ctx);
@@ -376,6 +377,17 @@ function act(st,a,p,ctx){p=p||{};const rng=ctx.rng,now=ctx.now;normalize(st,ctx)
   }
   throw uerr('Bilinmeyen işlem.');
 }
+/* ---------- HAFTALIK SEZON (arkadaşlar + klan arası) ----------
+   Sezon her pazartesi 00:00 Türkiye saatinde (UTC+3) başlar. Puan = sezonda arenada kazanılan net kupa. */
+const SEASON={week:604800e3,offset:4*86400e3-3*3600e3,   // 1970-01-05 pazartesi 00:00 UTC+3
+  rewards:[{pk:5,g:600},{pk:3,g:400},{pk:2,g:200}],part:{pk:0,g:100},minPlayers:3};
+const seasonOf=now=>Math.floor((now-SEASON.offset)/SEASON.week);
+const seasonEnd=id=>(id+1)*SEASON.week+SEASON.offset;
+// rows: [{me, pts, wins, losses}] → ödül (sıra + paket/altın) ya da null
+function seasonRewardFor(rows){const P=rows.filter(r=>(r.wins||0)+(r.losses||0)>0).sort((a,b)=>(b.pts-a.pts)||((b.wins||0)-(a.wins||0)));
+  const i=P.findIndex(r=>r.me);if(i<0)return null;const rank=i+1;
+  const top=P.length>=SEASON.minPlayers&&rank<=3?SEASON.rewards[rank-1]:null;return{rank,n:P.length,...(top||SEASON.part),top:!!top}}
+function seasonGive(st,rw){st.free+=rw.pk||0;st.gold+=rw.g||0;return rw}
 /* ---------- KLAN VE KART İSTEME ---------- */
 const CLAN={cost:500,max:30,nameMin:3,nameMax:20,descMax:80};
 // kart isteği: 8 saatte bir, 24 saat açık; Yaygın 10, Nadir 4 kopya; bağışçının en az 2 kopyası olmalı
@@ -402,6 +414,7 @@ const MR={ELS,round5,round10,RAR,TYPE_HP,TYPE_RET,DMG,ATK,FXV,FX,atkDmg,PACK,XP,
   ADV_CH,ADV_RULE,ADV_N,ADV_P,advStage,advStageX,TUT,fresh,
   ECON_KEYS,CLIENT_KEYS,BATTLE_MIN_MS,BATTLE_PER_HOUR,own,tutOn,roll,drawCard,rollPack,copies,canEvo,canAwaken,giveSup,rndSup,addXp,
   giftTick,dayKey,dqList,dqInc,normalize,mergeClient,act,pubStats,
+  SEASON,seasonOf,seasonEnd,seasonRewardFor,seasonGive,
   CLAN,REQ,reqable,reqCheck,reqOpen,dnLeft,donateCheck,donateGive,donateGet,clanPay};
 G.MR=MR;
 })(typeof globalThis!=='undefined'?globalThis:this);
