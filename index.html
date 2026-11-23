@@ -97,7 +97,7 @@ h3{font:20px/1.2 'MRDisplay',sans-serif;margin:22px 0 8px}
 .r3 .hd{padding:0 .2em .1em}.r3 .atks{padding:.15em .25em;flex:0 0 auto;margin-top:.2em}.r3 .ftr{padding:.1em .25em;margin-top:auto}
 .r3 .inf{background:#ffffffd0}
 .shine{position:absolute;inset:0;border-radius:.3em;pointer-events:none;background:radial-gradient(circle at var(--mx) var(--my),#ffffff66,transparent 50%);mix-blend-mode:overlay;transform:translateZ(1.5em)}
-.r2 .art::after,.r3 .art::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 20%,#ff6bd5 32%,#6bf3ff 44%,#fffb6b 56%,#7dff8a 68%,transparent 80%);background-size:260% 260%;background-position:var(--mx) var(--my);mix-blend-mode:color-dodge;opacity:.33;pointer-events:none}
+.r2 .art::after,.r3 .art::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 20%,#ff6bd5 32%,#6bf3ff 44%,#fffb6b 56%,#7dff8a 68%,transparent 80%);background-size:260% 260%;background-position:var(--mx) var(--my);mix-blend-mode:color-dodge;opacity:.2;pointer-events:none}
 .new{position:absolute;top:-.55em;left:50%;translate:-50% 0;background:var(--gold);color:#3a2600;font-size:.5em;font-weight:700;padding:.3em .7em;border-radius:99px;transform:translateZ(2em);white-space:nowrap;line-height:1}
 .card.miss .frame{background:linear-gradient(#1b2226,#12181b) padding-box,linear-gradient(#2c373c,#2c373c) border-box;color:#6b7c83}
 .card.miss .art .aimg{filter:grayscale(1) brightness(.3) contrast(1.3)}
@@ -1197,7 +1197,7 @@ function cardHTML(c,o={}){
   const F=frameFor(c);if(F)return frameCard(c,o,F);
   const w=weakOf(c.el),rs=resOf(c.el);
   return `<div class="card r${c.r} t-${c.el}${o.miss?' miss':''}${o.big?' big':''}${o.noTilt?'':' tiltable'}${shCls(c,o)}" data-id="${c.id}"${o.w?` style="--w:${o.w}"`:''}><div class="cs"><div class="tilt"><div class="frame">
-  <div class="art">${o.full||o.big?artFull(c):art(c)}</div>
+  <div class="art">${o.full||o.big?(c.r===3&&SHART.has(c.id)?`<img class="aimg" src="img/s/${c.id}.jpg" alt="${c.name}" draggable="false" decoding="async" onerror="this.onerror=null;this.src='img/${c.id}.jpg'">`:artFull(c)):art(c)}</div>
   <div class="hd"><div class="l"><span class="stg">${stageName(c)}</span><div class="nm">${c.name}</div></div><div class="hpv">${ic('heart','hpi')}${c.hp}</div><div class="ti">${icon(c.el)}</div></div>
   <div class="sp"></div>
   <div class="inf">${auraText(c)}</div>
