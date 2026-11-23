@@ -652,7 +652,26 @@ async function handleApi(req, env, path) {
     }
     const rows = (await rowsOf(cur)).sort((a, b) => (b.pts - a.pts) || (b.wins - a.wins) || a.name.localeCompare(b.name, 'tr'))
       .map(({ id, ...r }) => r);
-    return json({ season: cur, ends: MR.seasonEnd(cur), rows, rewards: MR.SEASON.rewards, part: MR.SEASON.part, minPlayers: MR.SEASON.minPlayers, reward, save, rev });
+    // GENEL SIRALAMA: o sezon arenada oynayan bütün oyuncular (ilk 50 + benim sıram)
+    const GSEL = `SELECT u.id, u.name, p.stats, s.pts, s.wins, s.losses FROM season_stats s JOIN users u ON u.id = s.user_id LEFT JOIN pub p ON p.user_id = u.id
+      WHERE s.season = ? AND (s.wins + s.losses) > 0 ORDER BY s.pts DESC, s.wins DESC, u.name`;
+    const gmap = r => ({ name: r.name, me: r.id === user.id, lg: r.stats ? (JSON.parse(r.stats).lg || 0) : 0, av: r.stats ? (JSON.parse(r.stats).av || 0) : 0, pts: r.pts || 0, wins: r.wins || 0, losses: r.losses || 0 });
+    const gAll = (await db.prepare(GSEL).bind(cur).all()).results || [];
+    const gi = gAll.findIndex(r => r.id === user.id);
+    const global = { rows: gAll.slice(0, 50).map(gmap), total: gAll.length, meRank: gi >= 0 ? gi + 1 : 0, me: gi >= 50 ? gmap(gAll[gi]) : null };
+    // genel sıralamanın küçük ödülü (önceki sezon, en az 5 oyuncu varsa ilk 3): ayrı kilit
+    let greward = null;
+    const glock = await db.prepare('INSERT INTO season_claims (user_id, season, t) VALUES (?, ?, ?) ON CONFLICT DO NOTHING').bind(user.id, prev + 1000000, now).run();
+    if (glock.meta.changes) {
+      const gp = (await db.prepare(GSEL).bind(prev).all()).results || [], rk = gp.findIndex(r => r.id === user.id);
+      const rw = gp.length >= MR.SEASON.gMin && rk >= 0 && rk < 3 ? MR.SEASON.gRewards[rk] : null;
+      if (rw) {
+        try { const m = await mutateState(db, env, user.id, st => MR.seasonGive(st, rw)); save = m.st; rev = m.rev; greward = { ...rw, rank: rk + 1, season: prev }; }
+        catch (e) { await db.prepare('DELETE FROM season_claims WHERE user_id = ? AND season = ?').bind(user.id, prev + 1000000).run(); }
+      }
+    }
+    return json({ season: cur, ends: MR.seasonEnd(cur), rows, global, rewards: MR.SEASON.rewards, part: MR.SEASON.part, minPlayers: MR.SEASON.minPlayers,
+      gRewards: MR.SEASON.gRewards, gMin: MR.SEASON.gMin, reward, greward, save, rev });
   }
 
   // ---------- AKIŞ VE BİLDİRİM ----------

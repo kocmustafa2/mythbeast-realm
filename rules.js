@@ -386,7 +386,9 @@ function act(st,a,p,ctx){p=p||{};const rng=ctx.rng,now=ctx.now;normalize(st,ctx)
 /* ---------- HAFTALIK SEZON (arkadaşlar + klan arası) ----------
    Sezon her pazartesi 00:00 Türkiye saatinde (UTC+3) başlar. Puan = sezonda arenada kazanılan net kupa. */
 const SEASON={week:604800e3,offset:4*86400e3-3*3600e3,   // 1970-01-05 pazartesi 00:00 UTC+3
-  rewards:[{pk:5,g:600},{pk:3,g:400},{pk:2,g:200}],part:{pk:0,g:100},minPlayers:3};
+  rewards:[{pk:5,g:600},{pk:3,g:400},{pk:2,g:200}],part:{pk:0,g:100},minPlayers:3,
+  // genel (tüm oyuncular) sıralamasının küçük ödülü: önceki sezonda en az gMin oyuncu oynadıysa ilk 3
+  gRewards:[{pk:1,g:150},{g:100},{g:50}],gMin:5};
 const seasonOf=now=>Math.floor((now-SEASON.offset)/SEASON.week);
 const seasonEnd=id=>(id+1)*SEASON.week+SEASON.offset;
 // rows: [{me, pts, wins, losses}] → ödül (sıra + paket/altın) ya da null
