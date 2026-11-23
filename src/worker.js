@@ -10,6 +10,23 @@ const SESSION_DAYS = 180;
 const MAX_SAVE = 512 * 1024;                          // bir kaydın en büyük boyutu (bayt)
 const ONLINE_MS = 150000;   // son 2,5 dakikada sinyal veren çevrimiçi sayılır
 const seenAt = (db, uid) => db.prepare('INSERT INTO presence (user_id, t) VALUES (?, ?) ON CONFLICT(user_id) DO UPDATE SET t = excluded.t').bind(uid, Date.now()).run();
+// ---------- SOHBET YARDIMCILARI ----------
+const CHAT_MAX = 200;
+const uerr = (msg, status) => Object.assign(new Error(msg), { user: true, status });
+// basit küfür filtresi: kelimenin içinde geçen kaba ifadeler yıldızlanır (harf benzerleri ve tekrarlar dahil)
+// kısa kaba kelimeler sadece tam (ya da yaygın ekleriyle), uzunlar kelimenin içinde geçince yakalanır
+const BAD_SHORT = ['amk','aq','amq','oç','oc','piç','pic','göt','got','sik','sg','mk'];
+const BAD_SUFX = ['','e','i','ı','u','ü','im','in','ım','ın','ini','ine','ler','lar','ler'];
+const BAD_LONG = ['orospu','yarrak','yarağ','yarak','ibne','kahpe','pezevenk','gavat','şerefsiz','serefsiz','gerizekal','siktir','sikerim','sikeyim','sikik','sikiş','sikis','amına','amina','amcık','amcik','salak','fuck','shit','bitch','motherf'];
+const norm = t => t.toLocaleLowerCase('tr').replace(/[0@]/g, 'o').replace(/1/g, 'i').replace(/3/g, 'e').replace(/\$/g, 's').replace(/(.)\1+/g, '$1');
+function cleanTxt(txt) {
+  return txt.split(/(\s+)/).map(w => { const n = norm(w).replace(/[^a-zçğıöşü]/g, '');
+    const r = w.toLocaleLowerCase('tr').replace(/[0@]/g, 'o').replace(/[^a-zçğıöşü]/g, '');   // kısa kelimelerde harf tekrarı birleştirilmez (sikke ≠ sik)
+    const bad = n && (BAD_LONG.some(b => n.includes(norm(b))) || BAD_SHORT.some(b => BAD_SUFX.some(x => r === b + x || n === b)));
+    return bad ? '*'.repeat(Math.min(w.length, 6)) : w; }).join('');
+}
+const dmRoom = (x, y) => 'd:' + Math.min(x, y) + ':' + Math.max(x, y);
+const isBlocked = async (db, by, who) => !!(await db.prepare('SELECT 1 FROM blocks WHERE user_id = ? AND blocked = ?').bind(by, who).first());
 const MAX_FRIENDS = 50, MAX_PENDING = 30;
 const USER_RE = /^[A-Za-z0-9_çğıöşüÇĞİÖŞÜ]{3,16}$/;
 
@@ -25,6 +42,11 @@ function ensureSchema(db) {
     db.prepare(`CREATE INDEX IF NOT EXISTS friends_b ON friends (b)`),
     // arkadaşların görebildiği özet: istatistikler ve arena destesi
     // çevrimiçi durumu: oyun açıkken dakikada bir güncellenir
+    // sohbet: oda 'c:<klan>' ya da 'd:<küçük id>:<büyük id>' (özel)
+    db.prepare(`CREATE TABLE IF NOT EXISTS chat (id INTEGER PRIMARY KEY AUTOINCREMENT, room TEXT NOT NULL, user_id INTEGER NOT NULL, txt TEXT NOT NULL, t INTEGER NOT NULL, del INTEGER NOT NULL DEFAULT 0)`),
+    db.prepare(`CREATE INDEX IF NOT EXISTS chat_room ON chat (room, id)`),
+    db.prepare(`CREATE TABLE IF NOT EXISTS chat_read (user_id INTEGER NOT NULL, room TEXT NOT NULL, last INTEGER NOT NULL, PRIMARY KEY (user_id, room))`),
+    db.prepare(`CREATE TABLE IF NOT EXISTS blocks (user_id INTEGER NOT NULL, blocked INTEGER NOT NULL, PRIMARY KEY (user_id, blocked))`),
     db.prepare(`CREATE TABLE IF NOT EXISTS presence (user_id INTEGER PRIMARY KEY, t INTEGER NOT NULL)`),
     db.prepare(`CREATE TABLE IF NOT EXISTS pub (user_id INTEGER PRIMARY KEY, stats TEXT NOT NULL, deck TEXT NOT NULL, updated INTEGER NOT NULL)`),
     // arkadaş destesine karşı yapılan savaşlar
@@ -307,9 +329,12 @@ async function handleApi(req, env, path) {
     const rows = (await db.prepare(`SELECT f.a, f.b, f.status, u.id AS oid, u.name, p.stats, p.updated, pr.t AS last
       FROM friends f JOIN users u ON u.id = CASE WHEN f.a = ?1 THEN f.b ELSE f.a END
       LEFT JOIN pub p ON p.user_id = u.id LEFT JOIN presence pr ON pr.user_id = u.id WHERE f.a = ?1 OR f.b = ?1`).bind(user.id).all()).results || [];
+    const unr = {};   // arkadaş başına okunmamış özel mesaj
+    for (const r of ((await db.prepare(`SELECT c.user_id AS uid, COUNT(*) AS n FROM chat c LEFT JOIN chat_read rd ON rd.user_id = ?1 AND rd.room = c.room
+      WHERE (c.room LIKE ?2 OR c.room LIKE ?3) AND c.user_id != ?1 AND c.del = 0 AND c.id > IFNULL(rd.last, 0) GROUP BY c.user_id`).bind(user.id, 'd:' + user.id + ':%', 'd:%:' + user.id).all()).results || [])) unr[r.uid] = r.n;
     const friends = [], incoming = [], outgoing = [];
     for (const r of rows) {
-      if (r.status === 'ok') friends.push({ name: r.name, stats: r.stats ? JSON.parse(r.stats) : null, seen: r.updated || 0, last: r.last || 0, on: !!r.last && Date.now() - r.last < ONLINE_MS });
+      if (r.status === 'ok') friends.push({ name: r.name, stats: r.stats ? JSON.parse(r.stats) : null, seen: r.updated || 0, last: r.last || 0, on: !!r.last && Date.now() - r.last < ONLINE_MS, unread: unr[r.oid] || 0 });
       else if (r.b === user.id) incoming.push(r.name); else outgoing.push(r.name);
     }
     const duels = ((await db.prepare(`SELECT u.name, d.win, d.t FROM duels d JOIN users u ON u.id = d.from_id
@@ -636,6 +661,62 @@ async function handleApi(req, env, path) {
       OR f.b IN (SELECT ?1 UNION SELECT CASE WHEN a = ?1 THEN b ELSE a END FROM friends WHERE status = 'ok' AND (a = ?1 OR b = ?1))) ORDER BY f.t DESC LIMIT 50`, user.id);
     return json({ feed });
   }
+  // ---------- SOHBET ----------
+  // oda çözümü: klan sohbeti için üye olmak, özel sohbet için arkadaş olmak gerekir
+  const chatRoom = async (kind, u) => {
+    if (kind === 'clan') { const m = await myClan(db, user.id); if (!m) throw uerr('Bir klanda değilsin.'); return { room: 'c:' + m.clan_id, m }; }
+    const o = await userByName(db, u); if (!o) throw uerr('Oyuncu bulunamadı.');
+    if (!(await areFriends(db, user.id, o.id))) throw uerr('Sadece arkadaşlarınla özel sohbet edebilirsin.');
+    return { room: dmRoom(user.id, o.id), o };
+  };
+  if (path === '/api/chat' && method === 'GET') {
+    const q = new URL(req.url).searchParams; let r;
+    try { r = await chatRoom(q.get('room'), q.get('u')); } catch (e) { return ue(e); }
+    const after = Math.floor(Number(q.get('after')) || 0);
+    const rows = ((await db.prepare(`SELECT c.id, c.user_id, u.name, c.txt, c.t, c.del, p.stats FROM chat c JOIN users u ON u.id = c.user_id LEFT JOIN pub p ON p.user_id = c.user_id
+      WHERE c.room = ? AND c.id > ? AND c.user_id NOT IN (SELECT blocked FROM blocks WHERE user_id = ?) ORDER BY c.id DESC LIMIT 60`).bind(r.room, after, user.id).all()).results || []).reverse();
+    const msgs = rows.map(x => ({ id: x.id, name: x.name, me: x.user_id === user.id, txt: x.del ? '' : x.txt, del: !!x.del, t: x.t, av: x.stats ? JSON.parse(x.stats).av || 0 : 0 }));
+    const top = rows.length ? rows[rows.length - 1].id : 0;
+    if (top) await db.prepare('INSERT INTO chat_read (user_id, room, last) VALUES (?, ?, ?) ON CONFLICT(user_id, room) DO UPDATE SET last = MAX(last, excluded.last)').bind(user.id, r.room, top).run();
+    const canMod = r.m ? (r.m.role === 'leader' || r.m.role === 'co') : false;
+    const blocked = r.o ? await isBlocked(db, user.id, r.o.id) : false;
+    return json({ msgs, canMod, blocked });
+  }
+  if (path === '/api/chat/send' && method === 'POST') {
+    const b = await readBody(req); let r;
+    try { r = await chatRoom(b.room, b.u); } catch (e) { return ue(e); }
+    let txt = typeof b.txt === 'string' ? b.txt.replace(/[\u0000-\u001f\u007f]/g, ' ').trim() : '';
+    if (!txt) return err('Boş mesaj gönderilemez.');
+    if (txt.length > CHAT_MAX) return err(`Mesaj en fazla ${CHAT_MAX} karakter olabilir.`);
+    if (r.o && await isBlocked(db, r.o.id, user.id)) return err('Bu oyuncu sana mesaj almıyor.', 403);
+    const now = Date.now();
+    const rec = await db.prepare('SELECT COUNT(*) AS n, MAX(t) AS last FROM chat WHERE user_id = ? AND t > ?').bind(user.id, now - 60000).first();
+    if (rec.last && now - rec.last < 1500) return err('Biraz yavaş: mesajlar arasında 1-2 saniye bekle.', 429);
+    if (rec.n >= 20) return err('Bir dakikada çok fazla mesaj gönderdin, biraz bekle.', 429);
+    txt = cleanTxt(txt);
+    const ins = await db.prepare('INSERT INTO chat (room, user_id, txt, t) VALUES (?, ?, ?, ?) RETURNING id').bind(r.room, user.id, txt, now).first();
+    // oda başına son 500 mesaj tutulur
+    if (ins.id % 25 === 0) await db.prepare('DELETE FROM chat WHERE room = ? AND id <= ?').bind(r.room, ins.id - 500).run();
+    await db.prepare('INSERT INTO chat_read (user_id, room, last) VALUES (?, ?, ?) ON CONFLICT(user_id, room) DO UPDATE SET last = MAX(last, excluded.last)').bind(user.id, r.room, ins.id).run();
+    return json({ ok: true, id: ins.id, txt });
+  }
+  if (path === '/api/chat/delete' && method === 'POST') {
+    const { id } = await readBody(req);
+    const msg = await db.prepare('SELECT id, room, user_id FROM chat WHERE id = ?').bind(Math.floor(Number(id))).first();
+    if (!msg) return err('Mesaj bulunamadı.', 404);
+    let ok = msg.user_id === user.id;
+    if (!ok && msg.room.startsWith('c:')) { const m = await myClan(db, user.id); ok = !!m && 'c:' + m.clan_id === msg.room && (m.role === 'leader' || m.role === 'co'); }
+    if (!ok) return err('Bu mesajı silemezsin.', 403);
+    await db.prepare('UPDATE chat SET del = 1 WHERE id = ?').bind(msg.id).run();
+    return json({ ok: true });
+  }
+  if ((path === '/api/block' || path === '/api/unblock') && method === 'POST') {
+    const { u } = await readBody(req); const o = await userByName(db, u);
+    if (!o || o.id === user.id) return err('Oyuncu bulunamadı.', 404);
+    if (path === '/api/block') await db.prepare('INSERT INTO blocks (user_id, blocked) VALUES (?, ?) ON CONFLICT DO NOTHING').bind(user.id, o.id).run();
+    else await db.prepare('DELETE FROM blocks WHERE user_id = ? AND blocked = ?').bind(user.id, o.id).run();
+    return json({ ok: true });
+  }
   if (path === '/api/notify' && method === 'GET') {
     await seenAt(db, user.id);
     const since = Math.floor(Number(new URL(req.url).searchParams.get('since')) || 0), m = await myClan(db, user.id);
@@ -643,7 +724,12 @@ async function handleApi(req, env, path) {
     const cj = m && (m.role === 'leader' || m.role === 'co') ? (await db.prepare('SELECT COUNT(*) AS n FROM clan_joins WHERE clan_id = ?').bind(m.clan_id).first()).n : 0;
     const dn = (await db.prepare(`SELECT COUNT(*) AS n FROM feed WHERE kind = 'donate' AND b = ? AND t > ?`).bind(user.id, since).first()).n;
     const ci = m ? 0 : (await db.prepare('SELECT COUNT(*) AS n FROM clan_invites WHERE user_id = ?').bind(user.id).first()).n;
-    return json({ fr, cj, dn, ci, clan: m ? m.name : null });
+    const unread = async room => (await db.prepare(`SELECT COUNT(*) AS n FROM chat c LEFT JOIN chat_read rd ON rd.user_id = ?1 AND rd.room = c.room
+      WHERE c.room = ?2 AND c.user_id != ?1 AND c.del = 0 AND c.id > IFNULL(rd.last, 0)`).bind(user.id, room).first()).n;
+    const cm = m ? await unread('c:' + m.clan_id) : 0;
+    const dm = (await db.prepare(`SELECT COUNT(*) AS n FROM chat c LEFT JOIN chat_read rd ON rd.user_id = ?1 AND rd.room = c.room
+      WHERE (c.room LIKE ?2 OR c.room LIKE ?3) AND c.user_id != ?1 AND c.del = 0 AND c.id > IFNULL(rd.last, 0)`).bind(user.id, 'd:' + user.id + ':%', 'd:%:' + user.id).first()).n;
+    return json({ fr, cj, dn, ci, cm, dm, clan: m ? m.name : null });
   }
 
   return err('Bulunamadı.', 404);
