@@ -34,6 +34,9 @@ function ensureSchema(db) {
     db.prepare(`CREATE INDEX IF NOT EXISTS clan_joins_c ON clan_joins (clan_id)`),
     // klan davetleri: lider/yardımcı bir oyuncuyu davet eder, oyuncu kabul edince doğrudan katılır
     // haftalık sezon: arena puanı (net kupa) ve G/M; season_claims önceki sezon ödülünün bir kez verilmesini sağlar
+    // maç geçmişi: oyuncu başına son 50 maç (profilde görünür)
+    db.prepare(`CREATE TABLE IF NOT EXISTS match_log (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, t INTEGER NOT NULL, mode TEXT NOT NULL, opp TEXT, win INTEGER NOT NULL, dt INTEGER NOT NULL DEFAULT 0)`),
+    db.prepare(`CREATE INDEX IF NOT EXISTS match_log_u ON match_log (user_id, t)`),
     db.prepare(`CREATE TABLE IF NOT EXISTS season_stats (user_id INTEGER NOT NULL, season INTEGER NOT NULL, pts INTEGER NOT NULL DEFAULT 0, wins INTEGER NOT NULL DEFAULT 0, losses INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (user_id, season))`),
     db.prepare(`CREATE TABLE IF NOT EXISTS season_claims (user_id INTEGER NOT NULL, season INTEGER NOT NULL, t INTEGER NOT NULL, PRIMARY KEY (user_id, season))`),
     db.prepare(`CREATE TABLE IF NOT EXISTS clan_invites (user_id INTEGER NOT NULL, clan_id INTEGER NOT NULL, by_id INTEGER NOT NULL, t INTEGER NOT NULL, PRIMARY KEY (user_id, clan_id))`),
@@ -170,7 +173,7 @@ async function mutateState(db, env, uid, fn) {
     const cur = await loadState(db, uid), st = cur.st, ctx = ctxOf(uid, {});
     MR.normalize(st, ctx); fixEz(st, owner);
     const r = fn(st, ctx.now);
-    fixEz(st, owner);
+    fixEz(st, owner); MR.achSync(st, null);
     const rev = await storeState(db, uid, st, cur.rev, cur.exists);
     if (rev !== false) return { r, st, rev };
   }
@@ -229,7 +232,10 @@ async function handleApi(req, env, path) {
   const user = await authUser(req, db);
   if (!user) return err('Oturum geçersiz. Tekrar giriş yap.', 401);
   const owner = isOwner(env, user);
-
+  const logMatch = async (uid, mode, opp, win, dt) => {
+    await db.batch([db.prepare('INSERT INTO match_log (user_id, t, mode, opp, win, dt) VALUES (?, ?, ?, ?, ?, ?)').bind(uid, Date.now(), mode, String(opp || '').slice(0, 40), win ? 1 : 0, Math.round(dt) || 0),
+      db.prepare('DELETE FROM match_log WHERE user_id = ?1 AND id NOT IN (SELECT id FROM match_log WHERE user_id = ?1 ORDER BY t DESC, id DESC LIMIT 50)').bind(uid)]);
+  };
   if (path === '/api/logout' && method === 'POST') {
     await db.prepare('DELETE FROM sessions WHERE token = ?').bind(user.token).run();
     return json({ ok: true });
@@ -257,6 +263,7 @@ async function handleApi(req, env, path) {
     const body = await readBody(req);
     const a = String(body.a || '');
     let friendOk = false;
+    const inClan = !!(await myClan(db, user.id));
     if (a === 'battle_start' && body.mode === 'friend') {
       const o = await userByName(db, body.fr);
       friendOk = !!o && await canDuel(db, user.id, o.id);
@@ -271,6 +278,7 @@ async function handleApi(req, env, path) {
       try { r = MR.act(st, a, body, ctx); }
       catch (e) { if (e && e.user) return err(e.message, 400); throw e; }
       fixEz(st, owner);
+      const ach = MR.achSync(st, { inClan });   // yeni tamamlanan başarımlar
       const rev = await storeState(db, user.id, st, cur.rev, cur.exists);
       if (rev === false) continue;          // aynı anda başka bir işlem yazdı: baştan dene
       // sezon puanı: sadece arena (bitirilen ya da terk edilip yenilgi sayılan savaşlar)
@@ -278,10 +286,13 @@ async function handleApi(req, env, path) {
         .bind(user.id, MR.seasonOf(Date.now()), pts, w, l).run();
       if (a === 'battle_end' && r && r.mode === 'arena') await sAdd(r.dt || 0, r.win ? 1 : 0, r.win ? 0 : 1);
       if (a === 'battle_start' && r && r.forfeit) await sAdd(r.forfeit.dt || 0, 0, 1);
-      if (a === 'battle_end' || a === 'pack' || a === 'evo' || a === 'awaken' || a === 'craft' || a === 'chest')
+      // maç geçmişi
+      if (a === 'battle_end' && r) await logMatch(user.id, r.mode, r.mode === 'arena' ? 'Bot · ' + MR.LEAGUES[r.lg0 || 0].n : r.mode === 'adv' ? MR.advStage(r.adv).name : (r.opp || '?'), r.win, r.dt || 0);
+      if (a === 'battle_start' && r && r.forfeit) await logMatch(user.id, 'arena', 'Terk edilen savaş', false, r.forfeit.dt || 0);
+      if (a === 'battle_end' || a === 'pack' || a === 'evo' || a === 'awaken' || a === 'craft' || a === 'chest' || a === 'avatar')
         await db.prepare("INSERT INTO pub (user_id, stats, deck, updated) VALUES (?, ?, '[]', ?) ON CONFLICT(user_id) DO UPDATE SET stats = excluded.stats, updated = excluded.updated")
           .bind(user.id, JSON.stringify(MR.pubStats(st)), Date.now()).run();   // deste seçimine dokunmadan tabloyu güncelle
-      return json({ r, save: st, rev });
+      return json({ r, save: st, rev, ach });
     }
     return err('İşlem şu an yapılamadı, tekrar dene.', 503);
   }
@@ -355,6 +366,7 @@ async function handleApi(req, env, path) {
 
   // ---------- KLAN ----------
   const CL = MR.CLAN;
+
   const memberCount = async cid => (await db.prepare('SELECT COUNT(*) AS n FROM clan_members WHERE clan_id = ?').bind(cid).first()).n;
   const clanByName = async n => typeof n === 'string' ? db.prepare('SELECT id, name FROM clans WHERE nkey = ?').bind(ukeyOf(n.trim())).first() : null;
   const officer = async () => { const m = await myClan(db, user.id); if (!m) throw Object.assign(new Error('Bir klanda değilsin.'), { user: true });
@@ -565,6 +577,28 @@ async function handleApi(req, env, path) {
   }
 
   // ---------- HAFTALIK SEZON ----------
+  // ---------- PROFİL (herkese açık özet) ----------
+  if (path === '/api/profile' && method === 'GET') {
+    const q = new URL(req.url).searchParams.get('u');
+    const o = q ? await userByName(db, q) : { id: user.id, name: user.name };
+    if (!o) return err('Oyuncu bulunamadı.', 404);
+    const cur = await loadState(db, o.id), st = cur.st;
+    MR.normalize(st, ctxOf(o.id, {}));
+    const mc = await myClan(db, o.id), x = { inClan: !!mc };
+    const N = MR.CARDS.filter(c => (st.owned[c.id] || 0) > 0).length;
+    const matches = ((await db.prepare('SELECT t, mode, opp, win, dt FROM match_log WHERE user_id = ? ORDER BY t DESC, id DESC LIMIT 20').bind(o.id).all()).results || [])
+      .map(m => ({ t: m.t, mode: m.mode, opp: m.opp, win: !!m.win, dt: m.dt }));
+    let rel = { self: o.id === user.id, friend: false, pending: false, clanmate: false };
+    if (!rel.self) {
+      const fr = await friendRow(db, user.id, o.id);
+      rel.friend = !!fr && fr.status === 'ok'; rel.pending = !!fr && fr.status === 'pending';
+      const mine = await myClan(db, user.id); rel.clanmate = !!mine && !!mc && mine.clan_id === mc.clan_id;
+    }
+    return json({ name: o.name, av: MR.avatarOf(st), clan: mc ? mc.name : null, rel,
+      stats: { tr: st.trophy || 0, lg: MR.lgOf(st.trophy || 0), bestLg: st.bestLg || 0, lvl: st.lvl || 1, w: st.wins || 0, l: st.losses || 0,
+        bestStk: st.bestStk || 0, opened: st.opened || 0, col: N, tot: MR.N, advC: Math.min(MR.ADV_N, st.advC || 0), advN: MR.ADV_N, dnTot: st.dnTot || 0, ssBest: st.ssBest || 0 },
+      ach: MR.achList(st, x), matches });
+  }
   if (path === '/api/season' && method === 'GET') {
     const now = Date.now(), cur = MR.seasonOf(now), prev = cur - 1;
     // grup: ben + arkadaşlarım + klan üyelerim (tekrarsız)
@@ -575,7 +609,7 @@ async function handleApi(req, env, path) {
     const idl = [...ids], ph = idl.map(() => '?').join(',');
     const rowsOf = async sid => ((await db.prepare(`SELECT u.id, u.name, p.stats, s.pts, s.wins, s.losses FROM users u LEFT JOIN pub p ON p.user_id = u.id
       LEFT JOIN season_stats s ON s.user_id = u.id AND s.season = ? WHERE u.id IN (${ph})`).bind(sid, ...idl).all()).results || [])
-      .map(r => ({ id: r.id, name: r.name, me: r.id === user.id, lg: r.stats ? (JSON.parse(r.stats).lg || 0) : 0, pts: r.pts || 0, wins: r.wins || 0, losses: r.losses || 0 }));
+      .map(r => ({ id: r.id, name: r.name, me: r.id === user.id, lg: r.stats ? (JSON.parse(r.stats).lg || 0) : 0, av: r.stats ? (JSON.parse(r.stats).av || 0) : 0, pts: r.pts || 0, wins: r.wins || 0, losses: r.losses || 0 }));
     // önceki sezonun ödülü: bir kez (season_claims satırı kilit görevi görür)
     let reward = null, save = null, rev = null;
     const lock = await db.prepare('INSERT INTO season_claims (user_id, season, t) VALUES (?, ?, ?) ON CONFLICT DO NOTHING').bind(user.id, prev, now).run();

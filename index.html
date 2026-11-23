@@ -371,7 +371,21 @@ th{color:var(--mute);font-weight:500}
 .fxi{height:1.35em;width:auto;vertical-align:middle;margin-right:.3em}
 .ssym{height:1.1em;width:auto;vertical-align:middle}
 .pi{width:22px;height:22px;object-fit:contain}
-.lvpill{padding:2px 8px 2px 4px}.lvw{position:relative;width:28px;height:28px;display:inline-block}.lvw img{width:100%;height:100%}
+.lvpill{padding:2px 8px 2px 4px}
+.lvpill.hasav{padding:2px;cursor:pointer}.lvpill.hasav .lvw{width:36px;height:36px}.lvpill.hasav #lvimg{border-radius:50%;object-fit:cover;border:2px solid var(--gold);box-sizing:border-box;box-shadow:0 2px 6px #0008}
+.lvpill.hasav .lvw b{inset:auto -6px -5px auto;width:19px;height:19px;border-radius:50%;background:#2a1650;border:1.5px solid var(--gold);font-size:10px}
+.avw{position:relative;width:38px;height:38px;flex:none}.avw .avm{width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid #ffffff44;box-sizing:border-box}
+.avw .avlg{position:absolute;right:-5px;bottom:-4px;width:20px;height:20px;object-fit:contain;filter:drop-shadow(0 1px 2px #000)}
+[data-prof]{cursor:pointer}
+.pfh{display:flex;gap:12px;align-items:center}.pfav{position:relative;width:84px;height:84px;flex:none}.pfav img.pfi{width:84px;height:84px;border-radius:50%;object-fit:cover;border:3px solid var(--gold);box-sizing:border-box;box-shadow:0 3px 10px #000a}
+.pfav .avlg{position:absolute;right:-6px;bottom:-4px;width:34px;height:34px;object-fit:contain;filter:drop-shadow(0 1px 3px #000)}
+.pfn{flex:1;min-width:0}.pfn b{display:block;font:22px 'MRDisplay',sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pfn small{display:block;color:#c9d3dc;font:13px/1.4 Rubik,sans-serif}
+.pfst{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.pfst div{background:#ffffff0d;border-radius:10px;padding:7px 4px;text-align:center}.pfst b{display:block;font:700 16px Rubik,sans-serif;color:#fff}.pfst small{font:11px Rubik,sans-serif;color:#c9d3dc}
+.pfm{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:10px;background:#ffffff0a;font:13px Rubik,sans-serif}.pfm .md{width:22px;text-align:center}.pfm .op{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pfm .w{color:#7ee05a;font-weight:700}.pfm .l{color:#ff8a7a;font-weight:700}.pfm small{color:var(--mute);font-size:11px}
+.pfa{display:grid;grid-template-columns:1fr 1fr;gap:6px}.pfa div{background:#ffffff0a;border-radius:10px;padding:7px 8px;opacity:.62}.pfa div.ok{opacity:1;background:#f5c45122;outline:1px solid #f5c45166}
+.pfa b{display:block;font:700 12.5px Rubik,sans-serif}.pfa small{display:block;font:11px/1.3 Rubik,sans-serif;color:#c9d3dc}.pfa i{display:block;height:5px;border-radius:3px;background:#ffffff1a;margin-top:5px;overflow:hidden}.pfa i u{display:block;height:100%;background:var(--gold)}
+.pfbtn{display:flex;gap:8px}.pfbtn .btn{flex:1;margin:0}
+.avg{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.avg button{border:2px solid transparent;border-radius:50%;padding:0;background:none;aspect-ratio:1;overflow:hidden}.avg button.on{border-color:var(--gold)}.avg img{width:100%;height:100%;object-fit:cover;display:block}.lvw{position:relative;width:28px;height:28px;display:inline-block}.lvw img{width:100%;height:100%}
 .lvw b{position:absolute;inset:0;display:grid;place-items:center;font:13px/1 'MRDisplay',sans-serif;color:#fff;text-shadow:0 1px 2px #000}
 nav button .ni{width:30px;height:30px;object-fit:contain;filter:grayscale(.6) brightness(.8);transition:filter .2s,transform .2s}
 nav button.on .ni{filter:none;transform:scale(1.12)}
@@ -942,7 +956,7 @@ body.inb main{padding:0 10px 16px}
   <header>
     <div class="logo"><small>Mythbeast</small>Realm</div>
     <div class="res">
-      <div class="pill lvpill"><span class="lvw"><img src="img/ic/level.webp" alt=""><b id="lvl">1</b></span></div><div class="pill"><img class="pi" src="img/ic/gold.webp" alt=""><span id="gold">0</span></div>
+      <div class="pill lvpill" id="lvpill"><span class="lvw"><img id="lvimg" src="img/ic/level.webp" alt=""><b id="lvl">1</b></span></div><div class="pill"><img class="pi" src="img/ic/gold.webp" alt=""><span id="gold">0</span></div>
       <div class="pill"><img class="pi" src="img/ic/dust.webp" alt=""><span id="dust">0</span></div>
     </div>
     <button class="gearb" id="gear" aria-label="Ayarlar"><svg viewBox="0 0 24 24"><path d="M12 8.5a3.5 3.5 0 100 7 3.5 3.5 0 000-7z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M19.4 13.5a7.6 7.6 0 000-3l2-1.6-2-3.4-2.4 1a7.5 7.5 0 00-2.6-1.5L14 2.5h-4l-.4 2.5A7.5 7.5 0 007 6.5l-2.4-1-2 3.4 2 1.6a7.6 7.6 0 000 3l-2 1.6 2 3.4 2.4-1a7.5 7.5 0 002.6 1.5l.4 2.5h4l.4-2.5a7.5 7.5 0 002.6-1.5l2.4 1 2-3.4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></button>
@@ -1193,7 +1207,7 @@ document.addEventListener('pointermove',e=>{
    6. EKRANLAR
    ===================================================================== */
 let tab='pack';
-function renderTop(){$('#lvl').textContent=S.lvl;$('#gold').textContent=S.gold;$('#dust').textContent=S.dust;const u=uniq();$('#ptxt').textContent=u+'/'+N;$('#pbar').style.width=(u/N*100)+'%'}
+function renderTop(){$('#lvl').textContent=S.lvl;{const lp=$('#lvpill'),av=!window.claude&&accGet().user;lp.classList.toggle('hasav',!!av);$('#lvimg').src=av?`img/t/${MR.avatarOf(S)}.webp`:'img/ic/level.webp';lp.onclick=av?()=>openProfile():null}$('#gold').textContent=S.gold;$('#dust').textContent=S.dust;const u=uniq();$('#ptxt').textContent=u+'/'+N;$('#pbar').style.width=(u/N*100)+'%'}
 function render(){
   renderTop();
   document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.tab===tab));
@@ -2188,6 +2202,45 @@ const ASSET_V=8;try{if('serviceWorker' in navigator&&location.protocol==='https:
   setTimeout(()=>{for(let k=0;k<5;k++)next()},150)})();
 
 /* ---------- AYARLAR ---------- */
+/* ---------- PROFİL: RESİM, İSTATİSTİK, MAÇ GEÇMİŞİ, BAŞARIMLAR ---------- */
+// listelerde küçük profil resmi + köşede lig rozeti
+function avW(av,lg){return `<span class="avw"><img class="avm" src="img/t/${av||MR.TUT.card}.webp" alt="">${lg!=null?`<img class="avlg" src="img/lg/${Math.min(lg||0,LEAGUES.length-1)}.webp" alt="">`:''}</span>`}
+function achToast(list){if(!list||!list.length)return;list.forEach((n,i)=>setTimeout(()=>{toast('🏅 Başarım: '+n);try{SFX.coins()}catch(e){}},400+i*1800))}
+// bir isme dokununca o oyuncunun profili açılır (tablolar, klan, akış)
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-prof]');if(!t||!t.dataset.prof||window.claude)return;
+  e.preventDefault();e.stopPropagation();openProfile(t.dataset.prof)},true);
+const MODE_N={arena:'Arena',adv:'Macera',friend:'Dostluk'},MODE_I={arena:'⚔️',adv:'🗺️',friend:'🤝'};
+async function openProfile(name){if(window.claude)return;const ov=$('#ov');const back=window.__pfBack=ov.classList.contains('on')?ov.innerHTML:null;ov.className='ov on';
+  const close=()=>{ov.className='ov';ov.innerHTML='';if(!B)render()};
+  const shell=body=>{ov.innerHTML=`<div class="fp setp frp"><div class="sth"><b>Profil</b><button class="stx" id="pfclose" aria-label="Kapat">✕</button></div>${body}</div>`;$('#pfclose').onclick=close};
+  if(!accGet().user){shell(`<p class="sionote">Profilini görmek için giriş yap.</p><button class="btn" id="pflogin">Giriş yap</button>`);$('#pflogin').onclick=openAccount;return}
+  shell('<p class="frem">Yükleniyor...</p>');
+  let j;try{j=await api('/api/profile'+(name?'?u='+encodeURIComponent(name):''))}catch(e){shell(`<p class="sioerr">${escH(e.message)}</p>`);return}
+  const st=j.stats,lg=Math.min(st.lg,LEAGUES.length-1),rate=st.w+st.l?Math.round(st.w/(st.w+st.l)*100):0,done=j.ach.filter(a=>a.done).length;
+  const R=j.rel;
+  shell(`<div class="pfh"><div class="pfav"><img class="pfi" src="img/t/${j.av}.webp" alt=""><img class="avlg" src="img/lg/${lg}.webp" alt=""></div>
+      <div class="pfn"><b>${escH(j.name)}</b><small>${j.clan?'🛡️ '+escH(j.clan)+' · ':''}Seviye ${st.lvl}</small><small>${LEAGUES[lg].n} Ligi · 🏆 ${st.tr} · En iyi: ${LEAGUES[Math.min(st.bestLg,LEAGUES.length-1)].n}</small></div></div>
+    <div class="pfbtn">${R.self?`<button class="btn alt" id="pfav">Profil resmini değiştir</button>`:`${R.friend||R.clanmate?`<button class="btn" id="pffight">Savaş</button>`:''}${R.friend?'':R.pending?'<button class="btn alt" disabled>İstek bekliyor</button>':'<button class="btn alt" id="pfadd">Arkadaş ekle</button>'}`}</div>
+    <p class="frh">İstatistikler</p>
+    <div class="pfst"><div><b>${st.w}/${st.l}</b><small>Arena G/M</small></div><div><b>%${rate}</b><small>Kazanma</small></div><div><b>${st.bestStk}</b><small>En uzun seri</small></div>
+      <div><b>${st.opened}</b><small>Açılan paket</small></div><div><b>${st.col}/${st.tot}</b><small>Koleksiyon</small></div><div><b>${st.advC}/${st.advN}</b><small>Macera</small></div>
+      <div><b>${st.dnTot}</b><small>Bağışlanan kart</small></div><div><b>${st.ssBest?st.ssBest+'.':'–'}</b><small>En iyi sezon</small></div><div><b>${done}/${j.ach.length}</b><small>Başarım</small></div></div>
+    <p class="frh">Son maçlar</p>
+    <div class="frl">${j.matches.length?j.matches.map(m=>`<div class="pfm"><span class="md" title="${MODE_N[m.mode]||''}">${MODE_I[m.mode]||'⚔️'}</span><span class="op">${escH(m.opp||'')}</span><span class="${m.win?'w':'l'}">${m.win?'Galibiyet':'Yenilgi'}</span>${m.mode==='arena'&&m.dt?`<small>${m.dt>0?'+':''}${m.dt} 🏆</small>`:''}<small>${agoTxt(m.t)}</small></div>`).join(''):'<p class="frem">Henüz maç yok.</p>'}</div>
+    <p class="frh">Başarımlar · ${done}/${j.ach.length}</p>
+    <div class="pfa">${j.ach.map(a=>`<div class="${a.done?'ok':''}"><b>${a.done?'🏅 ':''}${escH(a.n)}</b><small>${escH(a.d)}</small>${a.done?'':`<i><u style="width:${Math.round(a.v/a.g*100)}%"></u></i><small>${a.v}/${a.g}</small>`}</div>`).join('')}</div>`);
+  const pa=$('#pfav');if(pa)pa.onclick=()=>openAvatarPick(j.av);
+  const pf=$('#pffight');if(pf)pf.onclick=()=>friendBattle(j.name,pf);
+  const pd=$('#pfadd');if(pd)pd.onclick=async()=>{pd.disabled=true;try{const r=await api('/api/friends/request',{m:'POST',b:{u:j.name}});toast(r.accepted?r.name+' artık arkadaşın':'Arkadaşlık isteği gönderildi');openProfile(j.name)}catch(e){toast(e.message);pd.disabled=false}}}
+// profil resmi seçimi: sahip olunan yaratıklar (en nadirden)
+function openAvatarPick(cur){const ov=$('#ov');ov.className='ov on';
+  const list=ALLC().filter(c=>owned(c.id)).sort((a,b)=>b.r-a.r||(b.stage||0)-(a.stage||0)||a.id-b.id);
+  ov.innerHTML=`<div class="fp setp frp"><div class="sth"><b>Profil resmi</b><button class="stx" id="avclose" aria-label="Kapat">✕</button></div>
+    <p class="sionote">Sahip olduğun bir yaratığı seç.</p><div class="avg">${list.map(c=>`<button data-av="${c.id}" class="${c.id===cur?'on':''}" aria-label="${escH(c.name)}"><img src="img/t/${c.id}.webp" alt="" loading="lazy"></button>`).join('')}</div>
+    <button class="btn alt" id="avback">Geri</button></div>`;
+  $('#avclose').onclick=$('#avback').onclick=()=>openProfile();
+  ov.querySelectorAll('[data-av]').forEach(b=>b.onclick=async()=>{ov.querySelectorAll('[data-av]').forEach(x=>x.disabled=true);
+    try{await act('avatar',{id:+b.dataset.av});renderTop();toast('Profil resmi değişti');openProfile()}catch(e){toast(e.message);openAvatarPick(cur)}})}
 /* ---------- ARKADAŞLAR, LİDERLİK TABLOSU, ARKADAŞ DESTESİYLE SAVAŞ ---------- */
 function friendsCard(){if(window.claude)return '';const a=accGet(),n=window.__frInc||0;
   return `<button class="frc" id="frbtn"><img class="fri" src="img/ic/friends.webp" alt=""><b>Arkadaşlar</b><small>${a.user?'Tablo · İstekler · Savaş':'Giriş yapınca açılır'}</small>${n?`<span class="frbd">${n}</span>`:''}</button>`}
@@ -2218,8 +2271,8 @@ async function openSeason(){const ov=$('#ov');ov.className='ov on';
   const j=await seasonLoad();if(!j){shell('<p class="sioerr">Sezon bilgisi alınamadı.</p>');return}if(j.reward)return;
   const md=['🥇','🥈','🥉'],act=j.rows.filter(r=>r.wins+r.losses>0).length;
   shell(`<div class="clh"><small>Arkadaşların ve klan üyelerinle</small><span>⏳ ${snLeft(j.ends-Date.now())}</span></div>
-    <div class="frl">${j.rows.map((r,i)=>{const pl=r.wins+r.losses>0;return `<div class="frr${r.me?' me':''}"><span class="rk">${pl&&i<3?md[i]:i+1}</span>${lgBadge(Math.min(r.lg||0,LEAGUES.length-1))}
-      <div class="nm"><b>${escH(r.name)}${r.me?' (sen)':''}</b><small>${pl?`${r.wins} G · ${r.losses} M`:'Bu sezon oynamadı'}</small></div><b class="snpt">${r.pts}</b></div>`}).join('')}</div>
+    <div class="frl">${j.rows.map((r,i)=>{const pl=r.wins+r.losses>0;return `<div class="frr${r.me?' me':''}"><span class="rk">${pl&&i<3?md[i]:i+1}</span>${avW(r.av,r.lg)}
+      <div class="nm"><b data-prof="${escH(r.name)}">${escH(r.name)}${r.me?' (sen)':''}</b><small>${pl?`${r.wins} G · ${r.losses} M`:'Bu sezon oynamadı'}</small></div><b class="snpt">${r.pts}</b></div>`}).join('')}</div>
     <p class="frh">Sezon sonu ödülleri</p>
     <div class="frl snrw">${j.rewards.map((w,i)=>`<div class="frd">${md[i]} <b>${i+1}.</b> ${w.pk} paket + ${w.g} altın</div>`).join('')}<div class="frd">🎖️ Oynayan herkes: ${j.part.g} altın</div></div>
     <p class="sionote">Puan = bu hafta arenada kazandığın net kupa, eşitlikte galibiyet sayısı. Sezon her pazartesi 00:00'da biter. İlk 3 ödülü için en az ${j.minPlayers} kişinin oynaması gerekir (şu an ${act}). Ödülünü yeni sezonda oyuna girince alırsın.</p>`)}
@@ -2236,7 +2289,7 @@ const cardImg=id=>BY[id]?`<img class="fcd" src="img/t/${id}.webp" alt="">`:'';
 const cardNm=id=>BY[id]?escH(BY[id].name):'kart';
 // akış satırları (klan ve arkadaş akışı aynı biçimi kullanır)
 function feedHTML(rows){if(!rows.length)return '<p class="frem">Henüz bir şey olmadı. Maç yapın, kart bağışlayın!</p>';
-  const N2=x=>`<b>${escH(x||'?')}</b>`;
+  const N2=x=>`<b data-prof="${escH(x||'')}">${escH(x||'?')}</b>`;
   return `<div class="frl">${rows.map(f=>{let t='';switch(f.kind){
     case 'duel':t=`${N2(f.a)}, ${N2(f.b)} adlı oyuncunun destesine karşı <span class="${f.win?'w':'l'}">${f.win?'kazandı':'kaybetti'}</span>`;break;
     case 'donate':t=`${N2(f.a)}, ${N2(f.b)} için ${cardImg(f.card)} <b>${cardNm(f.card)}</b> gönderdi`;break;
@@ -2301,8 +2354,8 @@ async function openClan(view){if(tab!=='clan'||(B&&!B.over))return;const ov=$('#
   let body='';
   if(view==='feed')body=feedHTML(j.feed);
   else if(view==='mem')body=`${off&&j.joins.length?`<p class="frh">Katılma istekleri</p><div class="frl">${j.joins.map(x=>`<div class="frr"><div class="nm"><b>${escH(x.name)}</b><small>${x.stats?`🏆 ${x.stats.tr} · Sv ${x.stats.lvl}`:'Yeni oyuncu'}</small></div><button class="btn" data-cja="${escH(x.name)}">Kabul</button><button class="frx" data-cjd="${escH(x.name)}">Reddet</button></div>`).join('')}</div><p class="frh">Üyeler</p>`:''}
-    <div class="frl">${j.members.map((m,i)=>{const st=m.stats||{},isMe=m.name===me;return `<div class="frr cm${isMe?' me':''}"><span class="rk">${i+1}</span>${lgBadge(Math.min(st.lg||0,LEAGUES.length-1))}
-      <div class="nm"><b>${escH(m.name)}${RL[m.role]?` <em class="rlb ${m.role}">${RL[m.role]}</em>`:''}</b><small>${m.stats?`🏆 ${st.tr} · Sv ${st.lvl} · ${st.col}/${st.tot} kart`:'Henüz oynamadı'}</small></div>
+    <div class="frl">${j.members.map((m,i)=>{const st=m.stats||{},isMe=m.name===me;return `<div class="frr cm${isMe?' me':''}"><span class="rk">${i+1}</span>${avW(st.av,st.lg)}
+      <div class="nm"><b data-prof="${escH(m.name)}">${escH(m.name)}${RL[m.role]?` <em class="rlb ${m.role}">${RL[m.role]}</em>`:''}</b><small>${m.stats?`🏆 ${st.tr} · Sv ${st.lvl} · ${st.col}/${st.tot} kart`:'Henüz oynamadı'}</small></div>
       ${isMe?'':`<button class="btn" data-fight="${escH(m.name)}">Savaş</button>`}
       ${!isMe&&j.role==='leader'&&m.role!=='leader'?`<button class="frx" data-crl="${escH(m.name)}" data-to="${m.role==='co'?'member':'co'}" title="${m.role==='co'?'Yardımcılığı al':'Yardımcı yap'}">${m.role==='co'?'★−':'★+'}</button>`:''}
       ${!isMe&&off&&m.role!=='leader'&&!(j.role==='co'&&m.role==='co')?`<button class="frx" data-ckk="${escH(m.name)}" aria-label="Klandan çıkar">✕</button>`:''}</div>`}).join('')}</div>
@@ -2342,10 +2395,10 @@ async function openFriends(view){const ov=$('#ov');ov.className='ov on';view=vie
   const tabs=`<div class="frtabs"><button data-v="tbl" class="${view==='tbl'?'on':''}"><img src="img/ic/leader.webp" alt="">Tablo</button><button data-v="feed" class="${view==='feed'?'on':''}">Akış</button><button data-v="cards" class="${view==='cards'?'on':''}">Kartlar</button><button data-v="req" class="${view==='req'?'on':''}">İstekler${j.incoming.length?` (${j.incoming.length})`:''}</button><button data-v="add" class="${view==='add'?'on':''}">Ekle</button></div>`;
   let body='';
   if(view==='tbl'){
-    const me={name:accGet().user,me:1,stats:{tr:S.trophy||0,lg:lgOf(S.trophy||0),lvl:S.lvl||1,col:uniq(),tot:N}};
+    const me={name:accGet().user,me:1,stats:{tr:S.trophy||0,lg:lgOf(S.trophy||0),lvl:S.lvl||1,col:uniq(),tot:N,av:MR.avatarOf(S)}};
     const all=[me,...j.friends].sort((x,y)=>((y.stats||{}).tr||0)-((x.stats||{}).tr||0));
-    body=`<div class="frl">${all.map((f,i)=>{const st=f.stats||{};return `<div class="frr${f.me?' me':''}"><span class="rk">${i+1}</span>${lgBadge(Math.min(st.lg||0,LEAGUES.length-1))}
-      <div class="nm"><b>${escH(f.name)}${f.me?' (sen)':''}</b><small>${f.stats?`🏆 ${st.tr} · Sv ${st.lvl} · ${st.col}/${st.tot} kart`:'Henüz oynamadı'}</small></div>
+    body=`<div class="frl">${all.map((f,i)=>{const st=f.stats||{};return `<div class="frr${f.me?' me':''}"><span class="rk">${i+1}</span>${avW(st.av,st.lg)}
+      <div class="nm"><b data-prof="${escH(f.name)}">${escH(f.name)}${f.me?' (sen)':''}</b><small>${f.stats?`🏆 ${st.tr} · Sv ${st.lvl} · ${st.col}/${st.tot} kart`:'Henüz oynamadı'}</small></div>
       ${f.me?'':`<button class="btn" data-fight="${escH(f.name)}">Savaş</button><button class="frx" data-rm="${escH(f.name)}" aria-label="Arkadaşlıktan çıkar">✕</button>`}</div>`}).join('')}</div>
       ${j.friends.length?'':'<p class="frem">Henüz arkadaşın yok. <b>Ekle</b> sekmesinden kullanıcı adıyla istek gönder.</p>'}
       ${j.duels.length?`<p class="frh">Senin destene karşı savaşlar</p>${j.duels.map(d=>`<div class="frd"><b>${escH(d.name)}</b> destenle savaştı ve <span class="${d.win?'w':'l'}">${d.win?'kazandı':'kaybetti'}</span> · ${agoTxt(d.t)}</div>`).join('')}`:''}
@@ -2407,7 +2460,7 @@ async function act(a,p={}){
   if(window.claude){const r=MR.act(S,a,p,{rng:Math.random,now:Date.now(),friendOk:true});save();return r}
   if(!accGet().tok){openAccount(true);throw new Error('Önce giriş yap.')}
   let j;try{j=await api('/api/act',{m:'POST',b:{...p,a,tut:S.tut}})}catch(e){if(e.status===401)openAccount(true);throw e}
-  applySrv(j.save);accRev(j.rev);return j.r}
+  applySrv(j.save);accRev(j.rev);achToast(j.ach);return j.r}
 // Aynı hesap başka cihazda daha yeni kaydedilmiş: sunucudaki kayıt geçerli olur, bu cihazdaki .bak olarak yedeklenir.
 function cloudConflict(sv){takeSave(sv.data);accRev(sv.rev);
   toast('Hesabın başka bir cihazda oynandı, en güncel kayıt yüklendi');if(!B)render();else renderTop()}

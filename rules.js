@@ -240,7 +240,8 @@ const fresh=()=>({gold:ECON.startGold,dust:0,free:ECON.freePacks,owned:{},pity:0
    ===================================================================== */
 // Sunucunun sahip olduğu alanlar: istemcinin kaydetme isteği bunları DEĞİŞTİREMEZ.
 const ECON_KEYS=['gold','dust','free','owned','shiny','sup','supV','supV2','pity','xp','lvl','opened','trophy','bestLg','wins','losses',
-  'streak','lstreak','chest','chests','hist','gift','gt','advC','advV','exB','rqT','dn','dq','rare','tp','uidN','tut','bt','bl'];
+  'streak','lstreak','chest','chests','hist','gift','gt','advC','advV','exB','rqT','dn','dq','rare','tp','uidN','tut','bt','bl',
+  'av','bestStk','dnTot','evoN','awkN','ssBest','ach'];
 // İstemcinin değiştirebildiği zararsız alanlar (ayarlar, deste seçimi, ipuçları).
 const CLIENT_KEYS=['mv','sv','snd','deck','deck2','shOff','pset','th','sid','t'];
 const TUT_CLIENT_MAX=2;            // istemci öğreticiyi en fazla bu adıma kendisi ilerletebilir (hoş geldin → paket aç)
@@ -311,17 +312,17 @@ function battleEnd(st,p,ctx){const bt=st.bt,now=ctx.now;
   const wk=Math.max(0,Math.min(STAT_CAP.weak,Math.floor(+S0.weak||0))),ko=Math.max(0,Math.min(STAT_CAP.ko,Math.floor(+S0.ko||0)));
   if(wk)dqInc(st,'weak',null,wk,now);if(ko)dqInc(st,'ko',null,ko,now);
   dqInc(st,'battle',null,1,now);if(win)dqInc(st,'win',null,1,now);
-  if(bt.mode==='friend')return{mode:'friend',win};
+  if(bt.mode==='friend')return{mode:'friend',win,opp:bt.fr||null};
   st.bl=(st.bl||[]).filter(t=>now-t<3600e3);
   if(st.bl.length>=BATTLE_PER_HOUR)throw uerr('Bu saat için savaş ödülü sınırına ulaştın. Biraz sonra tekrar dene.');
   st.bl.push(now);
-  if(bt.mode==='adv'){const st0=advStage(bt.adv),first=st0.x?!(st.exB||{})[st0.ch]:bt.adv>=(st.advC||0),R={mode:'adv',win,first:win&&first,pk:0,du:0,sup:null};
+  if(bt.mode==='adv'){const st0=advStage(bt.adv),first=st0.x?!(st.exB||{})[st0.ch]:bt.adv>=(st.advC||0),R={mode:'adv',win,adv:bt.adv,first:win&&first,pk:0,du:0,sup:null};
     R.g=win?(first?st0.gold:Math.round(st0.gold/4)):10;st.gold+=R.g;
     if(R.first){st.dust+=st0.dust;R.du=st0.dust;if(st0.x){st.exB=st.exB||{};st.exB[st0.ch]=1}else st.advC=bt.adv+1;if(st0.pack){st.free+=st0.pack;R.pk=st0.pack}R.sup=st0.x||st0.p===ADV_P-1?'evo':st0.el;giveSup(st,R.sup)}
     if(win)dqInc(st,'adv',null,1,now);return R}
   const R={mode:'arena',win},lg0=lgOf(st.trophy||0),floor=LEAGUES[lg0].min;R.lg0=lg0;R.g=win?ECON.win+LEAGUES[lg0].gold:ECON.loss;st.gold+=R.g;
   R.dt=win?TROPHY.win:Math.max(TROPHY.loss,floor-(st.trophy||0));R.sb=null;R.chest=0;R.lost=0;
-  if(win){st.streak=(st.streak||0)+1;const sb=strkB(st.streak);if(sb.tr||sb.g){R.sb={n:st.streak,...sb};R.dt+=sb.tr;R.g+=sb.g;st.gold+=sb.g}
+  if(win){st.streak=(st.streak||0)+1;if(st.streak>(st.bestStk||0))st.bestStk=st.streak;const sb=strkB(st.streak);if(sb.tr||sb.g){R.sb={n:st.streak,...sb};R.dt+=sb.tr;R.g+=sb.g;st.gold+=sb.g}
     st.chest=(st.chest||0)+1;if(st.chest>=CHEST.need){st.chest-=CHEST.need;st.chests=(st.chests||0)+1;R.chest=1}}
   else{R.lost=st.streak||0;st.streak=0}
   st.lstreak=win?0:(st.lstreak||0)+1;   // üst üste arena yenilgisi: 3 ve üstünde sıradaki rakip kolaylaşır
@@ -355,9 +356,9 @@ function act(st,a,p,ctx){p=p||{};const rng=ctx.rng,now=ctx.now;normalize(st,ctx)
     return{g,d,id:c.id,isNew,sh:s.sh,pk,sup}}
   case 'gift':{const n=st.gift||0;if(n<1)throw uerr('Henüz hediye paketi yok.');st.free+=n;st.gift=0;st.gt=now;return{n}}
   case 'evo':{const t=BY[p.id];if(!canEvo(st,t))throw uerr('Bu evrim için yeterli kopyan yok.');const root=rootOf(t);
-    st.owned[root.id]-=EVO_NEED[t.stage];st.owned[t.id]=own(st,t.id)+1;if(st.tut===5&&t.id===TUT.evo)st.tut=6;return{id:t.id,from:root.id}}
+    st.owned[root.id]-=EVO_NEED[t.stage];st.owned[t.id]=own(st,t.id)+1;st.evoN=(st.evoN||0)+1;if(st.tut===5&&t.id===TUT.evo)st.tut=6;return{id:t.id,from:root.id}}
   case 'awaken':{const c=BY[p.id];if(!canAwaken(st,c))throw uerr('Uyanış şartları tamamlanmadı.');const X=exOf(c);
-    st.owned[c.id]-=EXCOST.copies;st.dust-=EXCOST.dust;st.owned[X.id]=1;return{id:X.id}}
+    st.owned[c.id]-=EXCOST.copies;st.dust-=EXCOST.dust;st.owned[X.id]=1;st.awkN=(st.awkN||0)+1;return{id:X.id}}
   case 'craft':{const c=BY[p.id];if(!c||c.ex||c.stage!==0||own(st,c.id))throw uerr('Bu kart üretilemez.');const R=RAR[c.r];
     if((st.dust||0)<R.craft)throw uerr('Yeterli tozun yok.');st.dust-=R.craft;st.owned[c.id]=1;return{id:c.id}}
   case 'todust':{const c=BY[p.id];if(!c||c.ex)throw uerr('Bu kart toza çevrilemez.');const extra=own(st,c.id)-1;if(extra<1)throw uerr('Fazla kopyan yok.');
@@ -371,9 +372,10 @@ function act(st,a,p,ctx){p=p||{};const rng=ctx.rng,now=ctx.now;normalize(st,ctx)
       const ok=adv>=0&&(adv<ADV_N?adv<=c:(adv>=100&&adv<100+ADV_CH.length&&c>=(adv-99)*ADV_P));if(!ok)throw uerr('Bu bölüm henüz açılmadı.')}
     if(mode==='friend'&&!ctx.friendOk)throw uerr('Sadece arkadaşlarının ya da klan üyelerinin destesiyle savaşabilirsin.');
     const fo=forfeit(st,now);
-    const id=Math.floor(rng()*2**52).toString(36);st.bt={id,mode,adv,t0:now,tut:mode==='arena'&&st.tut===6?1:0};
+    const id=Math.floor(rng()*2**52).toString(36);st.bt={id,mode,adv,t0:now,tut:mode==='arena'&&st.tut===6?1:0};if(mode==='friend'&&typeof p.fr==='string')st.bt.fr=p.fr.slice(0,16);
     return{id,forfeit:fo}}
   case 'battle_end':return battleEnd(st,p,ctx);
+  case 'avatar':{const id=Math.floor(+p.id),c=BY[id];if(!c||!(own(st,id)>0))throw uerr('Sadece sahip olduğun bir kartı profil resmi yapabilirsin.');st.av=id;return{av:id}}
   }
   throw uerr('Bilinmeyen işlem.');
 }
@@ -387,7 +389,7 @@ const seasonEnd=id=>(id+1)*SEASON.week+SEASON.offset;
 function seasonRewardFor(rows){const P=rows.filter(r=>(r.wins||0)+(r.losses||0)>0).sort((a,b)=>(b.pts-a.pts)||((b.wins||0)-(a.wins||0)));
   const i=P.findIndex(r=>r.me);if(i<0)return null;const rank=i+1;
   const top=P.length>=SEASON.minPlayers&&rank<=3?SEASON.rewards[rank-1]:null;return{rank,n:P.length,...(top||SEASON.part),top:!!top}}
-function seasonGive(st,rw){st.free+=rw.pk||0;st.gold+=rw.g||0;return rw}
+function seasonGive(st,rw){st.free+=rw.pk||0;st.gold+=rw.g||0;if(rw.rank&&(!st.ssBest||rw.rank<st.ssBest))st.ssBest=rw.rank;return rw}
 /* ---------- KLAN VE KART İSTEME ---------- */
 const CLAN={cost:500,max:30,nameMin:3,nameMax:20,descMax:80};
 // kart isteği: 8 saatte bir, 24 saat açık; Yaygın 10, Nadir 4 kopya; bağışçının en az 2 kopyası olmalı
@@ -402,18 +404,51 @@ function donateCheck(st,id,now){const c=BY[id];if(!reqable(c))throw uerr('Bu kar
   if(own(st,id)<REQ.donorMin)throw uerr(`Bağış için bu karttan en az ${REQ.donorMin} kopyan olmalı.`);
   if(dnLeft(st,now)<=0)throw uerr(`Bugünkü bağış sınırına ulaştın (${REQ.daily} kart).`);return c}
 function donateGive(st,id,now){const c=donateCheck(st,id,now),R=REQ.reward[c.r],d=dayKey(now);
-  st.owned[id]-=1;st.gold+=R.g;const ups=addXp(st,R.xp);st.dn=st.dn&&st.dn.day===d?{day:d,n:st.dn.n+1}:{day:d,n:1};return{g:R.g,xp:R.xp,ups}}
+  st.owned[id]-=1;st.gold+=R.g;st.dnTot=(st.dnTot||0)+1;const ups=addXp(st,R.xp);st.dn=st.dn&&st.dn.day===d?{day:d,n:st.dn.n+1}:{day:d,n:1};return{g:R.g,xp:R.xp,ups}}
 function donateGet(st,id){st.owned[id]=own(st,id)+1}
 function clanPay(st){if((st.gold||0)<CLAN.cost)throw uerr(`Klan kurmak için ${CLAN.cost} altın gerekli.`);st.gold-=CLAN.cost}
 
 // arkadaşların göreceği özet (sunucu hesaplar)
-function pubStats(st){return{tr:st.trophy||0,lg:lgOf(st.trophy||0),lvl:st.lvl||1,col:CARDS.filter(c=>own(st,c.id)>0).length,tot:N,w:st.wins||0,l:st.losses||0}}
+function pubStats(st){return{tr:st.trophy||0,lg:lgOf(st.trophy||0),lvl:st.lvl||1,col:CARDS.filter(c=>own(st,c.id)>0).length,tot:N,w:st.wins||0,l:st.losses||0,av:avatarOf(st)}}
+
+/* ---------- PROFİL: RESİM VE BAŞARIMLAR ---------- */
+// Profil resmi: seçilen kart (hâlâ sahipse), yoksa en nadir/en yüksek aşamalı kartı, hiç yoksa öğretici kartı.
+function avatarOf(st){if(st.av&&own(st,st.av)>0&&BY[st.av])return st.av;
+  let b=null;for(const c of CARDS)if(own(st,c.id)>0&&(!b||c.r>b.r||(c.r===b.r&&(c.stage||0)>(b.stage||0))))b=c;return b?b.id:TUT.card}
+// Başarımlar: sadece rozet ve ilerleme (ödül yok). x = {inClan} sunucudan gelir.
+const ACH=[
+  {id:'w1',n:'İlk Zafer',d:'Arenada ilk galibiyetini al',g:1,v:s=>s.wins||0},
+  {id:'w10',n:'Çaylak Savaşçı',d:'Arenada 10 galibiyet',g:10,v:s=>s.wins||0},
+  {id:'w50',n:'Arena Gazisi',d:'Arenada 50 galibiyet',g:50,v:s=>s.wins||0},
+  {id:'w200',n:'Arena Efsanesi',d:'Arenada 200 galibiyet',g:200,v:s=>s.wins||0},
+  {id:'s5',n:'Seri Avcısı',d:'Üst üste 5 galibiyet',g:5,v:s=>s.bestStk||0},
+  {id:'s10',n:'Durdurulamaz',d:'Üst üste 10 galibiyet',g:10,v:s=>s.bestStk||0},
+  ...[1,2,3,4,5].map(k=>({id:'lg'+k,n:LEAGUES[k].n+' Lig',d:LEAGUES[k].n+' lige yüksel',g:1,v:s=>(s.bestLg||0)>=k?1:0,lg:k})),
+  {id:'p10',n:'Paket Meraklısı',d:'10 paket aç',g:10,v:s=>s.opened||0},
+  {id:'p50',n:'Paket Avcısı',d:'50 paket aç',g:50,v:s=>s.opened||0},
+  {id:'p200',n:'Paket Ustası',d:'200 paket aç',g:200,v:s=>s.opened||0},
+  {id:'c25',n:'Koleksiyoncu',d:'Koleksiyonun %25\'ini topla',g:Math.ceil(N*.25),v:s=>CARDS.filter(c=>own(s,c.id)>0).length},
+  {id:'c50',n:'Büyük Koleksiyoncu',d:'Koleksiyonun %50\'sini topla',g:Math.ceil(N*.5),v:s=>CARDS.filter(c=>own(s,c.id)>0).length},
+  {id:'c100',n:'Tam Koleksiyon',d:'Bütün kartları topla',g:N,v:s=>CARDS.filter(c=>own(s,c.id)>0).length},
+  {id:'evo',n:'İlk Evrim',d:'Bir kartı evrimleştir',g:1,v:s=>s.evoN||0},
+  {id:'awk',n:'Uyanış',d:'Bir kartı uyandır',g:1,v:s=>Math.max(s.awkN||0,EXC.some(c=>own(s,c.id)>0)?1:0)},
+  {id:'adv',n:'Diyarların Fatihi',d:'Maceradaki bütün bölümleri bitir',g:ADV_N,v:s=>Math.min(ADV_N,s.advC||0)},
+  {id:'clan',n:'Klan Kardeşliği',d:'Bir klana katıl',g:1,v:(s,x)=>x&&x.inClan?1:0},
+  {id:'d10',n:'Yardımsever',d:'10 kart bağışla',g:10,v:s=>s.dnTot||0},
+  {id:'d100',n:'Cömert Kalp',d:'100 kart bağışla',g:100,v:s=>s.dnTot||0},
+  {id:'ss3',n:'Sezon Şampiyonu',d:'Haftalık sezonu ilk 3\'te bitir',g:1,v:s=>s.ssBest&&s.ssBest<=3?1:0}];
+function achList(st,x){const done=new Set(st.ach||[]);return ACH.map(a=>{const v=Math.min(a.g,a.v(st,x)||0);return{id:a.id,n:a.n,d:a.d,g:a.g,v,done:done.has(a.id)||v>=a.g,lg:a.lg}})}
+// Yeni tamamlananları st.ach'a ekler (bir kez kazanılan rozet geri gitmez), yeni olanların adlarını döner.
+// x verilmezse (klan bilinmiyorsa) klan başarımı bu turda değerlendirilmez.
+function achSync(st,x){const have=new Set(st.ach||[]),nw=[];
+  for(const a of ACH){if(have.has(a.id))continue;if(a.id==='clan'&&!x)continue;if((a.v(st,x)||0)>=a.g){have.add(a.id);nw.push(a.n)}}
+  if(nw.length)st.ach=[...have];return nw}
 
 const MR={ELS,round5,round10,RAR,TYPE_HP,TYPE_RET,DMG,ATK,FXV,FX,atkDmg,PACK,XP,ECON,RAW,E1,E2,CARDS,BY,rootOf,N,pad,setOf,setCards,cno,setN,
   EXA,EXCOST,EXD,EXC,exOf,EZA,EZDR,EZC,POOL,POOLS,EVO_NEED,STAGE_W,cw,SHINY,LEAGUES,lgOf,TROPHY,STREAK,strkB,CHEST,GIFT,DQP,DQB,srnd,SUPK,
   ADV_CH,ADV_RULE,ADV_N,ADV_P,advStage,advStageX,TUT,fresh,
   ECON_KEYS,CLIENT_KEYS,BATTLE_MIN_MS,BATTLE_PER_HOUR,own,tutOn,roll,drawCard,rollPack,copies,canEvo,canAwaken,giveSup,rndSup,addXp,
-  giftTick,dayKey,dqList,dqInc,normalize,mergeClient,act,pubStats,
+  giftTick,dayKey,dqList,dqInc,normalize,mergeClient,act,pubStats,avatarOf,ACH,achList,achSync,
   SEASON,seasonOf,seasonEnd,seasonRewardFor,seasonGive,
   CLAN,REQ,reqable,reqCheck,reqOpen,dnLeft,donateCheck,donateGive,donateGet,clanPay};
 G.MR=MR;
