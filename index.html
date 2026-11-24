@@ -702,6 +702,15 @@ body.inb main{padding:0 10px 16px}
 .frp{width:min(94vw,420px);max-height:86vh;overflow:auto;border-image:url(img/panel.webp) 95 / 22px / 4px stretch;background:linear-gradient(180deg,#140a2a66 0,#140a2ad9 32%,#140a2af2 100%),url(img/frbg.jpg) center top/cover;background-clip:padding-box}
 .frtabs{display:flex;gap:6px}.frtabs button{flex:1;border:0;border-radius:10px;padding:9px 4px;background:#ffffff12;color:#c9d3dc;font:700 13px Rubik,sans-serif}.frtabs button.on{background:var(--gold);color:#1a1206}.frtabs button{display:flex;align-items:center;justify-content:center;gap:5px}.frtabs img{width:22px;height:22px;margin:-4px 0}
 .frl{display:flex;flex-direction:column;gap:6px}
+.admp{max-height:92vh;overflow:auto}.admp>*,.admp #adres>*{flex-shrink:0}.adsr,.adrow{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:4px 0}.adsr .accin{flex:1;margin:0}
+.adn{width:84px!important;flex:1;margin:0!important}.adul{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}.adu{padding:6px 10px;border-radius:10px;background:#ffffff14;color:inherit;border:1px solid #ffffff22;font-weight:700}.adu.ban{opacity:.6}
+.adbox{background:#ffffff0d;border-radius:12px;padding:10px;margin:8px 0}.adhd{display:flex;gap:8px;align-items:center;font-size:18px}.adban{background:#c33;color:#fff;border-radius:6px;padding:1px 6px;font-size:11px}
+.adst{display:flex;flex-wrap:wrap;gap:6px 12px;margin:6px 0;font-size:13px}.adsm{opacity:.7;font-size:12px}
+.adcl{display:flex;flex-direction:column;gap:4px;max-height:260px;overflow:auto;margin:6px 0}.adc{display:flex;align-items:center;gap:8px;padding:4px 6px;border-radius:10px;background:#ffffff0a}
+.adc .btn,.adc .frx{flex:0 0 auto!important;width:auto!important;min-width:40px;margin:0!important;padding:6px 12px!important}.adrow .btn{flex:1}
+.adc img{width:40px;height:40px;border-radius:8px;object-fit:cover}.adc .nm{flex:1;min-width:0;display:flex;flex-direction:column}.adc.r1{box-shadow:inset 3px 0 #4cc4ff}.adc.r2{box-shadow:inset 3px 0 #b07bff}.adc.r3{box-shadow:inset 3px 0 #ffd84a}
+.adsel{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}.adch{background:#f5c45122;border-radius:8px;padding:3px 6px;font-size:12px}.adch button{background:none;border:0;color:inherit;margin-left:4px}
+.adlog{font-size:12px;display:flex;flex-direction:column;gap:3px;max-height:220px;overflow:auto;background:#0003;border-radius:10px;padding:6px}
 .frr{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:12px;background:#ffffff0d}.frr.me{background:#f5c45122;outline:1px solid #f5c45155}
 .frr .rk{font:700 14px Rubik,sans-serif;color:var(--gold);width:20px;text-align:center}.frr .lgb2 img{width:30px;height:30px}
 .frr .nm{flex:1;min-width:0;display:flex;flex-direction:column}.frr .nm b{font:700 15px Rubik,sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -2361,7 +2370,7 @@ function clanCard(){if(window.claude)return '';const a=accGet(),n=window.__clBd|
   return `<button class="frc" id="clbtn"><img class="fri" src="img/ic/clan.webp" alt="" onerror="this.outerHTML='<span class=&quot;fri fre&quot;>🛡️</span>'"><b>Klan</b><small>${a.user?(cn?escH(cn):'Klan kur ya da katıl'):'Giriş yapınca açılır'}</small>${n?`<span class="frbd">${n}</span>`:''}</button>`}
 // rozetler: arkadaşlık istekleri (Arkadaşlar), klan katılım istekleri ve sana gelen bağışlar (Klan)
 async function frBadge(){if(!cloudOn())return;try{const j=await api('/api/notify?since='+(+localStorage.getItem('mr.dnSeen')||0));
-  window.__frInc=j.fr+(j.dm||0);window.__clBd=j.cj+j.dn+(j.ci||0)+(j.cm||0);window.__srvN=j.fr+j.cj+j.dn+(j.ci||0)+(j.cm||0)+(j.dm||0);bellUpd();navClanBadge();window.__clName=j.clan;if(j.dn)cloudPull();
+  window.__frInc=j.fr+(j.dm||0);window.__clBd=j.cj+j.dn+(j.ci||0)+(j.cm||0);window.__srvN=j.fr+j.cj+j.dn+(j.ci||0)+(j.cm||0)+(j.dm||0)+(j.ag||0);bellUpd();navClanBadge();window.__clName=j.clan;if(j.dn)cloudPull();
   if(!B&&tab==='arena'&&!$('#ov').classList.contains('on'))renderArena()}catch(e){}}
 function navClanBadge(){const b=document.querySelector('nav button[data-tab=clan]');if(!b)return;let d=b.querySelector('.nbd');const n=window.__clBd||0;
   if(!n){if(d)d.remove();return}if(!d){d=document.createElement('span');d.className='nbd';b.appendChild(d)}d.textContent=n}
@@ -2484,7 +2493,8 @@ async function openInbox(){const ov=$('#ov');ov.className='ov on';
   const reqs=[...j.fr.map(f=>row('👥',escH(f.name),'Arkadaşlık isteği gönderdi',`<button class="btn" data-ibfa="${escH(f.name)}">Kabul</button><button class="frx" data-ibfd="${escH(f.name)}">Reddet</button>`)),
     ...j.ci.map(c=>row('✉️',escH(c.clan),`${escH(c.by)} seni klana davet etti`,`<button class="btn" data-ibca="${escH(c.clan)}">Katıl</button><button class="frx" data-ibcd="${escH(c.clan)}">Reddet</button>`)),
     ...j.cj.map(c=>row('🛡️',escH(c.name),'Klanına katılmak istiyor','<button class="btn" data-ibgo="clanmem">Gör</button>'))];
-  const rew=[...j.dn.map(d=>row('🎁',`${escH(d.name)} sana kart bağışladı`,`${cardNm(d.card)} · ${agoTxt(d.t)}`,'')),
+  const rew=[...(j.ag||[]).map(g=>row('🎁','Yönetici hediyesi',`${escH(g.msg)} · ${escH(giftTxt(g.p))} · ${agoTxt(g.t)}`,`<button class="btn" data-ibag="${g.id}">Al</button>`)),
+    ...j.dn.map(d=>row('🎁',`${escH(d.name)} sana kart bağışladı`,`${cardNm(d.card)} · ${agoTxt(d.t)}`,'')),
     ...localNotes().map(n=>row(n.ic,escH(n.t),'',`<button class="btn" data-ibgo="${n.go}">${n.go==='prof'?'Al':'Git'}</button>`))];
   const body=sec('Mesajlar',msgs)+sec('İstekler ve davetler',reqs)+sec('Ödüller',rew);
   shell(body||'<p class="frem">Yeni bildirimin yok.</p>');
@@ -2497,7 +2507,73 @@ async function openInbox(){const ov=$('#ov');ov.className='ov on';
   ov.querySelectorAll('[data-ibfa]').forEach(b=>b.onclick=()=>post(b,'/api/friends/accept',{u:b.dataset.ibfa},b.dataset.ibfa+' artık arkadaşın'));
   ov.querySelectorAll('[data-ibfd]').forEach(b=>b.onclick=()=>post(b,'/api/friends/decline',{u:b.dataset.ibfd}));
   ov.querySelectorAll('[data-ibca]').forEach(b=>b.onclick=()=>post(b,'/api/clan/invite_accept',{name:b.dataset.ibca},b.dataset.ibca+' klanına katıldın'));
-  ov.querySelectorAll('[data-ibcd]').forEach(b=>b.onclick=()=>post(b,'/api/clan/invite_decline',{name:b.dataset.ibcd}))}
+  ov.querySelectorAll('[data-ibcd]').forEach(b=>b.onclick=()=>post(b,'/api/clan/invite_decline',{name:b.dataset.ibcd}));
+  ov.querySelectorAll('[data-ibag]').forEach(b=>b.onclick=async()=>{b.disabled=true;
+    try{const r=await api('/api/gift/claim',{m:'POST',b:{id:+b.dataset.ibag},retry:true});applySrv(r.save);accRev(r.rev);toast('Hediye alındı: '+giftTxt(r.p));renderTop()}
+    catch(e){toast(e.message)}frBadge();re()})}
+const giftTxt=P=>[P.gold&&`${P.gold} altın`,P.dust&&`${P.dust} toz`,P.free&&`${P.free} paket`,P.trophy&&`${P.trophy} kupa`,
+  ...Object.entries(P.cards||{}).map(([k,n])=>`${n}× ${BY[k]?BY[k].name:'kart'}`),...Object.entries(P.sup||{}).map(([k,n])=>`${n}× ${k==='evo'?'evrim':k} destek`)].filter(Boolean).join(', ')||'—';
+/* ---------- YÖNETİCİ PANELİ (sadece sahip; sunucu da her istekte kontrol eder) ---------- */
+async function openAdmin(who){const ov=$('#ov');ov.className='ov on';const A=window.__adm=window.__adm||{u:null,cards:{}};if(who)A.u=who;
+  const shell=body=>{ov.innerHTML=`<div class="fp setp frp admp"><div class="sth"><b>🛠️ Yönetici paneli</b><button class="stx" id="adclose" aria-label="Kapat">✕</button></div>
+    <div class="adsr"><input class="accin" id="adq" placeholder="Oyuncu ara (kullanıcı adı)" autocapitalize="off" spellcheck="false" maxlength="16" value="${escH(A.q||'')}"><button class="btn" id="adgo">Ara</button></div>
+    <div id="adres"></div>${body}</div>`;
+    $('#adclose').onclick=()=>{ov.className='ov';ov.innerHTML=''};
+    const go=async()=>{A.q=$('#adq').value.trim();try{const j=await api('/api/admin/find?q='+encodeURIComponent(A.q));
+      $('#adres').innerHTML=j.users.length?`<div class="adul">${j.users.map(u=>`<button class="adu${u.banned?' ban':''}" data-adu="${escH(u.name)}">${escH(u.name)}${u.banned?' ⛔':''}</button>`).join('')}</div>`:'<p class="frem">Bulunamadı.</p>';
+      $('#adres').querySelectorAll('[data-adu]').forEach(b=>b.onclick=()=>openAdmin(b.dataset.adu))}catch(e){toast(e.message)}};
+    $('#adgo').onclick=go;$('#adq').onkeydown=e=>{if(e.key==='Enter')go()}};
+  if(!A.u){shell('<p class="frem">Bir oyuncu ara ve seç.</p>');return}
+  shell('<p class="frem">Yükleniyor...</p>');
+  let d;try{d=await api('/api/admin/user?u='+encodeURIComponent(A.u))}catch(e){shell(`<p class="sioerr">${escH(e.message)}</p>`);return}
+  const m=d.sum||{},num=(id,ph)=>`<input class="accin adn" id="${id}" type="number" inputmode="numeric" placeholder="${ph}">`;
+  const sel=Object.entries(A.cards).filter(([,n])=>n);
+  shell(`<div class="adbox"><div class="adhd"><b>${escH(d.name)}</b>${d.banned?'<span class="adban">ENGELLİ</span>':''}</div>
+    <div class="adst"><span>💰 ${m.gold??'—'}</span><span>✨ ${m.dust??'—'} toz</span><span>📦 ${m.free??'—'} paket</span><span>🏆 ${m.trophy??'—'}</span><span>⭐ Sv ${m.lvl??'—'}</span>
+      <span>🗺️ Macera ${m.advC??'—'}/${m.advN??'—'}</span><span>🃏 ${m.col??0} kart</span><span>⚔️ ${m.wins??0}G/${m.losses??0}M</span></div>
+    <small class="adsm">Destek: ${Object.entries(m.sup||{}).filter(([,n])=>n).map(([k,n])=>`${k} ${n}`).join(' · ')||'—'}</small></div>
+   <p class="frh">Altın / toz / paket / kupa (eksi değer çıkarır)</p>
+   <div class="adrow">${num('adg','Altın')}${num('add','Toz')}${num('adf','Paket')}${num('adt','Kupa')}</div>
+   <button class="btn" id="adapply">Uygula</button>
+   <p class="frh">Kart ver / al</p>
+   <input class="accin" id="adcq" placeholder="Kart adı ara" spellcheck="false"><div class="adcl" id="adcl"></div>
+   <div class="adsel">${sel.length?sel.map(([k,n])=>`<span class="adch">${n>0?'+':''}${n}× ${cardNm(+k)}<button data-adrm="${k}" aria-label="Kaldır">✕</button></span>`).join(''):'<small class="adsm">Seçili kart yok. Listeden + / − ile ekle.</small>'}</div>
+   <div class="adrow"><button class="btn" id="adcgive" ${sel.length?'':'disabled'}>Seçili kartları uygula</button><button class="btn alt" id="adcclr" ${sel.length?'':'disabled'}>Temizle</button></div>
+   <p class="frh">Destek kartı</p>
+   <div class="adrow"><select class="accin" id="adsk">${SUPK.map(k=>`<option value="${k}">${k==='evo'?'Evrim':k}</option>`).join('')}</select>${num('adsn','Adet (− alır)')}<button class="btn" id="adsgo">Uygula</button></div>
+   <p class="frh">Macera ilerlemesi (0–${m.advN})</p>
+   <div class="adrow">${num('adav','Bölüm sayısı')}<button class="btn" id="adavgo">Ayarla</button></div>
+   <p class="frh">Hediye mesajı (zil kutusuna 'Yönetici hediyesi' olarak düşer)</p>
+   <input class="accin" id="admsg" maxlength="200" placeholder="Mesaj (ör. Safari sorunu için telafi)">
+   <div class="adrow">${num('adhg','Altın')}${num('adhd','Toz')}${num('adhf','Paket')}</div>
+   <small class="adsm">Seçili kartların pozitif olanları da hediyeye eklenir.</small>
+   <button class="btn" id="adgift">🎁 Hediye gönder</button>
+   <p class="frh">Hesap</p>
+   <button class="btn ${d.banned?'':'alt'}" id="adban">${d.banned?'Engeli kaldır':'⛔ Engelle (giriş yapamaz, oturumları kapanır)'}</button>
+   <p class="frh">Son maçlar</p>
+   <div class="adlog">${(d.matches||[]).map(x=>`<div>${x.win?'✅':'❌'} ${escH(x.mode)} · ${escH(x.opp||'')} · ${x.dt>0?'+':''}${x.dt} · ${agoTxt(x.t)}</div>`).join('')||'<small class="adsm">Yok</small>'}</div>
+   <p class="frh">Ekonomi günlüğü (son 40)</p>
+   <div class="adlog">${(d.econ||[]).map(x=>`<div><b>${escH(x.a)}</b> 💰${x.gold_before??''}→${x.gold_after??''} 🗺️${x.advC_before??''}→${x.advC_after??''} 📦${x.free_before??''}→${x.free_after??''} ${x.note?'· '+escH(x.note):''} · ${agoTxt(x.t)}</div>`).join('')||'<small class="adsm">Yok</small>'}</div>`);
+  const v=id=>Math.trunc(+($('#'+id)||{}).value||0),re=()=>openAdmin();
+  const post=async(url,b,ok)=>{try{const r=await api(url,{m:'POST',b:{u:A.u,...b}});toast(ok||r.note||'Tamam');re()}catch(e){toast(e.message)}};
+  $('#adapply').onclick=()=>post('/api/admin/edit',{op:'add',p:{gold:v('adg'),dust:v('add'),free:v('adf'),trophy:v('adt')}});
+  $('#adsgo').onclick=()=>post('/api/admin/edit',{op:'add',p:{sup:{[$('#adsk').value]:v('adsn')}}});
+  $('#adavgo').onclick=()=>post('/api/admin/edit',{op:'adv',advC:v('adav')});
+  $('#adcgive').onclick=()=>{const c=A.cards;A.cards={};post('/api/admin/edit',{op:'add',p:{cards:c}})};
+  $('#adcclr').onclick=()=>{A.cards={};re()};
+  ov.querySelectorAll('[data-adrm]').forEach(b=>b.onclick=()=>{delete A.cards[b.dataset.adrm];re()});
+  $('#adban').onclick=()=>post('/api/admin/ban',{ban:!d.banned},d.banned?'Engel kaldırıldı':'Oyuncu engellendi');
+  $('#adgift').onclick=()=>{const cards={};Object.entries(A.cards).forEach(([k,n])=>{if(n>0)cards[k]=n});
+    post('/api/admin/gift',{msg:$('#admsg').value,p:{gold:v('adhg'),dust:v('adhd'),free:v('adhf'),cards}},'Hediye gönderildi').then(()=>{A.cards={}})};
+  const own=m.cards||{};
+  const list=()=>{const q=$('#adcq').value.trim().toLocaleLowerCase('tr');
+    const cs=CARDS.filter(c=>!q||c.name.toLocaleLowerCase('tr').includes(q)).slice(0,q?60:24);
+    $('#adcl').innerHTML=cs.map(c=>`<div class="adc r${c.r}"><img src="img/t/${c.id}.webp" alt="" loading="lazy"><div class="nm"><b>${escH(c.name)}</b><small>${RAR[c.r].n} · elinde ${own[c.id]||0}${A.cards[c.id]?` · seçili ${A.cards[c.id]>0?'+':''}${A.cards[c.id]}`:''}</small></div>
+      <button class="frx" data-adm="${c.id}" aria-label="Azalt">−</button><button class="btn" data-adp="${c.id}" aria-label="Artır">+</button></div>`).join('');
+    const ch=(id,dlt)=>{A.cards[id]=(A.cards[id]||0)+dlt;if(!A.cards[id])delete A.cards[id];const y=ov.scrollTop;openAdmin().then(()=>{$('#adcq').value=q;list();ov.scrollTop=y})};
+    $('#adcl').querySelectorAll('[data-adp]').forEach(b=>b.onclick=()=>ch(b.dataset.adp,1));
+    $('#adcl').querySelectorAll('[data-adm]').forEach(b=>b.onclick=()=>ch(b.dataset.adm,-1))};
+  $('#adcq').oninput=list;list()}
 /* ---------- SOHBET (klan + arkadaşla özel) ----------
    Sohbet açıkken 3 sn'de bir yeni mesajlar çekilir; ekran kapanınca durur. Küfür filtresi, hız sınırı ve engelleme sunucuda. */
 const hhmm=t=>{const d=new Date(t);return d.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})};
@@ -2723,6 +2799,7 @@ function openSettings(){const ov=$('#ov');ov.className='ov on';
     ${row('stmv','Müzik','<span class="sic">♫</span>',mvol())}
     ${row('stsv','Efektler','<span class="sic">✦</span>',svol())}
     ${window.claude?'':(()=>{const a=accGet();return `<div class="stsv"><b>Hesap</b>${a.user?`<p class="sionote">Giriş yapıldı: <b>${escH(a.user)}</b>. İlerlemen buluta kaydediliyor, başka cihazdan da devam edebilirsin.</p><button class="btn alt" id="stout">Çıkış yap</button>`:`<p class="sionote">Giriş yaparsan ilerlemen buluta kaydedilir; telefon değişse bile kaybolmaz.</p><button class="btn" id="stacc">Giriş yap / Kayıt ol</button>`}</div>`})()}
+    ${!window.claude&&accGet().owner?'<button class="btn alt" id="stadm">🛠️ Yönetici paneli</button>':''}
     <div class="stsv"><b>Kayıt</b><div class="stsv2"><button class="btn alt" id="stexp">Dışa aktar</button></div></div>
     <button class="btn alt" id="strules">📖 Kurallar ve oran tablosu</button>
     <div class="stinfo">Mythbeast Realm · Seri 1<br><small>Müzik ve ses efektleri: kendi parçaların ve OpenGameArt (CC0)</small></div>
@@ -2732,7 +2809,7 @@ function openSettings(){const ov=$('#ov');ov.className='ov on';
   $('#stsv').oninput=e=>{S.sv=e.target.value/100;upd();SFX.setVol()};$('#stsv').onchange=()=>{save();SFX.hit('fire','')};
   $('#stsnd').onclick=e=>{SFX.toggle();e.currentTarget.classList.toggle('on',SFX.on());e.currentTarget.parentNode.querySelector('.sic').innerHTML=sndIco();upd();const ts=$('#tsnd');if(ts)ts.innerHTML=sndIco()};
   const cl=()=>{ov.className='ov';ov.innerHTML='';if(tab==='rules')openRules()};$('#stclose').onclick=cl;$('#stok').onclick=cl;
-  $('#stexp').onclick=()=>openSaveIO('exp');
+  $('#stexp').onclick=()=>openSaveIO('exp');if($('#stadm'))$('#stadm').onclick=()=>openAdmin();
   if($('#stacc'))$('#stacc').onclick=openAccount;
   $('#strules').onclick=()=>{if(B&&!B.over){toast('Önce savaşı bitir');return}ov.className='ov';ov.innerHTML='';openRules()};
   const so=$('#stout');if(so)so.onclick=async()=>{if(!so.dataset.ok){so.dataset.ok=1;so.textContent='Emin misin? Tekrar bas';return}
