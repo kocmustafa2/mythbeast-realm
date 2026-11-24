@@ -692,6 +692,10 @@ body.inb main{padding:0 10px 16px}
 .hst{display:flex;gap:2px;flex-wrap:nowrap;justify-content:center}.hst span{display:flex;flex-direction:column;align-items:center;width:21px;padding:3px 0;border-radius:6px;font:13px/1 'MRDisplay',sans-serif}
 .hst span i{font:700 8.5px Rubik,sans-serif;font-style:normal;margin-top:2px;letter-spacing:-.03em}.hst .w{background:#2e8a4a55;color:#8ff0a8}.hst .l{background:#a8323255;color:#ff9a9a}
 .fightb{width:100%;margin:12px 0 14px}
+.qob{display:flex;gap:8px;margin:-4px 0 10px}.qob .btn{flex:1;margin:0;padding:10px 6px;font-size:14px}
+.qores{max-height:90vh}.qog{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 8px;overflow-y:auto;max-height:58vh;padding:4px}
+.qoc{position:relative;cursor:pointer;display:flex;justify-content:center}.qoc .card{--w:calc((min(94vw,420px) - 76px)/3)}.qoc.nw{filter:drop-shadow(0 0 6px #ffd84a)}
+.qtag{position:absolute;top:-4px;left:50%;transform:translateX(-50%);background:#ffd84a;color:#2a1a00;font:800 9px Rubik,sans-serif;font-style:normal;padding:1px 6px;border-radius:6px;z-index:9}.qtag.sh{background:linear-gradient(90deg,#ff7ad9,#6ad8ff);color:#fff}
 .frc{display:flex;align-items:center;gap:10px;width:100%;margin:0 0 10px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:#0c1014cc;color:#fff;text-align:left;position:relative}
 .frc b{font:18px 'MRDisplay',sans-serif;flex:1}.frc small{color:var(--mute);font:12px Rubik,sans-serif}.frc .fri{width:46px;height:46px;object-fit:contain;filter:drop-shadow(0 2px 4px #0009)}
 .snc .sncd{display:flex;flex-direction:column;align-items:flex-end;gap:1px}.snc .sncd small{color:var(--mute);font:11px Rubik,sans-serif}.snc .sncd em{font:700 14px Rubik,sans-serif;color:var(--gold);font-style:normal;white-space:nowrap}
@@ -1279,6 +1283,7 @@ function renderPack(){
   $('#main').innerHTML=`<div class="psets">${[1,2].map(n=>`<button class="chip${packSet===n?' on':''}" data-ps="${n}"${tutOn()&&n===2?' disabled':''}>Seri ${n}${n===2?' · Yeni':''}</button>`).join('')}</div><h2>${packSet===2?'Seri 2 · Metal ve Zehir':'Seri 1 · Elementler'}</h2><p class="sub">Her pakette 5 kart. ${packSet===2?'Seri 2 paketinden sadece Metal ve Zehir kartları çıkar.':'Evrimli kartlar çok nadir çıkar, onları kopya toplayarak evrimleştir.'}</p>
   <div class="packzone"><div class="pk" id="pk">${packArt()}</div></div>
   <button class="btn" id="buy" ${can?'':'disabled'}>${S.free>0?`Ücretsiz paket aç (${S.free})`:`Paket aç · ${PACK.cost} altın`}</button>
+  ${can&&!tutOn()?`<div class="qob"><button class="btn alt" id="qopen">⚡ Hızlı aç</button>${S.free>1?`<button class="btn alt" id="qall">⚡ Hepsini hızlı aç (${Math.min(20,S.free)})</button>`:''}</div>`:''}
   ${!can?'<p class="free">Altının bitti. Arenada savaşarak altın kazan.</p>':''}
   ${dqBox()}${giftBox()}
   <div class="fp pity${left<=5?' hot':''}"><img class="pmed" src="img/ic/legmed.webp" alt=""><div class="pti"><b>Efsanevi garantisi</b><small>${left===1?'Bir sonraki pakette kesin Efsanevi!':`En geç <em>${left}</em> paket içinde`}</small><div class="bar"><i style="width:${S.pity/(PACK.pity-1)*100}%"></i></div></div></div>
@@ -1287,7 +1292,28 @@ function renderPack(){
   document.querySelectorAll('[data-ps]').forEach(b=>b.onclick=()=>{S.pset=+b.dataset.ps;save();renderPack()});
   const go=()=>{if(S.free>0||S.gold>=PACK.cost)openPack()};
   $('#buy').onclick=go;$('#pk').onclick=go;
+  const q1=$('#qopen');if(q1)q1.onclick=()=>quickOpen(false);const qa=$('#qall');if(qa)qa.onclick=()=>quickOpen(true);
 }
+// HIZLI AÇ: animasyonsuz; tek paket ya da elindeki tüm ücretsiz paketler (en fazla 20), sonuçlar tek ızgarada
+async function quickOpen(all){if(window.__pkBusy)return;window.__pkBusy=1;const got=[];let n=0,err=null,xp=0;
+  const ov=$('#ov');ov.className='ov on';ov.innerHTML='<div class="fp setp frp"><p class="frem" id="qop">Paket açılıyor...</p></div>';
+  try{const max=all?Math.min(20,S.free):1;
+    for(let i=0;i<max;i++){if(!(S.free>0||S.gold>=PACK.cost))break;
+      const r=await act('pack',{set:packSet});n++;xp+=r.xp||0;r.res.forEach(x=>got.push({c:BY[x.id],isNew:x.isNew,sh:x.sh,newSh:x.newSh}));
+      const q=$('#qop');if(q)q.textContent=`${n} paket açıldı...`}}
+  catch(e){err=e.message}finally{window.__pkBusy=0}
+  renderTop();if(tab==='pack')renderPack();
+  if(!got.length){ov.className='ov';ov.innerHTML='';if(err)toast(err);return}
+  got.sort((a,b)=>(b.c.r-a.c.r)||((b.isNew||b.newSh)-(a.isNew||a.newSh)));
+  const nNew=got.filter(x=>x.isNew).length,best=got[0].c.r;
+  ov.innerHTML=`<div class="fp setp frp qores"><div class="sth"><b>${n} paket · ${got.length} kart</b><button class="stx" id="qoclose" aria-label="Kapat">✕</button></div>
+    <p class="sionote">${nNew?`<b>${nNew} yeni kart!</b> `:''}${best>=2?`En iyi: <b>${RAR[best].n}</b>`:''}${err?`<br><span class="sioerr">${escH(err)}</span>`:''}</p>
+    <div class="qog">${got.map(x=>`<div class="qoc r${x.c.r}${x.isNew||x.newSh?' nw':''}" data-qid="${x.c.id}">${cardHTML(x.c,{noTilt:1,shiny:!!x.sh})}${x.isNew?'<i class="qtag">YENİ</i>':x.newSh?'<i class="qtag sh">PARLAK</i>':''}</div>`).join('')}</div>
+    <button class="btn" id="qodone">Tamam</button></div>`;
+  const close=()=>{ov.className='ov';ov.innerHTML='';if(tab==='pack')renderPack()};
+  $('#qoclose').onclick=close;$('#qodone').onclick=close;
+  ov.querySelectorAll('[data-qid]').forEach(e=>e.onclick=()=>showCard(BY[e.dataset.qid],true));
+  if(best>=3){try{SFX.win()}catch(e){}}}
 async function openPack(){
   if(window.__pkBusy)return;window.__pkBusy=1;let r;
   try{r=await act('pack',{set:packSet})}catch(e){toast(e.message);return}finally{window.__pkBusy=0}
