@@ -13,13 +13,13 @@ const RAR=[
   {n:'Yaygın',  sym:'●',hp:100,mult:1.00,team:2,ret:1,dust:5,  craft:40},
   {n:'Nadir',   sym:'◆',hp:140,mult:1.15,team:3,ret:1,dust:20, craft:150},
   {n:'Destansı',sym:'★',hp:185,mult:1.30,team:4,ret:2,dust:80, craft:500},
-  {n:'Efsanevi',sym:'★',hp:225,mult:1.40,team:5,ret:2,dust:300,craft:1600}
+  {n:'Efsanevi',sym:'★',hp:290,mult:1.40,team:5,ret:2,dust:300,craft:1600}
 ];
 const TYPE_HP={fire:0,water:0,earth:15,air:-5,light:0,shadow:5,metal:0,poison:-5,blood:0};   // Toprak dayanıklı, Hava kırılgan
 const TYPE_RET={fire:0,water:0,earth:1,air:-1,light:0,shadow:-1,metal:1,poison:0,blood:0};    // Toprak ağır, Hava hafif
 const DMG=[0,20,45,75,110];                        // (eski enerji eğrisi, artık kullanılmıyor)
 // SALDIRI DEĞERLERİ: [normal, dolu] × nadirlik (Yaygın, Nadir, Destansı, Efsanevi)
-const ATK=[[30,40,50,60],[55,70,90,110]];
+const ATK=[[30,40,50,80],[55,70,90,145]];   // Efsanevi belirgin şekilde güçlü
 const FXV={burn:20,splash:20,heal:30,coin:20,recoil:30};   // efekt büyüklükleri
 const FX={
   burn:  {cost:5,  t:'Vurulan kart yanar: sahibinin sonraki 2 turunun başında 20 hasar alır.'},
@@ -154,7 +154,7 @@ const setCards=n=>CARDS.filter(c=>setOf(c)===n);
 const cno=c=>{const i=setCards(setOf(c)).indexOf(c);return pad(i>=0?i+1:c.id)};
 const setN=c=>setCards(setOf(c)).length;   // kart numarası: seri içindeki sıra (yeni eklenenler sona)
 
-const EXA={blast:'Sahaya inince bütün rakiplere 20 hasar',heal:'Sahaya inince kendi kartlarına +30 can, kötü etkileri siler',stand:'Yenilmeden önce bir kez 50 canla ayağa kalkar'};
+const EXA={blast:'Sahaya inince bütün rakiplere 50 hasar',heal:'Sahaya inince kendi kartlarına +70 can, kötü etkileri siler',stand:'Yenilmeden önce bir kez canının yarısıyla ayağa kalkar'};
 const EXCOST={copies:3,dust:1500};
 const EXD=[[65,7,'Buz Ankası','water','blast',['Buz Tüyü'],['Donduran Fırtına','splash'],'Alevleri söndüğünde buzdan yeniden doğdu.'],
  [66,14,'Altın Deniz Ejderi','light','heal',['Altın Dalga'],['Güneş Gelgiti','heal'],'Gün batımında denizi altına boyar.'],
@@ -162,8 +162,8 @@ const EXD=[[65,7,'Buz Ankası','water','blast',['Buz Tüyü'],['Donduran Fırtı
  [68,28,'Fırtına Ejderi','air','blast',['Şimşek Pençe'],['Gök Gürültüsü','splash'],'Kanat çırptığında gök yarılır.'],
  [69,33,'Gül Geyiği','light','heal',['Çiçek Işığı'],['Gül Aurorası','heal'],'Geçtiği yerde karın üstünde çiçekler açar.'],
  [70,38,'Kızıl Ay Kurdu','fire','stand',['Kor Diş'],['Kızıl Tutulma','burn'],'Kızıl ay doğduğunda uluması dağları titretir.']];
-const EXC=EXD.map(([id,base,name,el,exa,a1,a2,flv])=>{const B0=BY[base];return{id,base,name,el,exa,flv,ex:1,r:3,stage:0,from:0,b:B0.b,f:B0.f,ret:B0.ret,hp:260,
-  atks:[{e:E1[3],name:a1[0],fx:a1[1],dmg:Math.max(10,round5(70-(a1[1]?FX[a1[1]].cost:0)))},{e:E2[3],name:a2[0],fx:a2[1],dmg:Math.max(10,round5(125-(a2[1]?FX[a2[1]].cost:0)))}]}});
+const EXC=EXD.map(([id,base,name,el,exa,a1,a2,flv])=>{const B0=BY[base];return{id,base,name,el,exa,flv,ex:1,r:3,stage:0,from:0,b:B0.b,f:B0.f,ret:B0.ret,hp:400,
+  atks:[{e:E1[3],name:a1[0],fx:a1[1],dmg:Math.max(10,round5(105-(a1[1]?FX[a1[1]].cost:0)))},{e:E2[3],name:a2[0],fx:a2[1],dmg:Math.max(10,round5(190-(a2[1]?FX[a2[1]].cost:0)))}]}});
 EXC.forEach(c=>BY[c.id]=c);
 const exOf=c=>EXC.find(x=>x.base===c.id);
 
