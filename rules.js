@@ -15,7 +15,7 @@ const RAR=[
   {n:'Destansı',sym:'★',hp:185,mult:1.30,team:4,ret:2,dust:80, craft:500},
   {n:'Efsanevi',sym:'★',hp:225,mult:1.40,team:5,ret:2,dust:300,craft:1600}
 ];
-const TYPE_HP={fire:0,water:0,earth:15,air:-15,light:0,shadow:-15,metal:15,poison:-5,blood:0};   // Toprak dayanıklı, Hava kırılgan
+const TYPE_HP={fire:0,water:0,earth:15,air:-5,light:0,shadow:5,metal:0,poison:-5,blood:0};   // Toprak dayanıklı, Hava kırılgan
 const TYPE_RET={fire:0,water:0,earth:1,air:-1,light:0,shadow:-1,metal:1,poison:0,blood:0};    // Toprak ağır, Hava hafif
 const DMG=[0,20,45,75,110];                        // (eski enerji eğrisi, artık kullanılmıyor)
 // SALDIRI DEĞERLERİ: [normal, dolu] × nadirlik (Yaygın, Nadir, Destansı, Efsanevi)

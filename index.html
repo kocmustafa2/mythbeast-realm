@@ -911,7 +911,7 @@ body.inb main{padding:0 10px 16px}
 .bk.ch{box-shadow:0 4px 12px #000b,0 0 0 3px #ffd84a,0 0 16px #ffd84a}.bk.ch .bkat{background:linear-gradient(90deg,#5a3a00,#0a0f18);box-shadow:inset 0 0 0 1px #ffd84a}
 .bk .bkev{position:absolute;left:4px;top:calc(62% - 20px);font:800 8.5px Rubik,sans-serif;padding:2px 5px;border-radius:5px;background:linear-gradient(90deg,#b07bff,#6a3aff);box-shadow:0 2px 4px #000a}
 .bk .bkst{position:absolute;right:3px;top:calc(62% - 22px);display:flex;align-items:center;gap:1px;font:800 9px Rubik,sans-serif;padding:1px 5px 1px 1px;border-radius:9px;background:#000c;box-shadow:0 0 0 1px var(--ec)}.bk .bkst img{width:15px;height:15px}
-.bk .bkb,.bk .bkv{position:absolute;left:3px;top:24px;display:flex;align-items:center;gap:1px;font:800 10px Rubik,sans-serif;padding:1px 5px 1px 1px;border-radius:8px;background:#000c}.bk .bkb img,.bk .bkv img,.bk .bkv svg{width:14px;height:14px}.bk .bkv{top:44px}
+.bk .bkb,.bk .bkv{position:absolute;left:3px;top:24px;display:flex;align-items:center;gap:1px;font:800 10px Rubik,sans-serif;padding:1px 5px 1px 1px;border-radius:8px;background:#000c}.bk .bkb img,.bk .bkv img,.bk .bkv svg{width:14px;height:14px}.bk .bkv{top:44px}.bk .bkp{top:44px;background:#3d5a00e0}.bk .bkl{top:64px;background:#7a0000e0}.bk .bka2{top:84px;background:#4a2380e0}
 .bk .bkx{position:absolute;right:24px;top:4px;font:900 11px/1 'MRDisplay',sans-serif;padding:2px 5px;border-radius:5px;background:linear-gradient(135deg,#ff3c3c,#ffb020)}
 .bk.holo{box-shadow:0 4px 12px #000b,0 0 0 2px #fff,0 0 12px #ff7ad9,0 0 18px #6ad8ff}.bk.ex{box-shadow:0 4px 12px #000b,0 0 0 3px #ffb020,0 0 14px #ff5a3c}
 .bk.bpk:hover,.bk.bpk:active{transform:translateY(-3px)}
@@ -1547,24 +1547,40 @@ const evoNext=c=>CARDS.find(x=>x.from===c.id);
 function canSup(k,f,needOwn){if(!f)return 'Önce bir yaratık seç';
   if(k==='evo'){if(f.evo||f.c.stage!==0||f.c.r>=3||f.c.ex)return 'Evrim Taşı sadece temel yaratıklara takılır';const e=evoNext(f.c);if(!e)return `${f.c.name} evrimleşemez`;if(needOwn&&!owned(e.id))return `Önce ${e.name} kartını koleksiyonunda evrimleştirmelisin`;return true}
   if(f.st)return 'Bu yaratıkta zaten bir taş var';if(f.c.el!==k)return `${SUPN[k]} sadece ${T[k].n} yaratıklara takılır`;return true}
-const mx=f=>f.max||f.c.hp;   // deste: 7 kart, en fazla 24 puan (Yaygın 2, Nadir 3, Destansı 4, Efsanevi 5)
+const mx=f=>f.max||baseHp(f.c);   // deste: 7 kart, en fazla 24 puan (Yaygın 2, Nadir 3, Destansı 4, Efsanevi 5)
 let B=null;
 // savaşta vuruş gücü: normalde ilk saldırı; bir tur saldırmadan bekleyen kart "dolar" ve ikinci saldırısıyla vurur
-const atkOf=f=>(f.ch&&f.c.atks[1]?f.c.atks[1].dmg:f.c.atks[0].dmg)+(f.st?10:0);
+const atkOf=f=>Math.round(((f.ch&&f.c.atks[1]?f.c.atks[1].dmg:f.c.atks[0].dmg)+(f.st?10:0))*mulOf(f.c));
 function hitDmg(Af,D){const A=Af.c,k=rel(A.el,D.el);return{d:applyRel(atkOf(Af),A.el,D.el),w:k==='w',r:k==='r',i:k==='i'}}
-/* ---------- TÜR DESTEKLERİ (sahadaki bütün kendi kartlarına) ----------
-   aynı tür üst üste binmez: sahadaki en güçlüsü geçerli. Değer nadirlikten: Yaygın/Nadir/Destansı/Efsanevi */
-const AUR=[5,10,15,20],AIRP=[10,15,20,25],POI=[5,5,10,15];
+/* ---------- TÜR YETENEKLERİ (her kartın kendisinde) ----------
+   değer evrim basamağından: temel / 1. evrim / 2. evrim (tek basamaklı Efsanevi ve EX = 2) */
+const stg=c=>c.ex||c.ez||c.r>=3?2:Math.min(2,c.stage||0);
+const TV={water:[8,12,16],fire:[4,7,10],poison:[13,17,21],metal:[4,6,8]},SHM=[2,2.5,3],LIP=[50,60,70],AIRP=[55,65,75],AIRD=[1,.95,.9],EA={hp:1.3,at:.9};   // denge: 4000 savaşlık tür simülasyonuyla ayarlandı (window.__typeSim)
+window.__bal={TV,SHM,LIP,AIRP,AIRD,EA};
+const tv=(c,a)=>a[stg(c)];
+const baseHp=c=>c.el==='earth'?Math.round(c.hp*EA.hp/5)*5:c.hp;
+const mulOf=c=>c.el==='earth'?EA.at:c.el==='air'?tv(c,AIRD):1;
 const AURA_TXT={
-  earth:v=>`Saha: gelen hasar −${v}`,water:v=>`Saha: tur başında +${v} can`,fire:v=>`Saha: saldırılar +${v} hasar`,
-  light:(v,r)=>r?`Saha: kötü etkileri temizler, +10 can`:`Saha: yanığı temizler, +10 can`,
-  shadow:v=>`Saha: vurulan rakip 2 tur +${v} fazla hasar alır`,metal:v=>`Kendisi: aldığı hasar −${v} (zırh)`,poison:(v,r)=>`Saha: tur başında rakiplere ${POI[r]} zehir hasarı`,air:(v,r)=>`Kendisi: %${AIRP[r]} ihtimalle çift vuruş`};
-const auraText=c=>AURA_TXT[c.el](AUR[c.r],c.r);
-function auras(board){const a={earth:0,water:0,fire:0,shadow:0,light:-1,poison:0};
-  (board||[]).forEach(f=>{if(!f||f.hp<=0)return;const e=f.c.el,v=e==='poison'?POI[f.c.r]:AUR[f.c.r];if(e==='light')a.light=Math.max(a.light,f.c.r);else if(e in a)a[e]=Math.max(a[e],v)});return a}
+  earth:c=>`Kendisi: can +%${Math.round((EA.hp-1)*100)}, saldırı −%${Math.round((1-EA.at)*100)}`,
+  water:c=>`Tur başında yanındaki kartlara +${tv(c,TV.water)} can`,
+  fire:c=>`Vuruşta diğer rakiplere ${tv(c,TV.fire)} sıçrama`,
+  poison:c=>`Zehir: 2 tur ${tv(c,TV.poison)} hasar, ölünce yanına bulaşır`,
+  metal:c=>`Kanama: 2 tur ${tv(c,TV.metal)} hasar`,
+  shadow:c=>`Vurduğu rakibin kötü etkileri 2 tur ×${tv(c,SHM)}`,
+  light:c=>`Tur başında kötü etkilerin %${tv(c,LIP)}'ini siler`,
+  air:c=>`%${tv(c,AIRP)} ikinci vuruş${tv(c,AIRD)<1?`, vuruş başı %${tv(c,AIRD)*100} hasar`:''}`};
+const auraText=c=>AURA_TXT[c.el](c);
+function auras(){return{earth:0,water:0,fire:0,shadow:0,light:-1,poison:0}}
 function calc(A,D,atkB,defB,base){
   const k=rel(A.c.el,D.c.el);if(k==='i')return{d:0,k,sh:0};
-  const fa=auras(atkB),da=auras(defB);let d=applyRel(base+fa.fire,A.c.el,D.c.el)+(D.vuln||0);const sh=da.earth+(D.c.el==='metal'?AUR[D.c.r]:0);if(sh)d=Math.max(10,d-sh);return{d,k,sh}}
+  return{d:applyRel(base,A.c.el,D.c.el),k,sh:0}}
+const badOf=f=>(f.burn?1:0)+(f.poiT>0?1:0)+(f.bldT>0?1:0)+(f.ampT>0?1:0);
+function clearBad(f){f.burn=0;f.poi=0;f.poiT=0;f.bld=0;f.bldT=0;f.amp=1;f.ampT=0}
+// zehirli kart ölünce zehir bir kez yanındaki rakip karta bulaşır
+function spreadPoi(X,side){const bd=X[side].board,out=[];
+  bd.forEach((f,i)=>{if(!f||f.hp>0||!(f.poiT>0)||f.poiS)return;const v=f.poi;f.poi=0;f.poiT=0;
+    const nb=[i-1,i+1].filter(j=>bd[j]&&bd[j].hp>0).sort((a,b)=>(bd[a].poiT>0)-(bd[b].poiT>0))[0];
+    if(nb!=null){const t=bd[nb];t.poi=Math.max(t.poiT>0?t.poi:0,v);t.poiT=2;t.poiS=1;out.push(nb)}});return out}
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 const ptsOf=c=>c.ez?8:c.ex?7:BAT.pts[c.r];
 const isS=k=>typeof k==='string';
@@ -1695,18 +1711,21 @@ function foeDeck(mine,lg){const li=lg??lgOf(S.trophy||0),L=LEAGUES[li],easy=easy
   const tc={};cr.forEach(c=>tc[c.el]=(tc[c.el]||0)+1);const top=Object.entries(tc).sort((a,b)=>b[1]-a[1]).map(x=>x[0]);
   const sp=['evo'];for(let k=0;sp.length<ns;k++)sp.push(top[k%top.length]);
   return shuffle([...cr.map(c=>({t:'c',c})),...sp.map(k=>({t:'s',k}))])}
-const mk=c=>({c,hp:c.hp,max:c.hp,st:null,evo:false,ch:false,justIn:true,didAtk:false,burn:0,vuln:0,vulnT:0,uid:Math.random().toString(36).slice(2)});
+const mk=c=>({c,hp:baseHp(c),max:baseHp(c),st:null,evo:false,ch:false,justIn:true,didAtk:false,burn:0,poi:0,poiT:0,poiS:0,bld:0,bldT:0,amp:1,ampT:0,uid:Math.random().toString(36).slice(2)});
 function chargeStep(X,s){const out=[];X[s].board.forEach(f=>{if(!f)return;if(f.c.atks.length>1&&!f.ch&&!f.justIn&&!f.didAtk){f.ch=true;out.push(f.uid)}f.justIn=false;f.didAtk=false});return out}
 function startTurn(s){B.justCharged=chargeStep(B,s)}
-// tur başı: dolma → Işık arınma → yanık → Su can → savunmasızlık süresi
+// tur başı: dolma → Işık arınma → kötü etki hasarı (yanık/zehir/kanama, Gölge ile artar) → Su can
 function coreTurn(X,s){
-  const bd=X[s].board,ev={charged:chargeStep(X,s),cleanse:[],burn:[],heal:[]},au=auras(bd);
-  if(au.light>=0)bd.forEach((f,i)=>{if(!f)return;let n=0;if(f.burn){f.burn=0;n++}if(au.light>=1&&f.vuln){f.vuln=0;f.vulnT=0;n++}if(n){f.hp=Math.min(mx(f),f.hp+10*n);ev.cleanse.push(i)}});
-  bd.forEach((f,i)=>{if(f&&f.burn>0){f.hp=Math.max(0,f.hp-FXV.burn);f.burn--;ev.burn.push(i)}});
-  if(au.water)bd.forEach((f,i)=>{if(f&&f.hp>0&&f.hp<mx(f)){f.hp=Math.min(mx(f),f.hp+au.water);ev.heal.push([i,au.water])}});
-  bd.forEach(f=>{if(f&&f.vulnT>0&&--f.vulnT<=0)f.vuln=0});
-  // Zehir: rakibin bütün kartlarına tur başında zehir hasarı (Metal bağışık)
-  ev.poison=[];if(au.poison){const ob2=X[s==='me'?'foe':'me'].board;ob2.forEach((t,k)=>{if(!t||t.hp<=0||t.c.el==='metal')return;const d=Math.min(au.poison,t.hp);t.hp-=d;ev.poison.push([k,d])})}
+  const bd=X[s].board,ev={charged:chargeStep(X,s),cleanse:[],dot:[],heal:[],spread:[],poison:[]};
+  const lp=Math.max(0,...bd.filter(f=>f&&f.hp>0&&f.c.el==='light').map(f=>tv(f.c,LIP)));
+  if(lp)bd.forEach((f,i)=>{if(!f||f.hp<=0)return;let n=0;const r=()=>Math.random()*100<lp;
+    if(f.burn&&r()){f.burn=0;n++}if(f.poiT>0&&r()){f.poi=0;f.poiT=0;n++}if(f.bldT>0&&r()){f.bld=0;f.bldT=0;n++}if(f.ampT>0&&r()){f.amp=1;f.ampT=0;n++}if(n)ev.cleanse.push(i)});
+  bd.forEach((f,i)=>{if(!f||f.hp<=0)return;let d=0;
+    if(f.burn>0){d+=FXV.burn;f.burn--}if(f.poiT>0){d+=f.poi;if(--f.poiT<=0&&f.hp>d)f.poi=0}if(f.bldT>0){d+=f.bld;if(--f.bldT<=0)f.bld=0}
+    if(!d)return;d=Math.round(d*(f.ampT>0?f.amp:1));f.hp=Math.max(0,f.hp-d);ev.dot.push([i,d])});
+  ev.spread=spreadPoi(X,s);
+  bd.forEach((w,i)=>{if(!w||w.hp<=0||w.c.el!=='water')return;const v=tv(w.c,TV.water);[i-1,i+1].forEach(j=>{const f=bd[j];if(f&&f.hp>0&&f.hp<mx(f)){const g=Math.min(v,mx(f)-f.hp);f.hp+=g;ev.heal.push([j,g])}})});
+  bd.forEach(f=>{if(f&&f.ampT>0&&--f.ampT<=0)f.amp=1});
   // Ezeli: sahadaki her Ezeli kart, rakibin bütün kartlarından can çeker
   ev.drain=[];const ob=X[s==='me'?'foe':'me'].board;
   bd.forEach((f,i)=>{if(!f||!f.c.ez||f.hp<=0)return;let got=0;const hit=[];ob.forEach((t,k)=>{if(!t||t.hp<=0)return;const d=Math.min(EZDR,t.hp);t.hp-=d;got+=d;hit.push(k)});if(hit.length){f.hp=Math.min(mx(f),f.hp+got);ev.drain.push([i,hit,got])}});
@@ -1715,7 +1734,7 @@ function coreTurn(X,s){
 // tek saldırı: hasar + efekt + destekler; olayları döndürür (arayüz ve simülasyon aynı kodu kullanır)
 function coreHit(X,s,ai,ti){
   const o=s==='me'?'foe':'me',A=X[s].board[ai],D=X[o].board[ti],at=curAtk(A),ev={side:[]};
-  let base=at.dmg+(A.st?10:0);if(at.fx==='coin'){ev.coin=Math.random()<.5;if(ev.coin)base+=FXV.coin}
+  let base=atkOf(A);if(at.fx==='coin'){ev.coin=Math.random()<.5;if(ev.coin)base+=FXV.coin}
   const r=calc(A,D,X[s].board,X[o].board,base);ev.k=r.k;ev.d=r.d;ev.sh=r.sh;
   D.hp=Math.max(0,D.hp-r.d);A.ch=false;A.didAtk=true;
   if(D.hp<=0&&D.c.exa==='stand'&&!D.stood){D.hp=D.c.ez?100:50;D.stood=1;ev.stood=1}
@@ -1723,9 +1742,16 @@ function coreHit(X,s,ai,ti){
   if(at.fx==='splash')X[o].board.forEach((f,i)=>{if(f&&i!==ti&&rel(A.c.el,f.c.el)!=='i'){f.hp=Math.max(0,f.hp-FXV.splash);ev.side.push(i)}});
   if(at.fx==='heal'){A.hp=Math.min(mx(A),A.hp+FXV.heal);ev.heal=1}
   if(at.fx==='recoil'){A.hp=Math.max(0,A.hp-FXV.recoil);ev.recoil=1}
-  const sv=auras(X[s].board).shadow;if(sv&&D.hp>0&&r.k!=='i'){D.vuln=Math.max(D.vuln||0,sv);D.vulnT=2;ev.vuln=sv}
-  if(A.c.el==='air'&&A.hp>0&&Math.random()<AIRP[A.c.r]/100){let t=D.hp>0?ti:X[o].board.findIndex(f=>f&&f.hp>0);
-    if(t>=0){const T=X[o].board[t],r2=calc(A,T,X[s].board,X[o].board,A.c.atks[0].dmg+(A.st?10:0));T.hp=Math.max(0,T.hp-r2.d);ev.dbl={ti:t,d:r2.d}}}
+  ev.fs=[];const el=A.c.el,v=TV[el]?tv(A.c,TV[el]):0;
+  if(r.k!=='i'){
+    if(el==='fire')X[o].board.forEach((f,i)=>{if(f&&i!==ti&&f.hp>0&&rel('fire',f.c.el)!=='i'){const d=Math.min(v,f.hp);f.hp-=d;ev.fs.push([i,d])}});
+    if(D.hp>0){
+      if(el==='poison'){D.poi=Math.max(D.poiT>0?D.poi:0,v);D.poiT=2;D.poiS=0;ev.poi=v}
+      if(el==='metal'){D.bld=Math.max(D.bldT>0?D.bld:0,v);D.bldT=2;ev.bld=v}
+      if(el==='shadow'){const m=tv(A.c,SHM);D.amp=Math.max(D.ampT>0?D.amp:1,m);D.ampT=2;ev.amp=m}}}
+  if(el==='air'&&A.hp>0&&Math.random()*100<tv(A.c,AIRP)){let t=D.hp>0?ti:X[o].board.findIndex(f=>f&&f.hp>0);
+    if(t>=0){const T=X[o].board[t],r2=calc(A,T,X[s].board,X[o].board,atkOf(A));T.hp=Math.max(0,T.hp-r2.d);ev.dbl={ti:t,d:r2.d}}}
+  ev.spread=spreadPoi(X,o);ev.fsd=ev.fs.reduce((a,x)=>a+x[1],0);
   return ev;
 }
 function trophyIcon(){return `<svg class="tri" viewBox="0 0 24 24"><path d="M6 3h12v3h3v3a4 4 0 01-4 4h-.5A6 6 0 0113 16.9V19h3v2H8v-2h3v-2.1A6 6 0 017.5 13H7a4 4 0 01-4-4V6h3zm-1 5v1a2 2 0 002 2V8zm14 0h-2v3a2 2 0 002-2z" fill="#ffc94a" stroke="#7a4a00" stroke-width=".8"/></svg>`}
@@ -1736,7 +1762,7 @@ function renderArena(){
   if(B)return renderBattle();
   const n=uniq();
   $('#main').innerHTML=`<h2>Arena</h2>${leagueCard()}${seasonCard()}${friendsCard()}${arenaStrip()}${deckView()}${n?`<button class="btn fightb" id="fight">Savaşa gir</button>`:`<div class="empty">Arena için en az 1 kartın olmalı. Önce bir paket aç.</div>`}<p class="sub">Galibiyet <b>+${TROPHY.win}</b> kupa ve ${ECON.win+LEAGUES[lgOf(S.trophy||0)].gold} altın, mağlubiyet ${TROPHY.loss} kupa ve ${ECON.loss} altın. Lig tabanının altına düşmezsin. Üst üste galibiyetler ek kupa ve altın verir. Her 3 galibiyette bir zafer sandığı kazanırsın. (${S.wins} G · ${S.losses} M)</p>
-  <div class="box"><p><b>Deste 15 kart:</b> yaratıklar ve destek kartları karışık durur. Elinde en fazla 5 kart olur. Bir kartı oynadığında (yaratık koyunca ya da destek kullanınca) yerine desteden yenisi gelir.</p><p><b>Sahada 3 yaratık</b> savaşır. Boş yere elinden yaratık koyabilirsin. Her tur en fazla 1 destek kartı oynar, sonra bir yaratığınla saldırırsın; saldırı turu bitirir.</p><p><b>Destek kartları:</b> Tür taşı aynı türden yaratığa +30 can ve +10 hasar verir. Evrim Taşı temel yaratığı yenilene kadar evrimleştirir; evrimli hali koleksiyonunda olmalı.</p><p><b>6 can:</b> yenilen her yaratık 1 can götürür (EX 2 can). Canı biten kaybeder. <b>Toplam süre 3 dakika:</b> süre bitince canı fazla olan, eşitse daha çok hasar veren kazanır.</p><p>Bir tur saldırmayan yaratık <b>dolar</b> ve sonraki vuruşunda güçlü ikinci saldırısını kullanır. Tür destekleri (Toprak kalkan, Su can, Ateş hasar, Işık arınma, Gölge zayıflatma, Hava çift vuruş) sahadaki kendi kartlarına etki eder.</p></div>
+  <div class="box"><p><b>Deste 15 kart:</b> yaratıklar ve destek kartları karışık durur. Elinde en fazla 5 kart olur. Bir kartı oynadığında (yaratık koyunca ya da destek kullanınca) yerine desteden yenisi gelir.</p><p><b>Sahada 3 yaratık</b> savaşır. Boş yere elinden yaratık koyabilirsin. Her tur en fazla 1 destek kartı oynar, sonra bir yaratığınla saldırırsın; saldırı turu bitirir.</p><p><b>Destek kartları:</b> Tür taşı aynı türden yaratığa +30 can ve +10 hasar verir. Evrim Taşı temel yaratığı yenilene kadar evrimleştirir; evrimli hali koleksiyonunda olmalı.</p><p><b>6 can:</b> yenilen her yaratık 1 can götürür (EX 2 can). Canı biten kaybeder. <b>Toplam süre 3 dakika:</b> süre bitince canı fazla olan, eşitse daha çok hasar veren kazanır.</p><p>Bir tur saldırmayan yaratık <b>dolar</b> ve sonraki vuruşunda güçlü ikinci saldırısını kullanır. Her türün kendi yeteneği vardır (Toprak dayanıklı, Su yanına can, Ateş sıçrama, Zehir ve Metal süreli hasar, Gölge kötü etkileri artırır, Işık arındırır, Hava ikinci vuruş) ve evrimle güçlenir.</p></div>
   ${typeChart()}
   `;
   const f=$('#fight');if(f)f.onclick=()=>startBattle();const fb=$('#frbtn');if(fb)fb.onclick=()=>openFriends();const snb=$('#snbtn');if(snb)snb.onclick=()=>openSeason();if(cloudOn()&&Date.now()-(window.__snT||0)>60000)seasonLoad();const oc=$('#opench');if(oc)oc.onclick=openChest;
@@ -1754,7 +1780,7 @@ function rescue(X,s){const P=X[s];if(P.board.some(Boolean)||P.hand.some(x=>x.t==
 function drawX(X,s){const P=X[s];if(P.deck.length&&P.hand.length<BAT.handMax){P.hand.push(P.deck.shift());return true}return false}
 function pickSup(X,s,needOwn){const P=X[s];let best=null;P.hand.forEach((x,j)=>{if(x.t!=='s')return;P.board.forEach((f,i)=>{if(!f||canSup(x.k,f,needOwn)!==true)return;const v=(x.k==='evo'?40:20)+f.hp/10;if(!best||v>best.v)best={j,i,v}})});return best}
 function doSup(X,s,j,i){const P=X[s],x=P.hand[j],f=P.board[i];P.hand.splice(j,1);drawX(X,s);
-  if(x.k==='evo'){const e=evoNext(f.c),ratio=f.hp/mx(f);f.c=e;f.max=e.hp+(f.st?30:0);f.hp=Math.max(10,Math.round(f.max*ratio/5)*5);f.evo=true;return{k:'evo',e}}
+  if(x.k==='evo'){const e=evoNext(f.c),ratio=f.hp/mx(f);f.c=e;f.max=baseHp(e)+(f.st?30:0);f.hp=Math.max(10,Math.round(f.max*ratio/5)*5);f.evo=true;return{k:'evo',e}}
   f.st=x.k;f.max=mx(f)+30;f.hp+=30;return{k:x.k}}
 const outOf=(X,s)=>X[s].lives<=0||(!X[s].board.some(Boolean)&&!X[s].hand.some(x=>x.t==='c')&&!X[s].deck.some(x=>x.t==='c'));
 async function startBattle(adv,fr){if(window.__btStart)return;
@@ -1830,7 +1856,7 @@ function bk(f,s,i){
   const a=curAtk(f),big=f.ch&&c.atks[1],SH=c.ex||(s==='me'&&shownShiny(c.id)),src=SH&&SHART.has(c.id)?`img/s/${c.id}.jpg`:`img/t/${c.id}.webp`;
   return `<div class="bk${big?' ch':c.atks[1]&&!f.justIn&&!f.didAtk?' half':''}${s==='me'&&B.sel===i?' sel':''}${my&&!selS?' bpk':''}${tgt?' tg':''}${supOk?' sup':''}${SH?' holo':''}${c.ex?' ex':''}${c.ez?' ez':''}" data-s="${s}" data-i="${i}" data-u="${f.uid}" style="--ec:${AUC[c.el]}">
   <div class="bka" style="background-image:url(${src})"></div><div class="bkn">${c.name}</div><img class="bke" src="img/ic/${c.el}.webp" alt="">
-  ${c.ez?'':c.ex?'<span class="bkx">EX</span>':''}${f.evo?'<span class="bkev">EVRİM TAŞI</span>':''}${f.st?`<span class="bkst"><img src="img/ic/${f.st}.webp" alt="">+10</span>`:''}${f.burn?`<span class="bkb"><img src="img/ic/burn.webp" alt="">${f.burn}</span>`:''}${f.vuln?`<span class="bkv">${icon('shadow')}+${f.vuln}</span>`:''}
+  ${c.ez?'':c.ex?'<span class="bkx">EX</span>':''}${f.evo?'<span class="bkev">EVRİM TAŞI</span>':''}${f.st?`<span class="bkst"><img src="img/ic/${f.st}.webp" alt="">+10</span>`:''}${f.burn?`<span class="bkb"><img src="img/ic/burn.webp" alt="">${f.burn}</span>`:''}${f.poiT>0?`<span class="bkv bkp"><img src="img/ic/poison.webp" alt="">${f.poi}</span>`:''}${f.bldT>0?`<span class="bkv bkl"><img src="img/ic/blood.webp" alt="">${f.bld}</span>`:''}${f.ampT>0?`<span class="bkv bka2">${icon('shadow')}×${f.amp}</span>`:''}
   <div class="bkhp"><i class="${p<.35?'lo':''}" style="width:${p*100}%"></i><span>${f.hp} / ${mx(f)}</span></div>
   <div class="bkat${big?' big':''}"><span>${a.name}${a.fx?`<em>${FXS[a.fx]}</em>`:''}</span><b>${atkOf(f)}${a.fx==='coin'?'+':''}</b></div>${hint}</div>`}
 let handW=0;
@@ -1970,7 +1996,7 @@ function announceAuras(side,prev={}){const now=auraKeys(B[side].board),a=auras(B
   Object.keys(now).forEach(k=>{if((prev[k]||0)>=now[k])return;B[side].board.forEach((f,i)=>{if(f)ringFx(elOf(side,i),k,i===1||!B[side].board[1]?AULBL[k](a[k]):'',d)});d+=450})}
 function exEnter(s,i){if(!B)return;const f=B[s].board[i];if(!f||!f.c.ex||f.entered)return;f.entered=1;const o=s==='me'?'foe':'me',el=elOf(s,i);
   setTimeout(()=>{if(!B)return;if(f.c.exa==='blast'){ringFx(el,f.c.el,(f.c.ez?'EZELİ: ':'EX: ')+f.c.name);B[o].board.forEach((t,k)=>{if(!t)return;const dd=f.c.ez?40:20;t.hp=Math.max(1,t.hp-dd);const te=elOf(o,k);bnum(te,'−'+dd,'w')});SFX.hit(f.c.el,'w')}
-   if(f.c.exa==='heal'){ringFx(el,'light','EX: '+f.c.name);B[s].board.forEach((t,k)=>{if(!t)return;const hh=f.c.ez?50:30;t.hp=Math.min(mx(t),t.hp+hh);t.burn=0;t.vuln=0;ringFx(elOf(s,k),'water','+'+hh+' can',150)});SFX.heal()}
+   if(f.c.exa==='heal'){ringFx(el,'light','EX: '+f.c.name);B[s].board.forEach((t,k)=>{if(!t)return;const hh=f.c.ez?50:30;t.hp=Math.min(mx(t),t.hp+hh);clearBad(t);ringFx(elOf(s,k),'water','+'+hh+' can',150)});SFX.heal()}
    if(f.c.exa==='stand')ringFx(el,'shadow','EX: '+f.c.name);
    if(f.c.exa==='drain'){ringFx(el,'shadow','EZELİ: '+f.c.name);SFX.hit('shadow','w')}
    setTimeout(()=>{if(B&&!B.over&&!B.busy)renderBattle()},900)},300)}
@@ -1995,16 +2021,16 @@ async function sweep(){
 // tur başı: dolma + yanık hasarı
 async function beginTurn(s){
   const ev=coreTurn(B,s);B.justCharged=ev.charged;renderBattle();
-  if(!ev.cleanse.length&&!ev.burn.length&&!ev.heal.length&&!ev.drain.length&&!ev.poison.length)return false;
-  if(ev.poison.length){await wait(250);const o=s==='me'?'foe':'me';ev.poison.forEach(([k,d])=>{const e=elOf(o,k);bnum(e,'−'+d+' zehir','w');if(e)e.classList.add('hit')});SFX.hit('poison','');await wait(600)}
+  if(!ev.cleanse.length&&!ev.dot.length&&!ev.heal.length&&!ev.drain.length&&!ev.spread.length)return false;
   if(ev.drain.length){await wait(250);const o=s==='me'?'foe':'me';for(const[i,hit,got]of ev.drain){ringFx(elOf(s,i),'shadow','Can çekti +'+got);hit.forEach(k=>{const e=elOf(o,k);bnum(e,'−'+EZDR,'w');if(e)e.classList.add('hit')});SFX.hit('shadow','w');await wait(650)}}
   await wait(300);
-  ev.cleanse.forEach(i=>{const e=elOf(s,i);bfx(e,'light',1.2,800);ringFx(e,'light','Arındı +10')});
+  ev.cleanse.forEach(i=>{const e=elOf(s,i);bfx(e,'light',1.2,800);ringFx(e,'light','Arındı')});
   if(ev.cleanse.length)await wait(500);
-  ev.burn.forEach(i=>{const e=elOf(s,i);bfx(e,'fire',1.1,800);bnum(e,'−'+FXV.burn+' yanık','');if(e)e.classList.add('hit')});
-  if(ev.burn.length)await wait(600);
+  ev.dot.forEach(([i,d])=>{const e=elOf(s,i);bfx(e,'fire',1.1,800);bnum(e,'−'+d+' etki','');if(e)e.classList.add('hit')});
+  if(ev.dot.length)await wait(600);
+  ev.spread.forEach(i=>ringFx(elOf(s,i),'poison','Zehir bulaştı'));
   ev.heal.forEach(([i,v])=>{const e=elOf(s,i);bfx(e,'heal',1.1,800);ringFx(e,'water','+'+v+' can')});
-  if(ev.heal.length)await wait(600);
+  if(ev.heal.length||ev.spread.length)await wait(600);
   return await sweep();
 }
 
@@ -2063,16 +2089,17 @@ async function strike(s,ai,ti){
   const o=s==='me'?'foe':'me',A=B[s].board[ai],D=B[o].board[ti],at=curAtk(A);
   B.log=`${s==='me'?'Sen':'Rakip'}: <b>${A.c.name}</b> → ${D.c.name} · ${at.name}${A.ch&&A.c.atks[1]?' (dolu)':''}`;renderBattle();
   await lunge(elOf(s,ai),elOf(o,ti));if(!B||B.over)return true;
-  const fb=auras(B[s].board).fire;
-  const ev=coreHit(B,s,ai,ti),k=ev.k;hitFx(A.c.el,k,elOf(o,ti));B.dmg[s]+=ev.d+ev.side.length*FXV.splash+(ev.dbl?ev.dbl.d:0);
+  const ev=coreHit(B,s,ai,ti),k=ev.k;hitFx(A.c.el,k,elOf(o,ti));B.dmg[s]+=ev.d+ev.side.length*FXV.splash+ev.fsd+(ev.dbl?ev.dbl.d:0);
   if(k==='w')B.log+=' · <b class="b2w">ETKİLİ!</b>';
-  if(fb)ringFx(elOf(s,ai),'fire','+'+fb+' hasar');
-  if(ev.sh)ringFx(elOf(o,ti),'earth','−'+ev.sh+' kalkan',150);
   renderBattle();const ne=elOf(o,ti),na=elOf(s,ai);
   if(s==='me'){dq('hit',A.c.el);if(k==='w')dq('weak')}SFX.hit(A.c.el,k);if(ev.stood)setTimeout(()=>{ringFx(ne,'light','Ayağa kalktı! 50 can');SFX.heal()},500);bshake(k==='w'?1.4:.7);bnum(ne,k==='i'?'Bağışık':'−'+ev.d,k==='w'?'x':k?'w':'');if(ne&&ev.d)ne.classList.add('hit');
   if(ev.coin!==undefined)setTimeout(()=>bnum(na,ev.coin?'Tura! +'+FXV.coin:'Yazı','x'),150);
   if(ev.burned)setTimeout(()=>{SFX.burn();bnum(elOf(o,ti),'Yandı!','')},350);
-  if(ev.vuln)setTimeout(()=>ringFx(elOf(o,ti),'shadow','Savunmasız'),500);
+  if(ev.amp)setTimeout(()=>ringFx(elOf(o,ti),'shadow','Kötü etkiler ×'+ev.amp),500);
+  if(ev.poi)setTimeout(()=>ringFx(elOf(o,ti),'poison','Zehirlendi '+ev.poi),450);
+  if(ev.bld)setTimeout(()=>ringFx(elOf(o,ti),'metal','Kanama '+ev.bld),450);
+  ev.fs.forEach(([i,d])=>setTimeout(()=>{const e=elOf(o,i);bnum(e,'−'+d+' sıçrama','');if(e)e.classList.add('hit')},300));
+  ev.spread.forEach(i=>setTimeout(()=>ringFx(elOf(o,i),'poison','Zehir bulaştı'),700));
   ev.side.forEach(i=>{setTimeout(()=>{const e=elOf(o,i);bnum(e,'−'+FXV.splash,'');if(e)e.classList.add('hit')},250)});
   if(ev.heal)setTimeout(()=>{SFX.heal();bnum(na,'+'+FXV.heal,'h')},300);
   if(ev.recoil)setTimeout(()=>{bnum(na,'−'+FXV.recoil+' geri tepme','');if(na)na.classList.add('hit')},300);
@@ -2088,7 +2115,10 @@ function aiScore(a,d,atkB,defB){
   if(at.fx==='burn'&&!d.burn&&dmg<d.hp)sc+=FXV.burn*1.5;
   if(at.fx==='heal')sc+=Math.min(FXV.heal,mx(a)-a.hp)*.8;
   if(at.fx==='recoil')sc-=a.hp<=FXV.recoil?120:20;
-  const sv=auras(atkB).shadow;if(sv&&!d.vuln&&dmg<d.hp)sc+=sv*.8;
+  const el=a.c.el,v=TV[el]?tv(a.c,TV[el]):0;if(rel(el,d.c.el)!=='i'){
+    if(el==='fire')sc+=defB.filter(f=>f&&f!==d&&f.hp>0&&rel('fire',f.c.el)!=='i').length*v*.9;
+    if(dmg<d.hp){if(el==='poison'&&!(d.poiT>0))sc+=v*1.6;if(el==='metal'&&!(d.bldT>0))sc+=v*1.6;
+      if(el==='shadow'&&!(d.ampT>0))sc+=badOf(d)?v*1.5:4}}
   if(a.c.atks[1]&&!a.ch&&dmg<d.hp)sc-=15;
   return sc+Math.random()*5;
 }
@@ -2128,12 +2158,34 @@ function simBattle(lg){
   chargeStep(X,'me');let t=0,res=null;
   for(;t<44;t++){const s=t%2?'foe':'me',o=s==='me'?'foe':'me';if(t){coreTurn(X,s);sw()}if(outOf(X,'me')||outOf(X,'foe'))break;
     rescue(X,s);for(let m;(m=bestFill(X,s));)placeX(X,s,m.j,m.i);const sp=pickSup(X,s,false);if(sp)doSup(X,s,sp.j,sp.i);
-    const p=pick(s,s==='me'?.15:L.mis);if(p){const ev=coreHit(X,s,p.ai,p.di);X.dmg[s]+=ev.d+ev.side.length*FXV.splash+(ev.dbl?ev.dbl.d:0);sw()}if(outOf(X,o)||outOf(X,s))break}
+    const p=pick(s,s==='me'?.15:L.mis);if(p){const ev=coreHit(X,s,p.ai,p.di);X.dmg[s]+=ev.d+ev.side.length*FXV.splash+ev.fsd+(ev.dbl?ev.dbl.d:0);sw()}if(outOf(X,o)||outOf(X,s))break}
   simBattle.turns=(simBattle.turns||0)+t;
   const fo=outOf(X,'foe'),mo=outOf(X,'me');if(fo||mo){simBattle.ko=(simBattle.ko||0)+1;return fo&&!mo}
   simBattle.to=(simBattle.to||0)+1;
   return X.me.lives!==X.foe.lives?X.me.lives>X.foe.lives:X.dmg.me>X.dmg.foe;
 }
+// tür dengesi: ağırlıklı tür destesi (yaratıkların ~%60'ı o türden) ile yapay zekâ ↔ yapay zekâ
+function simTypeDeck(T){const pool=shuffle([...CARDS,...EXC].filter(c=>c.hp)),out=[],cnt={};let pts=0;
+  const add=c=>{if(out.length>=10||(cnt[c.id]||0)>=(c.r>=3||c.ex?1:2)||pts+ptsOf(c)>BAT.budget-6)return;out.push(c);cnt[c.id]=(cnt[c.id]||0)+1;pts+=ptsOf(c)};
+  pool.filter(c=>c.el===T).forEach(c=>{if(out.length<6)add(c)});pool.filter(c=>c.el!==T).forEach(add);
+  return shuffle([...out.map(c=>({t:'c',c})),...['evo',T,T,'evo','light','fire'].slice(0,5).map(k=>({t:'s',k}))])}
+function simType(ta,tb){const X={me:side(simTypeDeck(ta)),foe:side(simTypeDeck(tb)),dmg:{me:0,foe:0}};drawStart(X.me);drawStart(X.foe);
+  const place=(sd,j,i)=>{X[sd].board[i]=mk(X[sd].hand[j].c);X[sd].hand.splice(j,1);drawX(X,sd)};
+  for(const sd of['me','foe'])for(let m;(m=bestFill(X,sd));)place(sd,m.j,m.i);
+  const sw=()=>['me','foe'].forEach(s=>X[s].board.forEach((f,i)=>{if(f&&f.hp<=0){X[s].lives-=koL(f.c);X[s].board[i]=null}}));
+  const pick=s=>{const o=s==='me'?'foe':'me';let best=null;X[s].board.forEach((a,ai)=>{if(!a)return;X[o].board.forEach((d,di)=>{if(!d)return;const sc=aiScore(a,d,X[s].board,X[o].board);if(!best||sc>best.sc)best={sc,ai,di}})});
+    if(Math.random()<.1){const as=X[s].board.map((f,i)=>f?i:-1).filter(i=>i>=0),ds=X[o].board.map((f,i)=>f?i:-1).filter(i=>i>=0);if(as.length&&ds.length)best={ai:as[Math.floor(Math.random()*as.length)],di:ds[Math.floor(Math.random()*ds.length)]}}return best};
+  const f0=Math.random()<.5?0:1;chargeStep(X,f0?'foe':'me');let t=0;
+  for(;t<80;t++){const s=(t+f0)%2?'foe':'me',o=s==='me'?'foe':'me';if(t){coreTurn(X,s);sw()}if(outOf(X,'me')||outOf(X,'foe'))break;
+    rescue(X,s);for(let m;(m=bestFill(X,s));)place(s,m.j,m.i);const sp=pickSup(X,s,false);if(sp)doSup(X,s,sp.j,sp.i);
+    const p=pick(s);if(p){const ev=coreHit(X,s,p.ai,p.di);X.dmg[s]+=ev.d+ev.side.length*FXV.splash+ev.fsd+(ev.dbl?ev.dbl.d:0);sw()}if(outOf(X,o)||outOf(X,s))break}
+  const fo=outOf(X,'foe'),mo=outOf(X,'me'),to=!(fo||mo);
+  const win=to?(X.me.lives!==X.foe.lives?X.me.lives>X.foe.lives:X.dmg.me>X.dmg.foe):fo&&!mo?true:mo&&!fo?false:X.me.lives>=X.foe.lives;
+  return{win,t,to}}
+window.__typeSim=(n=1600)=>{const R={};ELS.forEach(e=>R[e]={w:0,n:0});let T=0,TO=0,mxT=0;
+  for(let k=0;k<n;k++){const a=ELS[Math.floor(Math.random()*ELS.length)];let b;do b=ELS[Math.floor(Math.random()*ELS.length)];while(b===a);
+    const r=simType(a,b);R[a].n++;R[b].n++;if(r.win)R[a].w++;else R[b].w++;T+=r.t;if(r.to)TO++;mxT=Math.max(mxT,r.t)}
+  return{rate:Object.fromEntries(ELS.map(e=>[e,+(R[e].w/R[e].n*100).toFixed(1)])),n,avgT:+(T/n).toFixed(1),maxT:mxT,timeout:+(TO/n*100).toFixed(1)}};
 window.__stats=()=>{const t={};CARDS.forEach(c=>{const k=c.r;t[k]=t[k]||{a:[],b:[],h:[]};t[k].a.push(c.atks[0].dmg);if(c.atks[1])t[k].b.push(c.atks[1].dmg);t[k].h.push(c.hp)});const f=a=>Math.min(...a)+'-'+Math.max(...a);return Object.values(t).map(v=>f(v.a)+' | '+f(v.b)+' | can '+f(v.h)).join('\n')};
 window.__arenaSim=(n=300)=>{simBattle.turns=0;simBattle.to=0;simBattle.ko=0;const r=LEAGUES.map((l,i)=>{let w=0;for(let k=0;k<n;k++)if(simBattle(i))w++;return l.n+' %'+Math.round(w/n*100)}).join(' · ');return r+' | ort. tur '+Math.round(simBattle.turns/(n*LEAGUES.length))+' | süreyle biten %'+Math.round(simBattle.to/(n*LEAGUES.length)*100)};
 /* ---------- KURALLAR + SİMÜLASYON ---------- */
@@ -2191,7 +2243,7 @@ function renderRules(){
   <p>Sırayla birer saldırı yapılır. Saldıran kart normalde ilk saldırısıyla vurur. Sahada bir tur saldırmadan bekleyen kart <b>dolar</b> ve sonraki vuruşunu güçlü ikinci saldırısıyla yapar (yarı dolu kartın alt kenarı, tam dolu kartın bütün çerçevesi parlar).</p>
   <p><b>Destek kartları</b> ödüllerden gelir, turda 1 tane oynanır: tür taşları (Ateş Taşı, Su İncisi, Toprak Taşı, Hava Tüyü, Işık Kristali, Gölge Taşı, <b>Metal Taşı</b>, <b>Zehir Şişesi</b>) aynı türden bir yaratığa +30 can ve +10 hasar verir; <b>Evrim Taşı</b> temel bir yaratığı yenilene kadar evrimleştirir (evrimi koleksiyonunda olmalı).</p>
   <p>Zayıflık: hasar <code>×${WEAK}</code>. Direnç: hasar <code>−20</code> (en az 10 geçer). Bağışık: hiç hasar almaz. Tablo Seri 2 türleri <b>Metal</b> ve <b>Zehir</b> dahil 8 türü gösterir:</p>${typeChart()}
-  <p><b>Tür destekleri</b> sahadaki kendi kartlarına etki eder; aynı tür üst üste binmez, sahadaki en güçlüsü geçerli olur. Değer nadirliğe göre büyür (Yaygın / Nadir / Destansı / Efsanevi):</p><div class="scroll"><table><tr><th>Tür</th><th>Destek</th><th>Değer</th></tr><tr><td>Toprak</td><td style="white-space:normal">Gelen saldırı hasarı azalır (en az 10 geçer)</td><td>−${AUR.join('/')}</td></tr><tr><td>Su</td><td style="white-space:normal">Tur başında can</td><td>+${AUR.join('/')}</td></tr><tr><td>Ateş</td><td style="white-space:normal">Saldırılara ek hasar</td><td>+${AUR.join('/')}</td></tr><tr><td>Işık</td><td style="white-space:normal">Tur başında kötü etkileri temizler, her biri için +10 can (Yaygın sadece yanık)</td><td>-</td></tr><tr><td>Gölge</td><td style="white-space:normal">Vurulan rakip 2 tur fazla hasar alır</td><td>+${AUR.join('/')}</td></tr><tr><td>Hava</td><td style="white-space:normal">Hava kartının kendisi çift vuruş yapabilir</td><td>%${AIRP.join('/')}</td></tr><tr><td>Metal <small>(Seri 2)</small></td><td style="white-space:normal">Metal kartının kendisi zırhlıdır: aldığı hasar azalır</td><td>−${AUR.join('/')}</td></tr><tr><td>Zehir <small>(Seri 2)</small></td><td style="white-space:normal">Tur başında rakibin sahadaki bütün kartlarına zehir hasarı</td><td>${POI.join('/')}</td></tr></table></div><p>Efektler: <b>yanma</b> (vurulan kart, sahibinin sonraki 2 turunun başında ${FXV.burn} hasar alır), <b>sıçrama</b> (rakibin sahadaki diğer kartlarına ${FXV.splash}), <b>iyileşme</b> (saldıran ${FXV.heal} can kazanır), <b>yazı-tura</b> (%50 ihtimalle +${FXV.coin}), <b>geri tepme</b> (saldıran kendine ${FXV.recoil} hasar verir).</p>
+  <p><b>Tür yetenekleri</b> her kartın kendisindedir ve evrimle güçlenir (Temel / 1. evrim / 2. evrim; Efsanevi ve EX 2. evrim sayılır). Kötü etkiler (yanık, zehir, kanama) sahibinin tur başında hasar verir:</p><div class="scroll"><table><tr><th>Tür</th><th>Yetenek</th><th>Değer</th></tr><tr><td>Toprak</td><td style="white-space:normal">Canı fazla, saldırısı düşük</td><td>can +%${Math.round((EA.hp-1)*100)}, saldırı −%${Math.round((1-EA.at)*100)}</td></tr><tr><td>Su</td><td style="white-space:normal">Kendi tur başında yanındaki kendi kartlarına can</td><td>+${TV.water.join('/')}</td></tr><tr><td>Ateş</td><td style="white-space:normal">Vurunca diğer rakip kartlara sıçrama hasarı</td><td>${TV.fire.join('/')}</td></tr><tr><td>Zehir</td><td style="white-space:normal">Vurduğu karta 2 tur zehir; zehirli kart ölürse zehir bir kez yanındaki karta bulaşır</td><td>${TV.poison.join('/')}</td></tr><tr><td>Metal</td><td style="white-space:normal">Vurduğu karta 2 tur kanama</td><td>${TV.metal.join('/')}</td></tr><tr><td>Gölge</td><td style="white-space:normal">Vurduğu kartın kötü etkileri 2 tur artar</td><td>×${SHM.join('/')}</td></tr><tr><td>Işık</td><td style="white-space:normal">Tur başında kendi kartlarının her kötü etkisini bu ihtimalle siler</td><td>%${LIP.join('/')}</td></tr><tr><td>Hava</td><td style="white-space:normal">İkinci vuruş ihtimali; vuruş başı hasar</td><td>%${AIRP.join('/')} · %${AIRD.map(x=>x*100).join('/')}</td></tr></table></div><p>Efektler: <b>yanma</b> (vurulan kart, sahibinin sonraki 2 turunun başında ${FXV.burn} hasar alır), <b>sıçrama</b> (rakibin sahadaki diğer kartlarına ${FXV.splash}), <b>iyileşme</b> (saldıran ${FXV.heal} can kazanır), <b>yazı-tura</b> (%50 ihtimalle +${FXV.coin}), <b>geri tepme</b> (saldıran kendine ${FXV.recoil} hasar verir).</p>
   <p><b>Arena rakipleri:</b> Bronz ve Gümüş ligde rakipler sadece Yaygın kart kullanır; lig yükseldikçe rakipler güçlenir. Üst üste 3 yenilgiden sonra bir sonraki rakip daha kolay olur.</p>
   <p><b>Otomatik oynama:</b> Sıra sendeyken 15 saniye hamle yapmazsan oyun senin yerine oynar. Savaştaki <b>Otomatik</b> düğmesiyle savaşın tamamını otomatik oynatabilirsin.</p>
   <p><b>Ödüller:</b> Arena galibiyeti ${ECON.win} altın (+lig bonusu) ve kupa verir. Dostluk maçları ödülsüzdür. Ödül için savaş en az 30 saniye sürmeli.</p></div>
