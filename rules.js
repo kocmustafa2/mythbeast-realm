@@ -241,7 +241,7 @@ const fresh=()=>({gold:ECON.startGold,dust:0,free:ECON.freePacks,owned:{},pity:0
 // Sunucunun sahip olduğu alanlar: istemcinin kaydetme isteği bunları DEĞİŞTİREMEZ.
 const ECON_KEYS=['gold','dust','free','owned','shiny','sup','supV','supV2','pity','xp','lvl','opened','trophy','bestLg','wins','losses',
   'streak','lstreak','chest','chests','hist','gift','gt','advC','advV','exB','rqT','dn','dq','rare','tp','uidN','tut','bt','bl',
-  'av','bestStk','dnTot','evoN','awkN','ssBest','ach','achC'];
+  'av','bestStk','dnTot','evoN','awkN','ssBest','ach','achC','rq'];
 // İstemcinin değiştirebildiği zararsız alanlar (ayarlar, deste seçimi, ipuçları).
 const CLIENT_KEYS=['mv','sv','snd','deck','deck2','shOff','pset','th','sid','t'];
 const TUT_CLIENT_MAX=2;            // istemci öğreticiyi en fazla bu adıma kendisi ilerletebilir (hoş geldin → paket aç)
@@ -300,7 +300,8 @@ function normalize(st,ctx){const F=fresh();for(const k in F)if(st[k]==null)st[k]
 // İstemci kaydını sunucudakine güvenli şekilde katar: sadece CLIENT_KEYS ve öğreticinin ilk adımları.
 function mergeClient(st,data){for(const k of CLIENT_KEYS)if(data[k]!==undefined)st[k]=data[k];
   if(Number.isInteger(data.tut)&&data.tut>st.tut&&data.tut<=TUT_CLIENT_MAX)st.tut=data.tut;
-  if(Array.isArray(st.deck2))st.deck2=st.deck2.slice(0,30);if(Array.isArray(st.deck))st.deck=st.deck.slice(0,30);return st}
+  if(Array.isArray(st.deck2))st.deck2=st.deck2.slice(0,30);if(Array.isArray(st.deck))st.deck=st.deck.slice(0,30);
+  return st}
 
 function battleEnd(st,p,ctx){const bt=st.bt,now=ctx.now;
   if(!bt||bt.id!==p.id)throw uerr('Bu savaş sunucuda bulunamadı. Yeni bir savaş başlat.');

@@ -75,10 +75,17 @@ function ensureSchema(db) {
     db.prepare(`CREATE INDEX IF NOT EXISTS feed_c ON feed (clan_id, t)`),
     db.prepare(`CREATE INDEX IF NOT EXISTS feed_a ON feed (a, t)`),
     db.prepare(`CREATE INDEX IF NOT EXISTS feed_b ON feed (b, t)`),
+    // ekonomi günlüğü: her /api/act ve yönetici işleminde altın, macera ilerlemesi ve ücretsiz paket önce/sonra (oyuncu başına son 500 satır)
+    db.prepare(`CREATE TABLE IF NOT EXISTS econ_log (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, t INTEGER NOT NULL, a TEXT NOT NULL, gold_before INTEGER, gold_after INTEGER, advC_before INTEGER, advC_after INTEGER, free_before INTEGER, free_after INTEGER, note TEXT)`),
+    db.prepare(`CREATE INDEX IF NOT EXISTS econ_log_u ON econ_log (user_id, id)`),
+    // yönetici hediyeleri: zil kutusunda 'Yönetici hediyesi' olarak görünür, oyuncu 'Al' deyince kaydına işlenir
+    db.prepare(`CREATE TABLE IF NOT EXISTS admin_gifts (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, msg TEXT NOT NULL, payload TEXT NOT NULL, t INTEGER NOT NULL, claimed INTEGER NOT NULL DEFAULT 0)`),
+    db.prepare(`CREATE INDEX IF NOT EXISTS admin_gifts_u ON admin_gifts (user_id, claimed)`),
   ]).then(async () => {
     // kayıt sürümü: iki cihaz aynı anda oynarsa eski sürüm yenisinin üstüne yazamaz
-    try { await db.prepare('ALTER TABLE saves ADD COLUMN rev INTEGER NOT NULL DEFAULT 0').run(); }
-    catch (e) { if (!/duplicate column/i.test(String(e && e.message))) throw e; }
+    const addCol = async sql => { try { await db.prepare(sql).run(); } catch (e) { if (!/duplicate column/i.test(String(e && e.message))) throw e; } };
+    await addCol('ALTER TABLE saves ADD COLUMN rev INTEGER NOT NULL DEFAULT 0');
+    await addCol('ALTER TABLE users ADD COLUMN banned INTEGER NOT NULL DEFAULT 0');   // engellenen oyuncu giriş yapamaz
   }).catch(e => { schemaReady = null; throw e; });
   return schemaReady;
 }
@@ -125,9 +132,9 @@ async function newSession(db, userId) {
 async function authUser(req, db) {
   const m = (req.headers.get('authorization') || '').match(/^Bearer ([0-9a-f]{64})$/);
   if (!m) return null;
-  const row = await db.prepare('SELECT u.id, u.name, s.expires FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token = ?')
+  const row = await db.prepare('SELECT u.id, u.name, u.banned, s.expires FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token = ?')
     .bind(m[1]).first();
-  if (!row || row.expires < Date.now()) return null;
+  if (!row || row.expires < Date.now() || row.banned) return null;
   return { id: row.id, name: row.name, token: m[1] };
 }
 
@@ -170,8 +177,23 @@ const feedAdd = (db, clan, kind, a, b = null, card = null, win = null) =>
 function cryptoRng() { const a = new Uint32Array(2); crypto.getRandomValues(a); return (a[0] * 2 ** 21 + (a[1] >>> 11)) / 2 ** 53; }
 async function loadState(db, uid) {
   const row = await db.prepare('SELECT data, rev FROM saves WHERE user_id = ?').bind(uid).first();
-  return row ? { st: JSON.parse(row.data), rev: row.rev, exists: true } : { st: MR.fresh(), rev: 0, exists: false };
+  if (row) return { st: JSON.parse(row.data), rev: row.rev, exists: true };
+  // Kayıt satırı yok: kayıt olurken her zaman yazılır, bu yüzden bu bir anormallik. Günlüğe yaz;
+  // storeState yeni satırı ON CONFLICT DO NOTHING ile ekler, var olan bir kaydın üstüne asla yazmaz.
+  console.warn('loadState: kayıt satırı yok', uid);
+  try { await econLog(db, uid, 'fresh', null, null, 'kayıt satırı bulunamadı, boş kayıt kullanıldı'); } catch (e) {}
+  return { st: MR.fresh(), rev: 0, exists: false };
 }
+// ekonomi günlüğü (önce/sonra); oyuncu başına son 500 satır tutulur
+const ECON_KEEP = 500;
+async function econLog(db, uid, a, b, c, note) {
+  const g = (s, k) => (s && Number.isFinite(+s[k]) ? Math.floor(+s[k]) : null);
+  await db.batch([
+    db.prepare('INSERT INTO econ_log (user_id, t, a, gold_before, gold_after, advC_before, advC_after, free_before, free_after, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+      .bind(uid, Date.now(), String(a).slice(0, 24), g(b, 'gold'), g(c, 'gold'), g(b, 'advC'), g(c, 'advC'), g(b, 'free'), g(c, 'free'), note == null ? null : String(note).slice(0, 300)),
+    db.prepare('DELETE FROM econ_log WHERE user_id = ?1 AND id <= (SELECT id FROM econ_log WHERE user_id = ?1 ORDER BY id DESC LIMIT 1 OFFSET ' + ECON_KEEP + ')').bind(uid)]);
+}
+const econSnap = st => ({ gold: st.gold, advC: st.advC, free: st.free });
 // Kaydı yazar; başka bir istek araya girdiyse false döner (çağıran yeniden dener).
 async function storeState(db, uid, st, rev, exists) {
   const txt = JSON.stringify(st), now = Date.now();
@@ -190,7 +212,9 @@ async function storePub(db, uid, st, deck, owner) {
   await db.prepare('INSERT INTO pub (user_id, stats, deck, updated) VALUES (?, ?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET stats = excluded.stats, deck = excluded.deck, updated = excluded.updated')
     .bind(uid, JSON.stringify(MR.pubStats(st)), JSON.stringify(cleanDeck(deck, owner).filter(own)), Date.now()).run();
 }
-const ctxOf = (uid, extra) => ({ rng: cryptoRng, now: Date.now(), uid, ...extra });
+// Test saati: sadece env.TEST_TIME === '1' iken (yerel test sunucusu) x-test-now başlığıyla zaman ileri alınabilir. Canlıda bu değişken yok.
+let NOW_OFF = 0;
+const ctxOf = (uid, extra) => ({ rng: cryptoRng, now: Date.now() + NOW_OFF, uid, ...extra });
 // Bir oyuncunun kaydını sunucuda değiştirir (çakışmada yeniden dener). fn hata fırlatırsa kayıt değişmez.
 async function mutateState(db, env, uid, fn) {
   const u = await db.prepare('SELECT name FROM users WHERE id = ?').bind(uid).first();
@@ -198,22 +222,24 @@ async function mutateState(db, env, uid, fn) {
   for (let tries = 0; tries < 6; tries++) {
     const cur = await loadState(db, uid), st = cur.st, ctx = ctxOf(uid, {});
     MR.normalize(st, ctx); fixEz(st, owner);
+    const before = econSnap(st);
     const r = fn(st, ctx.now);
     fixEz(st, owner); MR.achSync(st, null);
     const rev = await storeState(db, uid, st, cur.rev, cur.exists);
-    if (rev !== false) return { r, st, rev };
+    if (rev !== false) return { r, st, rev, before };
   }
   throw new Error('busy');
 }
 const feedRows = async (db, sql, ...args) => ((await db.prepare(sql).bind(...args).all()).results || []).map(f => ({
   kind: f.kind, a: f.an, b: f.bn, card: f.card, win: f.win == null ? null : !!f.win, t: f.t }));
-const FEED_SEL = `SELECT f.kind, f.card, f.win, f.t, ua.name AS an, ub.name AS bn FROM feed f JOIN users ua ON ua.id = f.a LEFT JOIN users ub ON ub.id = f.b`;
+const FEED_SEL = `SELECT f.kind, f.card, f.win, f.t, ua.name AS an, ub.name AS bn FROM feed f JOIN users ua ON ua.id = f.a AND ua.banned = 0 LEFT JOIN users ub ON ub.id = f.b`;
 
 async function handleApi(req, env, path) {
   const db = env.DB;
   if (!db) return err('Sunucu veritabanı ayarlı değil.', 500);
   await ensureSchema(db);
   const method = req.method;
+  NOW_OFF = env.TEST_TIME === '1' ? (Math.floor(Number(req.headers.get('x-test-now')) || 0)) : 0;
 
   if (path === '/api/register' && method === 'POST') {
     const { u, p } = await readBody(req);
@@ -240,8 +266,9 @@ async function handleApi(req, env, path) {
     const ukey = ukeyOf(u), now = Date.now();
     const f = await db.prepare('SELECT n, until FROM fails WHERE ukey = ?').bind(ukey).first();
     if (f && f.until > now) return err('Çok fazla yanlış deneme. Birkaç dakika sonra tekrar dene.', 429);
-    const row = await db.prepare('SELECT id, name, salt, hash FROM users WHERE ukey = ?').bind(ukey).first();
+    const row = await db.prepare('SELECT id, name, salt, hash, banned FROM users WHERE ukey = ?').bind(ukey).first();
     const ok = row && sameStr(await hashPw(p, row.salt), row.hash);
+    if (ok && row.banned) return err('Bu hesap yönetici tarafından engellendi.', 403);
     if (!ok) {
       const n = (f && f.until > now - 15 * 6e4 ? f.n : 0) + 1;
       await db.prepare('INSERT INTO fails (ukey, n, until) VALUES (?, ?, ?) ON CONFLICT(ukey) DO UPDATE SET n = excluded.n, until = excluded.until')
@@ -295,19 +322,31 @@ async function handleApi(req, env, path) {
       const o = await userByName(db, body.fr);
       friendOk = !!o && await canDuel(db, user.id, o.id);
     }
+    // İstek kimliği (rid): bağlantı kopup istemci aynı isteği yeniden gönderirse işlem ikinci kez uygulanmaz,
+    // ilk sonucun aynısı döner (Safari'de yanıtı kaybolan POST'lar için).
+    const rid = typeof body.rid === 'string' && /^[A-Za-z0-9_-]{8,40}$/.test(body.rid) ? body.rid : null;
     for (let tries = 0; tries < 4; tries++) {
       const cur = await loadState(db, user.id);
       const st = cur.st;
-      if (Number.isInteger(body.tut)) MR.mergeClient(st, { tut: body.tut });
       const ctx = ctxOf(user.id, { friendOk });
+      const seen = rid && Array.isArray(st.rq) ? st.rq.find(x => x && x.id === rid) : null;
+      if (seen) {
+        MR.normalize(st, ctx); fixEz(st, owner);
+        await econLog(db, user.id, a, econSnap(st), econSnap(st), 'tekrar (rid) — yeniden uygulanmadı');
+        return json({ r: seen.r, save: st, rev: cur.rev, ach: [], replay: true });
+      }
+      if (Number.isInteger(body.tut)) MR.mergeClient(st, { tut: body.tut });
       MR.normalize(st, ctx); fixEz(st, owner);
+      const before = econSnap(st);
       let r;
       try { r = MR.act(st, a, body, ctx); }
       catch (e) { if (e && e.user) return err(e.message, 400); throw e; }
       fixEz(st, owner);
       const ach = MR.achSync(st, { inClan });   // yeni tamamlanan başarımlar
+      if (rid) st.rq = [...(Array.isArray(st.rq) ? st.rq : []).filter(x => x && x.id !== rid), { id: rid, a, r: r === undefined ? null : r, t: ctx.now }].slice(-8);
       const rev = await storeState(db, user.id, st, cur.rev, cur.exists);
       if (rev === false) continue;          // aynı anda başka bir işlem yazdı: baştan dene
+      try { await econLog(db, user.id, a, before, econSnap(st), rid ? null : 'rid yok'); } catch (e) { console.warn('econ_log', e && e.message); }
       // sezon puanı: sadece arena (bitirilen ya da terk edilip yenilgi sayılan savaşlar)
       const sAdd = (pts, w, l) => db.prepare('INSERT INTO season_stats (user_id, season, pts, wins, losses) VALUES (?, ?, ?, ?, ?) ON CONFLICT(user_id, season) DO UPDATE SET pts = pts + excluded.pts, wins = wins + excluded.wins, losses = losses + excluded.losses')
         .bind(user.id, MR.seasonOf(Date.now()), pts, w, l).run();
@@ -654,7 +693,7 @@ async function handleApi(req, env, path) {
       .map(({ id, ...r }) => r);
     // GENEL SIRALAMA: o sezon arenada oynayan bütün oyuncular (ilk 50 + benim sıram)
     const GSEL = `SELECT u.id, u.name, p.stats, s.pts, s.wins, s.losses FROM season_stats s JOIN users u ON u.id = s.user_id LEFT JOIN pub p ON p.user_id = u.id
-      WHERE s.season = ? AND (s.wins + s.losses) > 0 ORDER BY s.pts DESC, s.wins DESC, u.name`;
+      WHERE s.season = ? AND (s.wins + s.losses) > 0 AND u.banned = 0 ORDER BY s.pts DESC, s.wins DESC, u.name`;
     const gmap = r => ({ name: r.name, me: r.id === user.id, lg: r.stats ? (JSON.parse(r.stats).lg || 0) : 0, av: r.stats ? (JSON.parse(r.stats).av || 0) : 0, pts: r.pts || 0, wins: r.wins || 0, losses: r.losses || 0 });
     const gAll = (await db.prepare(GSEL).bind(cur).all()).results || [];
     const gi = gAll.findIndex(r => r.id === user.id);
@@ -693,7 +732,7 @@ async function handleApi(req, env, path) {
     try { r = await chatRoom(q.get('room'), q.get('u')); } catch (e) { return ue(e); }
     const after = Math.floor(Number(q.get('after')) || 0);
     const rows = ((await db.prepare(`SELECT c.id, c.user_id, u.name, c.txt, c.t, c.del, p.stats FROM chat c JOIN users u ON u.id = c.user_id LEFT JOIN pub p ON p.user_id = c.user_id
-      WHERE c.room = ? AND c.id > ? AND c.user_id NOT IN (SELECT blocked FROM blocks WHERE user_id = ?) ORDER BY c.id DESC LIMIT 60`).bind(r.room, after, user.id).all()).results || []).reverse();
+      WHERE c.room = ? AND c.id > ? AND u.banned = 0 AND c.user_id NOT IN (SELECT blocked FROM blocks WHERE user_id = ?) ORDER BY c.id DESC LIMIT 60`).bind(r.room, after, user.id).all()).results || []).reverse();
     const msgs = rows.map(x => ({ id: x.id, name: x.name, me: x.user_id === user.id, txt: x.del ? '' : x.txt, del: !!x.del, t: x.t, av: x.stats ? JSON.parse(x.stats).av || 0 : 0 }));
     const top = rows.length ? rows[rows.length - 1].id : 0;
     if (top) await db.prepare('INSERT INTO chat_read (user_id, room, last) VALUES (?, ?, ?) ON CONFLICT(user_id, room) DO UPDATE SET last = MAX(last, excluded.last)').bind(user.id, r.room, top).run();
@@ -743,7 +782,7 @@ async function handleApi(req, env, path) {
     const dms = await all(`SELECT x.name, x.n, x.t, (SELECT txt FROM chat WHERE id = x.mid) AS txt FROM (
       SELECT u.name, COUNT(*) AS n, MAX(c.id) AS mid, MAX(c.t) AS t
       FROM chat c JOIN users u ON u.id = c.user_id LEFT JOIN chat_read rd ON rd.user_id = ?1 AND rd.room = c.room
-      WHERE (c.room LIKE ?2 OR c.room LIKE ?3) AND c.user_id != ?1 AND c.del = 0 AND c.id > IFNULL(rd.last, 0)
+      WHERE (c.room LIKE ?2 OR c.room LIKE ?3) AND c.user_id != ?1 AND c.del = 0 AND c.id > IFNULL(rd.last, 0) AND u.banned = 0
         AND c.user_id NOT IN (SELECT blocked FROM blocks WHERE user_id = ?1) GROUP BY c.user_id) x ORDER BY x.t DESC`, user.id, 'd:' + user.id + ':%', 'd:%:' + user.id);
     let clanChat = null;
     if (m) { const r = await db.prepare(`SELECT COUNT(*) AS n, MAX(c.t) AS t FROM chat c LEFT JOIN chat_read rd ON rd.user_id = ?1 AND rd.room = c.room
@@ -753,7 +792,9 @@ async function handleApi(req, env, path) {
     const cj = m && (m.role === 'leader' || m.role === 'co') ? await all(`SELECT u.name, j.t FROM clan_joins j JOIN users u ON u.id = j.user_id WHERE j.clan_id = ? ORDER BY j.t DESC`, m.clan_id) : [];
     const ci = m ? [] : await all(`SELECT c.name AS clan, u.name AS by, i.t FROM clan_invites i JOIN clans c ON c.id = i.clan_id JOIN users u ON u.id = i.by_id WHERE i.user_id = ? ORDER BY i.t DESC`, user.id);
     const dn = await all(`SELECT u.name, f.card, f.t FROM feed f JOIN users u ON u.id = f.a WHERE f.kind = 'donate' AND f.b = ? AND f.t > ? ORDER BY f.t DESC LIMIT 20`, user.id, since);
-    return json({ dms: dms.map(d => ({ name: d.name, n: d.n, txt: d.txt, t: d.t })), clanChat, fr, cj, ci, dn });
+    const ag = (await all('SELECT id, msg, payload, t FROM admin_gifts WHERE user_id = ? AND claimed = 0 ORDER BY t DESC LIMIT 20', user.id))
+      .map(g => ({ id: g.id, msg: g.msg, p: JSON.parse(g.payload), t: g.t }));
+    return json({ dms: dms.map(d => ({ name: d.name, n: d.n, txt: d.txt, t: d.t })), clanChat, fr, cj, ci, dn, ag });
   }
   if (path === '/api/notify' && method === 'GET') {
     await seenAt(db, user.id);
@@ -767,9 +808,101 @@ async function handleApi(req, env, path) {
     const cm = m ? await unread('c:' + m.clan_id) : 0;
     const dm = (await db.prepare(`SELECT COUNT(*) AS n FROM chat c LEFT JOIN chat_read rd ON rd.user_id = ?1 AND rd.room = c.room
       WHERE (c.room LIKE ?2 OR c.room LIKE ?3) AND c.user_id != ?1 AND c.del = 0 AND c.id > IFNULL(rd.last, 0)`).bind(user.id, 'd:' + user.id + ':%', 'd:%:' + user.id).first()).n;
-    return json({ fr, cj, dn, ci, cm, dm, clan: m ? m.name : null });
+    const ag = (await db.prepare('SELECT COUNT(*) AS n FROM admin_gifts WHERE user_id = ? AND claimed = 0').bind(user.id).first()).n;
+    return json({ fr, cj, dn, ci, cm, dm, ag, clan: m ? m.name : null });
+  }
+  // yönetici hediyesini al: önce satır kilitlenir (claimed=1), kayda işlenemezse kilit geri açılır
+  if (path === '/api/gift/claim' && method === 'POST') {
+    const { id } = await readBody(req);
+    const g = await db.prepare('UPDATE admin_gifts SET claimed = 1 WHERE id = ? AND user_id = ? AND claimed = 0 RETURNING payload').bind(Math.floor(Number(id)) || 0, user.id).first();
+    if (!g) return err('Bu hediye zaten alınmış ya da bulunamadı.', 404);
+    const P = JSON.parse(g.payload);
+    try {
+      const m = await mutateState(db, env, user.id, st => applyGift(st, P));
+      await econLog(db, user.id, 'admin_gift', m.before, econSnap(m.st), 'admin hediyesi alındı #' + id);
+      return json({ ok: true, p: P, save: m.st, rev: m.rev });
+    } catch (e) { await db.prepare('UPDATE admin_gifts SET claimed = 0 WHERE id = ?').bind(Math.floor(Number(id))).run(); throw e; }
   }
 
+  // ---------- YÖNETİCİ PANELİ (sadece env.OWNER) ----------
+  if (path.startsWith('/api/admin/')) {
+    if (!owner) return err('Bu işlem için yetkin yok.', 403);
+    return adminApi(req, env, db, path, method, user);
+  }
+
+  return err('Bulunamadı.', 404);
+}
+
+// ---------- YÖNETİCİ ----------
+const nInt = (v, lo, hi) => Math.max(lo, Math.min(hi, Math.trunc(Number(v) || 0)));
+// hediye/yönetici yükü: altın, toz, ücretsiz paket, kupa, kartlar {id:n}, destek kartları {tür:n}
+function cleanPayload(p) {
+  p = p && typeof p === 'object' ? p : {};
+  const o = { gold: nInt(p.gold, -1e7, 1e7), dust: nInt(p.dust, -1e7, 1e7), free: nInt(p.free, -1000, 1000), trophy: nInt(p.trophy, -1e5, 1e5), cards: {}, sup: {} };
+  for (const [k, v] of Object.entries(p.cards || {})) if (MR.BY[k] && !EZ_IDS.has(String(k))) { const n = nInt(v, -99, 99); if (n) o.cards[k] = n; }
+  for (const [k, v] of Object.entries(p.sup || {})) if (MR.SUPK.includes(k)) { const n = nInt(v, -99, 99); if (n) o.sup[k] = n; }
+  return o;
+}
+function applyGift(st, P) {
+  st.gold = Math.max(0, (st.gold || 0) + P.gold); st.dust = Math.max(0, (st.dust || 0) + P.dust);
+  st.free = Math.max(0, (st.free || 0) + P.free); st.trophy = Math.max(0, (st.trophy || 0) + P.trophy);
+  st.owned = st.owned || {};
+  for (const [k, n] of Object.entries(P.cards)) { const v = Math.max(0, (st.owned[k] || 0) + n); if (v) st.owned[k] = v; else delete st.owned[k]; }
+  st.sup = st.sup || {};
+  for (const [k, n] of Object.entries(P.sup)) st.sup[k] = Math.max(0, (st.sup[k] || 0) + n);
+  return P;
+}
+const payloadTxt = P => [P.gold && `${P.gold} altın`, P.dust && `${P.dust} toz`, P.free && `${P.free} paket`, P.trophy && `${P.trophy} kupa`,
+  ...Object.entries(P.cards).map(([k, n]) => `${n}× ${MR.BY[k].name || k}`), ...Object.entries(P.sup).map(([k, n]) => `${n}× destek:${k}`)].filter(Boolean).join(', ');
+async function adminApi(req, env, db, path, method, me) {
+  const target = async u => { const o = await db.prepare('SELECT id, name, banned, created FROM users WHERE ukey = ?').bind(ukeyOf(String(u || ''))).first(); if (!o) throw uerr('Oyuncu bulunamadı.', 404); return o; };
+  try {
+    if (path === '/api/admin/find' && method === 'GET') {
+      const q = ukeyOf(String(new URL(req.url).searchParams.get('q') || '')).replace(/[%_]/g, '').slice(0, 16);
+      const rows = (await db.prepare('SELECT name, banned FROM users WHERE ukey LIKE ? ORDER BY ukey LIMIT 20').bind(q + '%').all()).results || [];
+      return json({ users: rows.map(r => ({ name: r.name, banned: !!r.banned })) });
+    }
+    if (path === '/api/admin/user' && method === 'GET') {
+      const o = await target(new URL(req.url).searchParams.get('u'));
+      const cur = await db.prepare('SELECT data FROM saves WHERE user_id = ?').bind(o.id).first();
+      const st = cur ? MR.normalize(JSON.parse(cur.data), ctxOf(o.id)) : null;
+      const matches = (await db.prepare('SELECT t, mode, opp, win, dt FROM match_log WHERE user_id = ? ORDER BY t DESC LIMIT 15').bind(o.id).all()).results || [];
+      const econ = (await db.prepare('SELECT t, a, gold_before, gold_after, advC_before, advC_after, free_before, free_after, note FROM econ_log WHERE user_id = ? ORDER BY id DESC LIMIT 40').bind(o.id).all()).results || [];
+      const gifts = (await db.prepare('SELECT id, msg, payload, t, claimed FROM admin_gifts WHERE user_id = ? ORDER BY t DESC LIMIT 10').bind(o.id).all()).results || [];
+      return json({ name: o.name, banned: !!o.banned, created: o.created, sum: st && { gold: st.gold, dust: st.dust, free: st.free, trophy: st.trophy, lvl: st.lvl, xp: st.xp,
+        advC: st.advC, advN: MR.ADV_N, col: Object.keys(st.owned || {}).filter(k => st.owned[k] > 0).length, cards: st.owned, sup: st.sup, wins: st.wins, losses: st.losses },
+        matches, econ, gifts: gifts.map(g => ({ ...g, payload: JSON.parse(g.payload) })) });
+    }
+    if (path === '/api/admin/edit' && method === 'POST') {
+      const b = await readBody(req), o = await target(b.u);
+      let note;
+      const m = await mutateState(db, env, o.id, st => {
+        if (b.op === 'adv') { const v = nInt(b.advC, 0, MR.ADV_N); note = `macera ${st.advC} → ${v}`; st.advC = v; return v; }
+        const P = cleanPayload(b.p); note = payloadTxt(P) || 'değişiklik yok'; return applyGift(st, P);
+      });
+      await econLog(db, o.id, 'admin', m.before, econSnap(m.st), `admin (${me.name}): ${note}`);
+      return json({ ok: true, note });
+    }
+    if (path === '/api/admin/ban' && method === 'POST') {
+      const b = await readBody(req), o = await target(b.u), ban = !!b.ban;
+      if (isOwner(env, o)) throw uerr('Sahip hesap engellenemez.');
+      await db.prepare('UPDATE users SET banned = ? WHERE id = ?').bind(ban ? 1 : 0, o.id).run();
+      if (ban) await db.prepare('DELETE FROM sessions WHERE user_id = ?').bind(o.id).run();   // açık oturumlar hemen düşer
+      await econLog(db, o.id, 'admin', null, null, `admin (${me.name}): ${ban ? 'engellendi' : 'engel kaldırıldı'}`);
+      return json({ ok: true, banned: ban });
+    }
+    if (path === '/api/admin/gift' && method === 'POST') {
+      const b = await readBody(req), o = await target(b.u), P = cleanPayload(b.p);
+      for (const k of ['gold', 'dust', 'free', 'trophy']) P[k] = Math.max(0, P[k]);
+      for (const k of Object.keys(P.cards)) if (P.cards[k] < 0) delete P.cards[k];
+      for (const k of Object.keys(P.sup)) if (P.sup[k] < 0) delete P.sup[k];
+      const msg = String(b.msg || '').trim().slice(0, 200) || 'Yönetici hediyesi';
+      if (!payloadTxt(P)) throw uerr('Hediye boş.');
+      const r = await db.prepare('INSERT INTO admin_gifts (user_id, msg, payload, t) VALUES (?, ?, ?, ?) RETURNING id').bind(o.id, msg, JSON.stringify(P), Date.now()).first();
+      await econLog(db, o.id, 'admin', null, null, `admin (${me.name}): hediye gönderildi #${r.id}: ${payloadTxt(P)}`);
+      return json({ ok: true, id: r.id });
+    }
+  } catch (e) { if (e && e.user) return err(e.message, e.status || 400); throw e; }
   return err('Bulunamadı.', 404);
 }
 

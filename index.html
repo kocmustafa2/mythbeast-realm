@@ -110,6 +110,12 @@ h3{font:20px/1.2 'MRDisplay',sans-serif;margin:22px 0 8px}
 
 /* ================= PAKET EKRANI ================= */
 .packzone{display:grid;place-items:center;padding:6px 0 16px}
+.netbar{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 8px);transform:translateX(-50%);z-index:9999;background:#7a1d1d;color:#fff;border:1px solid #ff8a8a;border-radius:12px;padding:8px 14px;font-weight:700;font-size:13px;box-shadow:0 6px 18px #0008;animation:nbpulse 1.4s ease-in-out infinite}
+@keyframes nbpulse{50%{opacity:.75}}
+/* Safari/iPhone: ağır filtreler bellek ve GPU yükü bindirir; sade görünüm */
+.lowfx *{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+.lowfx .pk,.lowfx .tear{filter:none!important}
+.lowfx .card.holo .cs{filter:none!important;animation:none!important}
 .pk{width:min(56vw,220px);aspect-ratio:620/911;filter:drop-shadow(0 16px 24px #000a);position:relative;cursor:pointer;animation:floaty 3.4s ease-in-out infinite}
 .foil{position:absolute;inset:0;border-radius:12px;background:linear-gradient(160deg,#ff9a5c,#d8344a 40%,#6a1d7e 75%,#2a1450);box-shadow:0 18px 40px #000a,inset 0 0 0 3px #ffffff30;overflow:hidden}
 .foil::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,#ffffff40 45%,transparent 60%);background-size:250% 100%;animation:gl 3s linear infinite}
@@ -996,7 +1002,7 @@ body.inb main{padding:0 10px 16px}
 <div id="title"><div class="tbg"></div><div class="tlogo"><img class="tlimg" src="img/logo.webp" alt="Mythbeast Realm"><span class="t3">Seri 1 · Elementler</span></div>
 <button class="sndb tsnd" id="tsnd" aria-label="Ses"></button><div class="tbtm"><button class="tgo" id="tgo" aria-label="Oyna"><img src="img/btn_play.webp" alt="Oyna"></button><p class="tinfo" id="tinfo"></p></div></div>
 
-<script src="rules.js?v=1"></script>
+<script src="rules.js?v=2"></script>
 <script>
 {
 // Ortak kurallar (rules.js): kart verisi ve ekonomi. Oyun ve sunucu aynı dosyayı kullanır.
@@ -1052,6 +1058,9 @@ function applyRel(d,atk,def){const k=rel(atk,def);return k==='i'?0:k==='w'?round
 /* =====================================================================
    3. KAYIT
    ===================================================================== */
+// Safari (iPhone/iPad dahil, iOS'taki Chrome/Firefox da WebKit'tir): ağır CSS filtreleri ve toplu efekt ön yüklemesi kapatılır
+const LOWFX=(()=>{const u=navigator.userAgent||'';return /iP(hone|ad|od)/.test(u)||(/Macintosh/.test(u)&&navigator.maxTouchPoints>1)||(/Safari/.test(u)&&!/Chrome|Chromium|CriOS|FxiOS|Edg|Android/.test(u))})();
+if(LOWFX)document.documentElement.classList.add('lowfx');
 const KEY='kartdiyari.v2';
 let S=fresh();
 try{const j=JSON.parse(localStorage.getItem(KEY));if(j&&typeof j==='object')S={...S,...j}}catch(e){}
@@ -1689,7 +1698,9 @@ function doSup(X,s,j,i){const P=X[s],x=P.hand[j],f=P.board[i];P.hand.splice(j,1)
   if(x.k==='evo'){const e=evoNext(f.c),ratio=f.hp/mx(f);f.c=e;f.max=e.hp+(f.st?30:0);f.hp=Math.max(10,Math.round(f.max*ratio/5)*5);f.evo=true;return{k:'evo',e}}
   f.st=x.k;f.max=mx(f)+30;f.hp+=30;return{k:x.k}}
 const outOf=(X,s)=>X[s].lives<=0||(!X[s].board.some(Boolean)&&!X[s].hand.some(x=>x.t==='c')&&!X[s].deck.some(x=>x.t==='c'));
-async function startBattle(adv,fr){if(window.__btStart)return;window.__btStart=1;let bid,fo;
+async function startBattle(adv,fr){if(window.__btStart)return;
+  if(pendGet()&&!(await flushPend())){toast('Önceki savaşın sonucu henüz kaydedilemedi. Bağlantı gelince tekrar dene.');return}
+  window.__btStart=1;let bid,fo;
   // savaşı sunucu başlatır (kimlik + başlangıç zamanı); ödülleri bitişte sunucu hesaplar
   try{const r=await act('battle_start',{mode:fr?'friend':adv!=null?'adv':'arena',adv:adv!=null?adv:undefined,fr:fr?fr.name:undefined});bid=r.id;fo=r.forfeit}
   catch(e){toast(e.message);return}finally{window.__btStart=0}
@@ -1845,7 +1856,7 @@ const FX2C={
   metal:{src:'metal',rows:3,a:4,b:20,d:620,sz:1.7}, metalS:{src:'metal',rows:3,a:0,b:29,d:900,sz:2.4},
   poison:{src:'poison',rows:3,a:4,b:20,d:620,sz:1.7},poisonS:{src:'poison',rows:3,a:0,b:29,d:900,sz:2.4},
   blood:{src:'blood',rows:3,a:4,b:20,d:620,sz:1.7},  bloodS:{src:'blood',rows:3,a:0,b:29,d:950,sz:2.5}};
-let fx2Pre=0;function fx2Load(){if(fx2Pre)return;fx2Pre=1;Object.values(FX2).forEach(u=>{const i=new Image();i.src=u})}
+let fx2Pre=0;function fx2Load(){if(fx2Pre||LOWFX)return;fx2Pre=1;Object.values(FX2).forEach(u=>{const i=new Image();i.src=u})}
 function hitFx(el,k,tgt){const key=k==='w'?el+'S':el,C=FX2C[key];if(!tgt||!C)return;const r=tgt.getBoundingClientRect(),S=r.width*C.sz;
   const R=C.rows||6;const d=document.createElement('div');d.className='hfx';d.style.cssText=`left:${r.left+r.width/2-S/2}px;top:${r.top+r.height/2-S/2}px;width:${S}px;height:${S}px;background-image:url(${FX2[C.src]});background-size:1000% ${R*100}%`;
   document.body.appendChild(d);const t0=performance.now(),n=C.b-C.a;
@@ -1870,7 +1881,9 @@ async function endBattle(win){
   if(!B||B.done)return;B.done=1;B.tEnd=Date.now();if(B.iv)clearInterval(B.iv);B.busy=true;B.sel=null;B.selH=null;
   const Bk=B,dq0=JSON.stringify(((S.dq||{}).l)||[]);B.log='Sonuç kaydediliyor...';renderBattle();
   // ödüller sunucuda hesaplanır: kupa, altın, seri, sandık, lig, macera, görevler
-  let r=null,err=null;try{r=await act('battle_end',{id:Bk.bid,win:!!win,stats:Bk.stats})}catch(e){err=e.message}
+  let r=null,err=null;const rid=newRid();
+  try{r=await act('battle_end',{id:Bk.bid,win:!!win,stats:Bk.stats},{rid})}
+  catch(e){err=e.message;if(e.status===0||e.status>=500){pendSet({id:Bk.bid,win:!!win,stats:Bk.stats,rid,t:Date.now()});err='Bağlantı yok: sonuç bu cihazda bekletiliyor, bağlantı gelince otomatik kaydedilecek.'}}
   if(B!==Bk)return;
   B.busy=false;B.over=true;B.win=win;
   if(B.fr){if(!err)api('/api/duel',{m:'POST',b:{u:B.fr.name,win:!!win}}).catch(()=>{})}
@@ -2567,9 +2580,24 @@ const escH=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;
 function accGet(){try{return JSON.parse(localStorage.getItem('mr.acc'))||{}}catch(e){return{}}}
 function accSet(a){try{a?localStorage.setItem('mr.acc',JSON.stringify(a)):localStorage.removeItem('mr.acc')}catch(e){}}
 function cloudOn(){return !window.claude&&!!accGet().tok}
-async function api(path,o={}){const a=accGet(),h={'content-type':'application/json'};if(a.tok)h.authorization='Bearer '+a.tok;
-  let r;try{r=await fetch(path,{method:o.m||'GET',headers:h,body:o.b?JSON.stringify(o.b):undefined,cache:'no-store'})}
-  catch(e){throw Object.assign(new Error('İnternet bağlantısı yok.'),{status:0})}
+// Sunucu isteği. Safari (özellikle iPhone) bazen açık bağlantı üzerinden giden POST'u "Load failed / network connection was lost"
+// ile düşürür ve kendisi yeniden denemez. Bu yüzden: GET istekleri ve istek kimliği (rid) taşıyan işlemler bağlantı hatasında
+// ve 502/503/504'te otomatik yeniden denenir (sunucu aynı rid'i ikinci kez uygulamaz). Denerken ekranda uyarı görünür.
+const NET_WAIT=[600,1200,2500,4000,6000,8000];
+function netBar(on){let d=$('#netbar');if(on){if(!d){d=document.createElement('div');d.id='netbar';d.className='netbar';d.setAttribute('role','status');document.body.appendChild(d)}
+    d.textContent=typeof on==='string'?on:'Bağlantı koptu, yeniden bağlanılıyor…'}else if(d)d.remove()}
+async function api1(path,o,a){const h={'content-type':'application/json'};if(a.tok)h.authorization='Bearer '+a.tok;
+  if(window.__testNow)h['x-test-now']=String(window.__testNow);
+  const ac=typeof AbortController==='function'?new AbortController():null,tm=ac&&setTimeout(()=>ac.abort(),o.timeout||20000);
+  try{return await fetch(path,{method:o.m||'GET',headers:h,body:o.b?JSON.stringify(o.b):undefined,cache:'no-store',signal:ac?ac.signal:undefined})}
+  catch(e){throw Object.assign(new Error('İnternet bağlantısı yok.'),{status:0})}finally{if(tm)clearTimeout(tm)}}
+async function api(path,o={}){const a=accGet();
+  const canRetry=o.retry||!o.m||o.m==='GET';let r,lastErr;
+  for(let k=0;;k++){
+    try{r=await api1(path,o,a);if(canRetry&&[502,503,504].includes(r.status)&&k<NET_WAIT.length)throw Object.assign(new Error('Sunucu meşgul.'),{status:r.status});break}
+    catch(e){lastErr=e;if(!canRetry||k>=NET_WAIT.length){if(o.retry)netBar(false);throw e}
+      if(o.retry)netBar(true);await new Promise(f=>setTimeout(f,NET_WAIT[k]))}}
+  if(o.retry)netBar(false);
   let j={};try{j=await r.json()}catch(e){}
   if(r.status===401&&a.tok&&!/\/api\/(login|register)$/.test(path)){accSet(null);window.__ezOwner=false}
   if(!r.ok)throw Object.assign(new Error(j.error||'Sunucuya ulaşılamadı.'),{status:r.status,data:j});
@@ -2589,11 +2617,24 @@ function accRev(rev){const a=accGet();if(a.tok&&Number.isInteger(rev)){a.rev=rev
 // Ekonomi alanlarını (altın, kartlar, paketler...) sunucudaki değerle değiştirir.
 function applySrv(sv){if(!sv)return;for(const k of MR.ECON_KEYS){if(sv[k]===undefined)delete S[k];else S[k]=sv[k]}try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 // Ekonomi işlemi: Cloudflare sürümünde sunucuda yapılır; artifact içinde (window.claude) aynı kurallar yerelde çalışır.
-async function act(a,p={}){
+const newRid=()=>{const b=new Uint8Array(12);(self.crypto||{}).getRandomValues?crypto.getRandomValues(b):b.forEach((x,i)=>b[i]=Math.random()*256|0);return [...b].map(x=>x.toString(16).padStart(2,'0')).join('')};
+async function act(a,p={},o={}){
   if(window.claude){const r=MR.act(S,a,p,{rng:Math.random,now:Date.now(),friendOk:true});save();return r}
   if(!accGet().tok){openAccount(true);throw new Error('Önce giriş yap.')}
-  let j;try{j=await api('/api/act',{m:'POST',b:{...p,a,tut:S.tut}})}catch(e){if(e.status===401)openAccount(true);throw e}
+  // her işlem bir istek kimliği (rid) taşır: yanıt kaybolup yeniden gönderilirse sunucu ilk sonucu döner, ikinci kez uygulamaz
+  const rid=o.rid||newRid();
+  let j;try{j=await api('/api/act',{m:'POST',b:{...p,a,tut:S.tut,rid},retry:true})}catch(e){if(e.status===401)openAccount(true);e.rid=rid;throw e}
   applySrv(j.save);accRev(j.rev);achToast(j.ach);return j.r}
+// test ve hata ayıklama kancası (oyunu değiştirmez)
+window.__mr={act:(...x)=>act(...x),S:()=>S,foeDeck:(...x)=>foeDeck(...x),flushPend:()=>flushPend(),pendGet:()=>pendGet(),endBattle:w=>endBattle(w),B:()=>B};
+// Bağlantı gidip gelene kadar kaydedilemeyen savaş sonucu: aynı rid ile saklanır, bağlantı gelince (ve yeni savaştan önce) gönderilir.
+const PEND='mr.pendEnd';
+function pendGet(){try{return JSON.parse(localStorage.getItem(PEND))}catch(e){return null}}
+function pendSet(v){try{v?localStorage.setItem(PEND,JSON.stringify(v)):localStorage.removeItem(PEND)}catch(e){}}
+async function flushPend(){const pe=pendGet();if(!pe||window.__pfBusy||!cloudOn())return true;window.__pfBusy=1;
+  try{await act('battle_end',{id:pe.id,win:pe.win,stats:pe.stats},{rid:pe.rid});pendSet(null);toast('Bekleyen savaş sonucu kaydedildi ✓');if(!B)render();else renderTop();return true}
+  catch(e){if(e.status===0||e.status>=500)return false;pendSet(null);return true}   // sunucu reddettiyse (ör. süresi geçmiş) bekletmenin anlamı yok
+  finally{window.__pfBusy=0}}
 // Aynı hesap başka cihazda daha yeni kaydedilmiş: sunucudaki kayıt geçerli olur, bu cihazdaki .bak olarak yedeklenir.
 function cloudConflict(sv){takeSave(sv.data);accRev(sv.rev);
   toast('Hesabın başka bir cihazda oynandı, en güncel kayıt yüklendi');if(!B)render();else renderTop()}
@@ -2614,11 +2655,12 @@ function afterAuth(j,login){const a=accGet(),sv=j.save,r=sv&&sv.data;
   if(!B)render();frBadge();seasonLoad()}
 async function cloudInit(){if(window.claude)return;
   // giriş sonradan yapılsa da çalışsın diye dinleyici her zaman kurulur; içeride oturum kontrol edilir
-  addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')cloudPush(true);else{cloudPull();frBadge()}});
+  addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')cloudPush(true);else{flushPend();cloudPull();frBadge()}});
+  addEventListener('online',()=>{flushPend();cloudPull()});addEventListener('pageshow',e=>{if(e.persisted){flushPend();cloudPull()}});
   // çevrimiçi sinyali: oyun ekranda açıkken dakikada bir (bildirim sayılarını da tazeler)
   setInterval(()=>{if(cloudOn()&&document.visibilityState==='visible')frBadge()},60000);
   if(!accGet().tok){openAccount(true);return}   // hesap şart
-  try{afterAuth(await api('/api/me'),false)}catch(e){if(e.status===401)openAccount(true)}}
+  try{afterAuth(await api('/api/me'),false);flushPend()}catch(e){if(e.status===401)openAccount(true)}}
 function openAccount(force){if(force&&$('#accu'))return;const ov=$('#ov');ov.className='ov on';window.__accForce=!!force;
   ov.innerHTML=`<div class="fp setp"><div class="sth"><b>Hesap</b>${force?'':'<button class="stx" id="accback" aria-label="Geri">✕</button>'}</div>${force?'<p class="sionote">Mythbeast Realm\'de ilerlemen hesabında saklanır. Oynamak için giriş yap ya da ücretsiz hesap aç.</p>':''}
     <input class="accin" id="accu" placeholder="Kullanıcı adı" autocomplete="username" autocapitalize="off" spellcheck="false" maxlength="16">
