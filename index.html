@@ -1625,15 +1625,22 @@ async function openChest(){
 function lgBadge(i,big){return `<span class="lgb2${big?' big':''}"><img src="img/lg/${i}.webp" alt="${LEAGUES[i].n}"></span>`}
 // kolay rakip: üst üste 3+ arena yenilgisinden sonra (sunucunun tuttuğu lstreak)
 const easyFoe=()=>(S.lstreak||0)>=3;
-function foeDeck(mine,lg){const li=lg??lgOf(S.trophy||0),L=LEAGUES[li],easy=easyFoe(),low=li<=1||easy;   // Bronz ve Gümüşte sadece Yaygın
-  const rnd=a=>a[Math.floor(Math.random()*a.length)];
-  const cr=mine.filter(x=>x.t==='c').map(x=>{const c=x.c;
-    if(low){if(!easy)return rnd(POOL[0]);const weak=POOL[0].filter(y=>power(y)<power(c));return weak.length?rnd(weak):POOL[0].reduce((m,y)=>power(y)<power(m)?y:m)}
-    let r=Math.min(3,c.r);if(r<3&&Math.random()<L.up)r++;else if(r>0&&r<3&&Math.random()<L.down)r--;const p=POOL[r];return p[Math.floor(Math.random()*p.length)]});
-  const fill=easy?[...POOL[0]].sort((a,b)=>power(a)-power(b)).slice(0,Math.ceil(POOL[0].length/2)):POOL[0];
-  while(cr.length<BAT.deck-(easy?2:[2,3,4,4,5,5][li]))cr.push(rnd(fill));
-  if(!easy&&li>=4&&Math.random()<(li>=5?.6:.35))cr[Math.floor(Math.random()*cr.length)]=EXC[Math.floor(Math.random()*EXC.length)];
-  const ns=easy?2:[2,3,4,4,5,5][li],tc={};cr.forEach(c=>tc[c.el]=(tc[c.el]||0)+1);const top=Object.entries(tc).sort((a,b)=>b[1]-a[1]).map(x=>x[0]);
+// Arena botu destesi. Lig başına nadirlik sınırı ve her karttan en fazla 1 kopya; EX/Ezeli yok.
+// Bronz/Gümüş: sadece Yaygın · Altın: en fazla 2 Nadir · Elmas/Usta: en fazla 3 Nadir + 1 Destansı · Efsane: en fazla 3 Nadir + 2 Destansı + 1 Efsanevi
+const FOE_CAP=[[99,0,0,0],[99,0,0,0],[99,2,0,0],[99,3,1,0],[99,3,1,0],[99,3,2,1]];
+function foeDeck(mine,lg){const li=lg??lgOf(S.trophy||0),L=LEAGUES[li],easy=easyFoe(),cap=easy?FOE_CAP[0]:FOE_CAP[li];
+  const rnd=a=>a[Math.floor(Math.random()*a.length)],used=new Set(),cnt=[0,0,0,0];
+  const ns=easy?2:[2,3,4,4,5,5][li],want=BAT.deck-ns;
+  const pick=(r,f)=>{for(;r>=0;r--){if(cnt[r]>=cap[r])continue;const p=POOL[r].filter(y=>!used.has(y.id)&&(!f||f(y)));if(!p.length)continue;
+    const c=rnd(p);used.add(c.id);cnt[r]++;return c}return null};
+  const cr=[];
+  for(const x of mine.filter(x=>x.t==='c')){if(cr.length>=want)break;const c=x.c;let o;
+    if(easy){o=pick(0,y=>power(y)<power(c))||pick(0)}   // kaybetme serisinde: oyuncunun kartından zayıf Yaygınlar
+    else{let r=Math.min(3,c.r);if(r<3&&Math.random()<L.up)r++;else if(r>0&&r<3&&Math.random()<L.down)r--;o=pick(r)}
+    if(o)cr.push(o)}
+  const weakC=easy?new Set([...POOL[0]].sort((a,b)=>power(a)-power(b)).slice(0,Math.ceil(POOL[0].length/2)).map(c=>c.id)):null;
+  while(cr.length<want){const o=pick(0,weakC?y=>weakC.has(y.id):null)||pick(0);if(!o)break;cr.push(o)}
+  const tc={};cr.forEach(c=>tc[c.el]=(tc[c.el]||0)+1);const top=Object.entries(tc).sort((a,b)=>b[1]-a[1]).map(x=>x[0]);
   const sp=['evo'];for(let k=0;sp.length<ns;k++)sp.push(top[k%top.length]);
   return shuffle([...cr.map(c=>({t:'c',c})),...sp.map(k=>({t:'s',k}))])}
 const mk=c=>({c,hp:c.hp,max:c.hp,st:null,evo:false,ch:false,justIn:true,didAtk:false,burn:0,vuln:0,vulnT:0,uid:Math.random().toString(36).slice(2)});
