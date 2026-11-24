@@ -1658,7 +1658,7 @@ function openDeckEditor(){
     $('#dauto').onclick=()=>{sel=autoDeck();draw()};$('#dclear').onclick=()=>{sel=[];draw()};
     ov.querySelectorAll('.dtab').forEach(b=>b.onclick=()=>{slot=+b.dataset.s;sel=wk[slot].k.length?validDeck(wk[slot].k):[];draw()});
     $('#dname').oninput=e=>{wk[slot].n=e.target.value.slice(0,20)};
-    $('#dname').onchange=()=>{if(!wk[slot].n.trim())wk[slot].n='Deste '+(slot+1);draw()};
+    $('#dname').onchange=()=>{if(!wk[slot].n.trim())wk[slot].n='Deste '+(slot+1);setTimeout(()=>{if(ov.querySelector('.dedit'))draw()},0)};
     $('#useA').onclick=()=>{dA=slot;draw()};$('#useM').onclick=()=>{dM=slot;draw()};
     $('#dsave').onclick=()=>{wk.forEach((d,i)=>{d.n=(d.n||'').trim()||('Deste '+(i+1))});S.decks=wk;S.dA=dA;S.dM=dM;S.deck2=wk[dA].k.slice();save();ov.classList.remove('on');ov.innerHTML='';renderArena();toast('Deste kaydedildi')};
   };
