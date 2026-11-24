@@ -243,7 +243,7 @@ const ECON_KEYS=['gold','dust','free','owned','shiny','sup','supV','supV2','pity
   'streak','lstreak','chest','chests','hist','gift','gt','advC','advV','exB','rqT','dn','dq','rare','tp','uidN','tut','bt','bl',
   'av','bestStk','dnTot','evoN','awkN','ssBest','ach','achC','rq'];
 // İstemcinin değiştirebildiği zararsız alanlar (ayarlar, deste seçimi, ipuçları).
-const CLIENT_KEYS=['mv','sv','snd','deck','deck2','shOff','pset','th','sid','t'];
+const CLIENT_KEYS=['mv','sv','snd','deck','deck2','decks','dA','dM','shOff','pset','th','sid','t'];
 const TUT_CLIENT_MAX=2;            // istemci öğreticiyi en fazla bu adıma kendisi ilerletebilir (hoş geldin → paket aç)
 const BATTLE_MIN_MS=30000;          // ödül için savaşın en kısa süresi
 const BATTLE_TUT_MIN_MS=8000;
@@ -301,6 +301,8 @@ function normalize(st,ctx){const F=fresh();for(const k in F)if(st[k]==null)st[k]
 function mergeClient(st,data){for(const k of CLIENT_KEYS)if(data[k]!==undefined)st[k]=data[k];
   if(Number.isInteger(data.tut)&&data.tut>st.tut&&data.tut<=TUT_CLIENT_MAX)st.tut=data.tut;
   if(Array.isArray(st.deck2))st.deck2=st.deck2.slice(0,30);if(Array.isArray(st.deck))st.deck=st.deck.slice(0,30);
+  if(st.decks!==undefined){st.decks=Array.isArray(st.decks)?st.decks.slice(0,8).map((d,i)=>({n:String(d&&d.n||('Deste '+(i+1))).slice(0,20),k:Array.isArray(d&&d.k)?d.k.slice(0,30).filter(x=>Number.isInteger(x)||(typeof x==='string'&&x.length<24)):[]})):[]}
+  for(const f of ['dA','dM'])if(st[f]!==undefined&&!(Number.isInteger(st[f])&&st[f]>=0&&st[f]<8))st[f]=0;
   return st}
 
 function battleEnd(st,p,ctx){const bt=st.bt,now=ctx.now;
