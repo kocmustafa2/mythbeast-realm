@@ -693,7 +693,9 @@ body.inb main{padding:0 10px 16px}
 .hst span i{font:700 8.5px Rubik,sans-serif;font-style:normal;margin-top:2px;letter-spacing:-.03em}.hst .w{background:#2e8a4a55;color:#8ff0a8}.hst .l{background:#a8323255;color:#ff9a9a}
 .fightb{width:100%;margin:12px 0 14px}
 .dtabs{display:flex;gap:4px;overflow-x:auto;margin-bottom:6px}.dtab{flex:0 0 auto;padding:6px 10px;border-radius:9px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);color:inherit;font:inherit;font-size:13px;white-space:nowrap}.dtab.on{background:rgba(255,200,80,.25);border-color:#e8b84a}.dmk{display:inline-block;margin-left:4px;padding:0 5px;border-radius:6px;font-size:10px;font-style:normal;font-weight:700;background:#3a7bd5;color:#fff;vertical-align:middle}.dmk.m{background:#3aa55a}.dnm{display:flex;gap:6px;align-items:center;margin-bottom:6px}.dnm input{flex:1;min-width:0;padding:6px 8px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:rgba(0,0,0,.25);color:inherit;font:inherit}
-.qob{display:flex;gap:8px;margin:-4px 0 10px}.qob .btn{flex:1;margin:0;padding:10px 6px;font-size:14px}
+.qskip{position:absolute;right:12px;top:calc(13% + 10px);z-index:6;background:#1a0f24cc;border:1px solid #e6b45a;color:#ffe2a8;border-radius:20px;padding:8px 14px;font-size:14px;font-weight:700;min-height:40px;cursor:pointer}
+@media (max-height:700px){.qskip{top:10px}}
+.qsum{margin-top:8px;padding:10px 14px;font-size:14px}
 .qores{max-height:90vh}.qog{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 8px;overflow-y:auto;max-height:58vh;padding:4px}
 .qoc{position:relative;cursor:pointer;display:flex;justify-content:center}.qoc .card{--w:calc((min(94vw,420px) - 76px)/3)}.qoc.nw{filter:drop-shadow(0 0 6px #ffd84a)}
 .qtag{position:absolute;top:-4px;left:50%;transform:translateX(-50%);background:#ffd84a;color:#2a1a00;font:800 9px Rubik,sans-serif;font-style:normal;padding:1px 6px;border-radius:6px;z-index:9}.qtag.sh{background:linear-gradient(90deg,#ff7ad9,#6ad8ff);color:#fff}
@@ -1284,7 +1286,6 @@ function renderPack(){
   $('#main').innerHTML=`<div class="psets">${[1,2].map(n=>`<button class="chip${packSet===n?' on':''}" data-ps="${n}"${tutOn()&&n===2?' disabled':''}>Seri ${n}${n===2?' · Yeni':''}</button>`).join('')}</div><h2>${packSet===2?'Seri 2 · Metal ve Zehir':'Seri 1 · Elementler'}</h2><p class="sub">Her pakette 5 kart. ${packSet===2?'Seri 2 paketinden sadece Metal ve Zehir kartları çıkar.':'Evrimli kartlar çok nadir çıkar, onları kopya toplayarak evrimleştir.'}</p>
   <div class="packzone"><div class="pk" id="pk">${packArt()}</div></div>
   <button class="btn" id="buy" ${can?'':'disabled'}>${S.free>0?`Ücretsiz paket aç (${S.free})`:`Paket aç · ${PACK.cost} altın`}</button>
-  ${can&&!tutOn()?`<div class="qob"><button class="btn alt" id="qopen">⚡ Hızlı aç</button>${S.free>1?`<button class="btn alt" id="qall">⚡ Hepsini hızlı aç (${Math.min(20,S.free)})</button>`:''}</div>`:''}
   ${!can?'<p class="free">Altının bitti. Arenada savaşarak altın kazan.</p>':''}
   ${dqBox()}${giftBox()}
   <div class="fp pity${left<=5?' hot':''}"><img class="pmed" src="img/ic/legmed.webp" alt=""><div class="pti"><b>Efsanevi garantisi</b><small>${left===1?'Bir sonraki pakette kesin Efsanevi!':`En geç <em>${left}</em> paket içinde`}</small><div class="bar"><i style="width:${S.pity/(PACK.pity-1)*100}%"></i></div></div></div>
@@ -1293,7 +1294,6 @@ function renderPack(){
   document.querySelectorAll('[data-ps]').forEach(b=>b.onclick=()=>{S.pset=+b.dataset.ps;save();renderPack()});
   const go=()=>{if(S.free>0||S.gold>=PACK.cost)openPack()};
   $('#buy').onclick=go;$('#pk').onclick=go;
-  const q1=$('#qopen');if(q1)q1.onclick=()=>quickOpen(false);const qa=$('#qall');if(qa)qa.onclick=()=>quickOpen(true);
 }
 // HIZLI AÇ: animasyonsuz; tek paket ya da elindeki tüm ücretsiz paketler (en fazla 20), sonuçlar tek ızgarada
 async function quickOpen(all){if(window.__pkBusy)return;window.__pkBusy=1;const got=[];let n=0,err=null,xp=0;
@@ -1371,7 +1371,7 @@ function showOpen(res,dustGain,xi,guaranteed){
     <div class="chance" id="chance">${guaranteed?'Efsanevi garantili':`%${Math.round(legChance()*100)} Efsanevi şansı`}</div>
     <div class="tear" id="tear"><div class="beam"></div><div class="pb">${packArt()}</div><div class="cap">${packArt()}</div><div class="cut" id="cut"></div><div class="swipe"></div></div>
     <p class="cue" id="cue">Açmak için kaydır</p><button class="linkbtn" id="tapopen">Dokunarak aç</button>
-  </div>`;
+  </div>${S.tut===5?'':'<button class="qskip" id="qskip">⚡ Hızlı aç</button>'}`;
   const tear=$('#tear'),cut=$('#cut');let x0=null,done=false;
   const finish=async()=>{if(done)return;done=true;cut.style.width='100%';
     ['#cue','#tapopen','#chance'].forEach(s=>$(s).style.visibility='hidden');tear.querySelector('.swipe').remove();
@@ -1386,6 +1386,7 @@ function showOpen(res,dustGain,xi,guaranteed){
     cut.style.width=p*100+'%';cut.style.left=dx<0?'auto':'0';cut.style.right=dx<0?'0':'auto';if(p>.6)finish()};
   tear.onpointerup=tear.onpointercancel=()=>{x0=null;if(!done)cut.style.width='0'};
   $('#tapopen').onclick=finish;
+  const qs=$('#qskip');if(qs)qs.onclick=e=>{e.stopPropagation();if(done&&!$('#rslot'))return;done=true;stopBurst();showSummary(res,dustGain)};
 }
 const legChance=()=>{let q=1;for(const s of PACK.slots)q*=1-s[3]/100;return 1-q};
 async function flyGems(xi){
@@ -1453,6 +1454,7 @@ function reveal(res,dustGain){
   ov.onpointermove=e=>{if(x0===null||state!==1||busy)return;dx=e.clientX-x0;const rc=$('#rc');if(rc){rc.style.transition='none';rc.style.transform=`translateX(${dx}px) rotate(${dx/20}deg)`}};
   ov.onpointerup=e=>{if(x0===null)return;x0=null;if(busy&&state===0&&busyAt&&Date.now()-busyAt>4500){busy=false}if(busy||idx>last)return;
     if(state===0)open();else next(dx>20?1:-1)};
+  {const qs=$('#qskip');if(qs)qs.textContent='⚡ Hepsini göster'}
   deal();
 }
 function starPts(){const p=[];for(let i=0;i<24;i++){const a=i*Math.PI/12,r=i%2?36:50;p.push((50+Math.cos(a)*r).toFixed(1)+','+(50+Math.sin(a)*r).toFixed(1))}return p.join(' ')}
@@ -1467,10 +1469,12 @@ function showSummary(res,dustGain){SFX.fan();
   const ov=$('#ov'),can=S.free>0||S.gold>=PACK.cost,nw=res.filter(x=>x.isNew).length;
   ov.innerHTML=`<div class="ovt">${nw} yeni kart${dustGain?` · +${dustGain} toz`:''}${res.some(x=>x.sh)?' · <span class="shtxt">✦ parlak!</span>':''}</div>
   <div class="sum">${res.map(x=>`<div>${cardHTML(x.c,{isNew:x.isNew,w:'min(27vw,112px)',shiny:!!x.sh})}${x.isNew?'':`<div class="dl">×${owned(x.c.id)}</div>`}</div>`).join('')}</div>
-  <div class="ovb"><button class="btn alt" id="done">Tamam</button>${can&&S.tut!==5?`<button class="btn" id="more">Bir tane daha</button>`:''}</div>`;
+  <div class="ovb"><button class="btn alt" id="done">Tamam</button>${can&&S.tut!==5?`<button class="btn" id="more">Bir tane daha</button>`:''}</div>
+  ${can&&S.tut!==5?`<button class="btn alt qsum" id="qmore">⚡ Hızlı aç${S.free>1?` (${Math.min(20,S.free)} paket)`:''}</button>`:''}`;
   noTilt=false;
   $('#done').onclick=()=>{ov.className='ov';ov.innerHTML='';if(S.tut===5)tab='col';render();if(uniq()===N)toast('Seri 1 tamamlandı!')};
   const m=$('#more');if(m)m.onclick=()=>openPack();
+  const qm=$('#qmore');if(qm)qm.onclick=()=>quickOpen(S.free>1);
 }
 
 /* ---------- KOLEKSİYON ---------- */
