@@ -1103,6 +1103,7 @@ body.inb main{padding:0 10px 16px}
 .pkn{position:absolute;right:4px;bottom:4px;z-index:20;font:900 13px/1 'MRDisplay',sans-serif;background:#000b;color:#fff;border-radius:8px;padding:3px 6px;font-style:normal}
 .pkf{display:flex;gap:6px;overflow-x:auto;padding:2px 0 6px;flex:none;min-height:40px}.pkf button{flex:none;display:flex;align-items:center;gap:4px;border:1px solid #ffffff2a;background:#ffffff10;color:#fff;border-radius:16px;padding:5px 10px;font:700 13px Rubik,sans-serif}.pkf button.on{background:#fff;color:#1a1530}.pkf button .ei,.pkf button img{width:20px;height:20px}
 .pksp{display:flex;flex-wrap:wrap;gap:6px}.pksp span{display:flex;align-items:center;gap:5px;background:#ffffff12;border-radius:10px;padding:4px 8px 4px 4px;font:600 12px Rubik,sans-serif}.pksp img{width:30px;height:30px;border-radius:6px;object-fit:cover}
+.exb{font-size:0!important;padding:0!important;background:none!important;box-shadow:none!important;top:56px!important;right:10px!important;transform:none!important;line-height:0!important}.exb .kdi{width:34px!important;height:34px!important;margin:0!important;filter:drop-shadow(0 2px 4px #000c)}   /* Kadim: sadece simge */
 </style>
 </head>
 <body>
@@ -2564,7 +2565,7 @@ document.addEventListener('pointerdown',e=>{if(e.target.closest('.btn,.tgo,nav b
 // dosyaları telefonda saklayan servis: içeriği değişen bir görsel/ses olursa ASSET_V artırılır
 // SÜRÜM KONTROLÜ: yeni sürüm yayınlanınca APP_V ve version.txt birlikte artırılır.
 // İnternet varken oyun arada bir version.txt'ye bakar; farklıysa üstte 'Yeni sürüm hazır · Yenile' çıkar (savaş sırasında beklenir).
-const APP_V='2026.11.27-11';
+const APP_V='2026.11.27-12';
 function verCheck(){if(window.claude||!navigator.onLine)return;
   fetch('version.txt?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{t=(t||'').trim();if(/^[\w.-]{3,40}$/.test(t)&&t!==APP_V){window.__upd=t;updShow()}}).catch(()=>{})}
 function updShow(){if(!window.__upd||document.getElementById('updb'))return;if(B&&!B.over){window.__updLater=1;return}
