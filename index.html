@@ -1020,6 +1020,7 @@ body.inb main{padding:0 10px 16px}
 .bklv{position:absolute;left:3px;top:20px;z-index:4;font-size:11px;padding:2px 5px}.dtlv{position:absolute;right:3px;top:3px;z-index:4;font-size:11px;padding:2px 5px}.dgrid .dtlv{top:22px}
 .lvn{display:inline-block;margin-left:.3em;padding:0 .3em;border-radius:.35em;font:900 .78em/1.25 'MRDisplay',sans-serif;color:#1a1000;vertical-align:.08em;flex:none;box-shadow:0 1px 2px #0006}.lvn.lt4{color:#fff;text-shadow:0 1px 2px #000}.bkn .lvn{font-size:.85em}.bkn.bknl{display:flex;align-items:center;min-width:0}.bkn.bknl>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}.bkn.bknl .lvn{flex:none}
 .card.lvc{filter:drop-shadow(0 0 3px var(--lvg))}.dtlv{font-size:10px!important;padding:1px 4px!important;border-radius:6px!important}
+.aimg.pt{object-position:50% 12%!important}
 .lvmx{font:400 11px Rubik,sans-serif;color:#aab6c2}.lvbox .lvrz{vertical-align:middle}
 .lgbox{display:flex;flex-direction:column;gap:8px}.lgg{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}
 .lgd{position:relative;aspect-ratio:1;border-radius:10px;background:#ffffff0d;box-shadow:inset 0 0 0 1px #ffffff14;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:2px}
@@ -1195,9 +1196,11 @@ const ALLC=()=>[...CARDS,...EXC,...EZC.filter(c=>owned(c.id)),...PRL.filter(c=>o
 // küçük görünümlerde hafif kopya (img/t), büyük görünümlerde tam boy görsel
 function artFull(c){return IMG[c.id]?`<img class="aimg" src="img/${c.id}.jpg" alt="${c.name}" draggable="false" decoding="async" onerror="imgRetry(this)">`:art(c)}
 window.imgRetry=im=>{const n=+(im.dataset.r||0);if(n>=3)return;im.dataset.r=n+1;setTimeout(()=>{const u=im.src.split('?')[0];im.src=u+'?r='+(n+1)},600*(n+1))};
+// dikey (2:3) resimler: Efsanevi, EX, Ezeli ve Parlak. Kırpılan yerlerde yüz görünsün diye üstten hizalanır.
+const portArt=c=>!!c&&(c.r===3||c.ex||c.ez||c.prl);
 function art(c){
   if(ART[c.id])return ART[c.id];
-  if(IMG[c.id])return ART[c.id]=`<img class="aimg" src="img/t/${c.id}.webp" alt="${c.name}" draggable="false" decoding="async" onerror="imgRetry(this)">`;
+  if(IMG[c.id])return ART[c.id]=`<img class="aimg${portArt(c)?' pt':''}" src="img/t/${c.id}.webp" alt="${c.name}" draggable="false" decoding="async" onerror="imgRetry(this)">`;
   const E=T[c.el],root=rootOf(c),R=rng(root.id*7919+13),R2=rng(c.id*104729+7);
   const h=E.h+Math.round(R()*24-12),col=`hsl(${h} ${E.s}% ${E.l}%)`,dk=`hsl(${h} ${E.s}% ${E.l-22}%)`,lt=`hsl(${h} ${E.s}% ${Math.min(E.l+20,95)}%)`;
   const P=[{x:48,y:66,rx:22,ry:19,hx:64,hy:44,hr:14},{x:44,y:70,rx:30,ry:13,hx:74,hy:58,hr:12},{x:50,y:66,rx:17,ry:24,hx:50,hy:35,hr:13}][c.b];
@@ -1948,7 +1951,7 @@ function bk(f,s,i){
   let hint='';if(tgt){const A=B.me.board[B.sel],fx=curAtk(A).fx,h=calc(A,f,B.me.board,B.foe.board,atkOf(A));hint=`<div class="bkhint${h.k==='w'?' x':h.k?' w':''}">${h.k==='i'?'Bağışık':'−'+h.d+(fx==='coin'?'+':'')}</div>`}
   const a=curAtk(f),big=f.ch&&c.atks[1],SH=c.ex||(s==='me'&&shownShiny(c.id)),src=SH&&SHART.has(c.id)?`img/s/${c.id}.jpg`:`img/t/${c.id}.webp`;
   return `<div class="bk${big?' ch':c.atks[1]&&!f.justIn&&!f.didAtk?' half':''}${s==='me'&&B.sel===i?' sel':''}${my&&!selS?' bpk':''}${tgt?' tg':''}${supOk?' sup':''}${SH?' holo':''}${c.ex?' ex':''}${c.ez?' ez':''}" data-s="${s}" data-i="${i}" data-u="${f.uid}" style="--ec:${AUC[c.el]}">
-  <div class="bka" style="background-image:url(${src})"></div><div class="bkn${c.lv?' bknl':''}">${c.lv?`<span>${c.name}</span>${lvN(c)}`:c.name}</div><img class="bke" src="img/ic/${c.el}.webp" alt="">
+  <div class="bka" style="background-image:url(${src})${portArt(c)?';background-position:50% 12%':''}"></div><div class="bkn${c.lv?' bknl':''}">${c.lv?`<span>${c.name}</span>${lvN(c)}`:c.name}</div><img class="bke" src="img/ic/${c.el}.webp" alt="">
   ${c.ez?'':c.ex?'<span class="bkx">EX</span>':''}${f.evo?'<span class="bkev">EVRİM TAŞI</span>':''}${f.st?`<span class="bkst"><img src="img/ic/${f.st}.webp" alt="">+10</span>`:''}${f.burn?`<span class="bkb"><img src="img/ic/burn.webp" alt="">${f.burn}</span>`:''}${f.poiT>0?`<span class="bkv bkp"><img src="img/ic/poison.webp" alt="">${f.poi}</span>`:''}${f.bldT>0?`<span class="bkv bkl"><img src="img/ic/blood.webp" alt="">${f.bld}</span>`:''}${f.ampT>0?`<span class="bkv bka2">${icon('shadow')}×${f.amp}</span>`:''}${f.frz>0?'<span class="bkfz">❄ Donmuş</span>':''}${f.mute>0?'<span class="bkmu">Yetenek kapalı</span>':''}
   <div class="bkhp"><i class="${p<.35?'lo':''}" style="width:${p*100}%"></i><span>${f.hp} / ${mx(f)}</span></div>
   <div class="bkat${big?' big':''}"><span>${a.name}${a.fx?`<em>${FXS[a.fx]}</em>`:''}</span><b>${atkOf(f)}${a.fx==='coin'?'+':''}</b></div>${hint}</div>`}
@@ -1956,7 +1959,7 @@ let handW=0;
 function handPos(n){const W=(handW||Math.min(innerWidth,480)-8)-14,cw=84,gap=n>1?Math.min(cw+6,(W-cw)/(n-1)):0,x0=7+(W-(cw+gap*(n-1)))/2,t=performance.now()/1000;
   return k=>`left:${(x0+k*gap).toFixed(1)}px;--rot:${((k-(n-1)/2)*3.5).toFixed(1)}deg;animation-delay:${(-(t%3.2)-k*.55).toFixed(2)}s`}
 function hk(x,j,pos=''){const my=B.turn==='me'&&!B.busy&&!B.over,sel=B.selH===j;
-  if(x.t==='c'){const can=my&&B.me.board.some(f=>!f);return `<div class="hk${can?' can':''}${sel?' sel':''}" data-h="${j}" style="--ec:${AUC[x.c.el]};${pos}"><span class="hkt">YARATIK</span><div class="hka" style="background-image:url(img/t/${x.c.id}.webp)"></div><b>${x.c.name}</b><small>❤ ${x.c.hp} · ⚔ ${x.c.atks[0].dmg}</small></div>`}
+  if(x.t==='c'){const can=my&&B.me.board.some(f=>!f);return `<div class="hk${can?' can':''}${sel?' sel':''}" data-h="${j}" style="--ec:${AUC[x.c.el]};${pos}"><span class="hkt">YARATIK</span><div class="hka" style="background-image:url(img/t/${x.c.id}.webp)${portArt(x.c)?';background-position:50% 12%':''}"></div><b>${x.c.name}</b><small>❤ ${x.c.hp} · ⚔ ${x.c.atks[0].dmg}</small></div>`}
   const can=my&&!B.supUsed&&B.me.board.some(f=>f&&canSup(x.k,f,true)===true);
   return `<div class="hk sup${x.k==='evo'?' evo':''}${can?' can':''}${sel?' sel':''}${my&&B.supUsed?' off':''}" data-h="${j}" style="--ec:${x.k==='evo'?'#b07bff':x.k==='will'?'#ffcf4a':x.k==='feda'?'#ff3355':x.k==='bedel'?'#4dff6a':AUC[x.k]};${pos}"><span class="hkt">DESTEK</span><div class="hki" style="background-image:url(${supArt(x.k)})"></div><b>${SUPN[x.k]}</b><small>${x.k==='evo'?'Temel kart evrimleşir':x.k==='will'?'Rakip 1 tur oynayamaz':x.k==='feda'?'Gücünü başkasına aktar':x.k==='bedel'?'Güç +%50 · Can −%50':'+30 can · +10 hasar'}</small></div>`}
 function auraChips(bd){const a=auras(bd),out=[];if(a.earth)out.push(['earth','−'+a.earth,'kalkan']);if(a.water)out.push(['water','+'+a.water,'can']);if(a.fire)out.push(['fire','+'+a.fire,'hasar']);if(a.light>=0)out.push(['light','✓','arınma']);if(a.shadow)out.push(['shadow','+'+a.shadow,'zayıflatma']);if(a.poison)out.push(['poison',''+a.poison,'zehir']);
