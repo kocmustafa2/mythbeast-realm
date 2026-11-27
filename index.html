@@ -917,7 +917,7 @@ body.inb main{padding:0 10px 16px}
 .bk .bkev{position:absolute;left:4px;top:calc(62% - 20px);font:800 8.5px Rubik,sans-serif;padding:2px 5px;border-radius:5px;background:linear-gradient(90deg,#b07bff,#6a3aff);box-shadow:0 2px 4px #000a}
 .bk .bkst{position:absolute;right:3px;top:calc(62% - 22px);display:flex;align-items:center;gap:1px;font:800 9px Rubik,sans-serif;padding:1px 5px 1px 1px;border-radius:9px;background:#000c;box-shadow:0 0 0 1px var(--ec)}.bk .bkst img{width:15px;height:15px}
 .bk .bkb,.bk .bkv{position:absolute;left:3px;top:24px;display:flex;align-items:center;gap:1px;font:800 10px Rubik,sans-serif;padding:1px 5px 1px 1px;border-radius:8px;background:#000c}.bk .bkb img,.bk .bkv img,.bk .bkv svg{width:14px;height:14px}.bk .bkv{top:44px}.bk .bkp{top:44px;background:#3d5a00e0}.bk .bkl{top:64px;background:#7a0000e0}.bk .bka2{top:84px;background:#4a2380e0}
-.bk .bkx{position:absolute;right:24px;top:4px;font:900 11px/1 'MRDisplay',sans-serif;padding:2px 5px;border-radius:5px;background:linear-gradient(135deg,#ff3c3c,#ffb020)}
+.bk .bkx{position:absolute;right:24px;top:4px;font:900 11px/1 'MRDisplay',sans-serif;padding:2px 5px;border-radius:5px;background:linear-gradient(135deg,#0f7a5a,#3fd18f)}
 .bk.holo{box-shadow:0 4px 12px #000b,0 0 0 2px #fff,0 0 12px #ff7ad9,0 0 18px #6ad8ff}.bk.ex{box-shadow:0 4px 12px #000b,0 0 0 3px #ffb020,0 0 14px #ff5a3c}
 .bk.bpk:hover,.bk.bpk:active{transform:translateY(-3px)}
 .bk.sel{transform:translateY(-10px) scale(1.04);box-shadow:0 0 0 3px var(--gold),0 0 22px var(--gold)}
@@ -1086,7 +1086,7 @@ body.inb main{padding:0 10px 16px}
 .stg{background:var(--ec,#c0281c);color:#fff!important;border-radius:1em;padding:.05em .45em}
 
 /* üçüncü tur: başlık düzeni — can rozeti solda, ad ortada (Pokémon'un "ad solda, can sağda" düzeninden çıkış) */
-.hd .hpv{order:-1;align-self:center}.hd .l{align-items:center;text-align:center}.hd{align-items:center}
+.hd .hpv{order:-1;align-self:center;font-size:.66em;padding:.06em .3em .08em .16em}.hd .l{align-items:center;text-align:center}.hd{align-items:center}
 .fhd .fhp{order:-1}.fhd .fnm{justify-content:center}
 .scard:not(.ezc) .shp{order:-1}.scard:not(.ezc) .snm{align-items:center;text-align:center}.scard:not(.ezc) .shd{padding:0 12px 0 8px}
 
@@ -1355,7 +1355,7 @@ function cardHTML0(c,o={}){
   const w=weakOf(c.el),rs=resOf(c.el);
   return `<div class="card r${c.r} t-${c.el}${o.miss?' miss':''}${o.big?' big':''}${o.noTilt?'':' tiltable'}${shCls(c,o)}" data-id="${c.id}"${o.w?` style="--w:${o.w}"`:''}><div class="cs"><div class="tilt"><div class="frame">
   <div class="art">${c.r===3&&SHART.has(c.id)?`<img class="aimg" src="img/${o.full||o.big?'s':'st'}/${c.id}.${o.full||o.big?'jpg':'webp'}" alt="${c.name}" draggable="false" decoding="async" onerror="this.onerror=null;this.src='img/${o.full||o.big?'':'t/'}${c.id}.${o.full||o.big?'jpg':'webp'}'">`:o.full||o.big?artFull(c):art(c)}</div>
-  <div class="hd"><div class="l"><span class="stg">${stageName(c)}</span><div class="nm"><span${nmS(c.name+(c.lv?'+10':''),10)}>${c.name}</span>${lvN(c)}</div></div><div class="hpv">${ic('heart','hpi')}${lvHp(c)}</div><div class="ti">${icon(c.el)}</div></div>
+  <div class="hd"><div class="l"><span class="stg">${stageName(c)}</span><div class="nm"><span${nmS(c.name+(c.lv?'+10':''),8)}>${c.name}</span>${lvN(c)}</div></div><div class="hpv">${ic('heart','hpi')}${lvHp(c)}</div><div class="ti">${icon(c.el)}</div></div>
   <div class="sp"></div>
   <div class="inf">${auraText(c)}</div>
   <div class="atks">${c.atks.map((a,ai)=>`<div class="ak"><div class="cost">${ai?'<span class="dolu">DOLU</span>':''}</div><div class="akn">${a.name}</div><div class="akd">${lvDm(c,a,ai)}${a.fx==='coin'?'+':''}</div>${a.fx?`<div class="akt">${ic(FXI[a.fx],'fxi')}${FX[a.fx].t}</div>`:''}</div>`).join('')}</div>
@@ -2557,7 +2557,7 @@ document.addEventListener('pointerdown',e=>{if(e.target.closest('.btn,.tgo,nav b
 // dosyaları telefonda saklayan servis: içeriği değişen bir görsel/ses olursa ASSET_V artırılır
 // SÜRÜM KONTROLÜ: yeni sürüm yayınlanınca APP_V ve version.txt birlikte artırılır.
 // İnternet varken oyun arada bir version.txt'ye bakar; farklıysa üstte 'Yeni sürüm hazır · Yenile' çıkar (savaş sırasında beklenir).
-const APP_V='2026.11.27-10';
+const APP_V='2026.11.27-11';
 function verCheck(){if(window.claude||!navigator.onLine)return;
   fetch('version.txt?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{t=(t||'').trim();if(/^[\w.-]{3,40}$/.test(t)&&t!==APP_V){window.__upd=t;updShow()}}).catch(()=>{})}
 function updShow(){if(!window.__upd||document.getElementById('updb'))return;if(B&&!B.over){window.__updLater=1;return}
