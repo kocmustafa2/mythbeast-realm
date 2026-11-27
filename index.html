@@ -1021,7 +1021,7 @@ body.inb main{padding:0 10px 16px}
 <div id="title"><div class="tbg"></div><div class="tlogo"><img class="tlimg" src="img/logo.webp" alt="Mythbeast Realm"><span class="t3">Seri 1 · Elementler</span></div>
 <button class="sndb tsnd" id="tsnd" aria-label="Ses"></button><div class="tbtm"><button class="tgo" id="tgo" aria-label="Oyna"><img src="img/btn_play.webp" alt="Oyna"></button><p class="tinfo" id="tinfo"></p></div></div>
 
-<script src="rules.js?v=6"></script>
+<script src="rules.js?v=7"></script>
 <script>
 {
 // Ortak kurallar (rules.js): kart verisi ve ekonomi. Oyun ve sunucu aynı dosyayı kullanır.
@@ -1540,19 +1540,20 @@ function typeChart(){
 /* ---------- ARENA (6 kart, 3 sahada + deste) ---------- */
 const BAT={deck:15,hand:5,field:3,lives:6,time:180,minC:9,maxS:6,budget:50,pts:[2,3,4,5],handMax:5};   // yeni arena: 15 kartlık deste, elde 5 kart, sahada 3 yaratık, 6 can, toplam 3 dakika
 /* ---------- DESTEK KARTLARI (ödüllerden gelir) ---------- */
-const SUPN={fire:'Ateş Taşı',water:'Su İncisi',earth:'Toprak Taşı',air:'Hava Tüyü',light:'Işık Kristali',shadow:'Gölge Taşı',metal:'Metal Taşı',poison:'Zehir Şişesi',evo:'Evrim Taşı'};
+const SUPN={will:'İrade',fire:'Ateş Taşı',water:'Su İncisi',earth:'Toprak Taşı',air:'Hava Tüyü',light:'Işık Kristali',shadow:'Gölge Taşı',metal:'Metal Taşı',poison:'Zehir Şişesi',evo:'Evrim Taşı'};
 const supIco=k=>k==='evo'?'img/ic/star.webp':`img/ic/${k}.webp`;
 const supArt=k=>`img/sup/${k}.webp`;
 // destek kartının büyük görünümü: kendi çerçevesi (tür taşları fildişi, Evrim Taşı altın)
 function supCard(k,o={}){return `<div class="spc${k==='evo'?' evo':''}" data-sk="${k}" style="${o.w?`width:${o.w}`:''}"><div class="spa" style="background-image:url(img/sup/${k}.webp)"></div>${o.desc===false?'':`<div class="spd">${supTxt(k)}</div>`}<img class="spf" src="img/sup/${k==='evo'?'fr_evo':'fr'}.webp" alt="" draggable="false"><b class="spn">${SUPN[k]}</b>${o.n!=null?`<span class="spx${o.n?'':' z'}">×${o.n}</span>`:''}</div>`}
 function showSup(k){const ov=$('#ov');ov.className='ov on';ov.innerHTML=`<div class="ovt">${SUPN[k]}</div><div class="spbig">${supCard(k,{w:'min(70vw,300px)',n:supHave(k),desc:false})}</div><p class="ttx">${supTxt(k)}.<br>Her tur en fazla 1 destek kartı oynayabilirsin. Destek kartları zafer sandıklarından, maceradan ve günlük görevlerden gelir.</p><div class="ovb"><button class="btn" id="close">Kapat</button></div>`;$('#close').onclick=()=>{ov.className='ov';ov.innerHTML=''}}
-const supTxt=k=>k==='evo'?'Temel yaratık yenilene kadar evrimleşir (evrimi koleksiyonunda olmalı)':`${T[k].n} yaratığa +30 can ve +10 hasar`;
+const supTxt=k=>k==='will'?'Rakip bir sonraki turunu oynayamaz (destede en fazla 1)':k==='evo'?'Temel yaratık yenilene kadar evrimleşir (evrimi koleksiyonunda olmalı)':`${T[k].n} yaratığa +30 can ve +10 hasar`;
 const supHave=k=>(S.sup||{})[k]||0;
 function giveSup(k,n=1){MR.giveSup(S,k,n)}
 if(S.supV===1&&!S.supV2){giveSup('metal',1);giveSup('poison',1);S.supV2=1}
 if(S.supV!==1){S.sup=S.sup||{};giveSup('evo',2);ELS.forEach(e=>giveSup(e,1));S.supV=1;save()}
 const evoNext=c=>CARDS.find(x=>x.from===c.id);
 function canSup(k,f,needOwn){if(!f)return 'Önce bir yaratık seç';
+  if(k==='will')return B&&B.skipX?'İrade art arda oynanamaz':true;
   if(k==='evo'){if(f.evo||f.c.stage!==0||f.c.r>=3||f.c.ex)return 'Evrim Taşı sadece temel yaratıklara takılır';const e=evoNext(f.c);if(!e)return `${f.c.name} evrimleşemez`;if(needOwn&&!owned(e.id))return `Önce ${e.name} kartını koleksiyonunda evrimleştirmelisin`;return true}
   if(f.st)return 'Bu yaratıkta zaten bir taş var';if(f.c.el!==k)return `${SUPN[k]} sadece ${T[k].n} yaratıklara takılır`;return true}
 const mx=f=>f.max||baseHp(f.c);   // deste: 7 kart, en fazla 24 puan (Yaygın 2, Nadir 3, Destansı 4, Efsanevi 5)
@@ -1595,7 +1596,7 @@ const isS=k=>typeof k==='string';
 const maxCopy=c=>c.r>=3?1:Math.min(2,owned(c.id));
 const deckPts=ks=>ks.reduce((t,k)=>t+(isS(k)?0:ptsOf(BY[k])),0);
 function validDeck(ks){const out=[],cnt={};for(const k of ks){if(out.length>=BAT.deck)break;cnt[k]=(cnt[k]||0)+1;
-  if(isS(k)){if(cnt[k]>supHave(k.slice(2))||out.filter(isS).length>=BAT.maxS)continue}
+  if(isS(k)){if(cnt[k]>supHave(k.slice(2))||(k==='s:will'&&cnt[k]>1)||out.filter(isS).length>=BAT.maxS)continue}
   else{const c=BY[k];if(!c||!owned(k)||cnt[k]>maxCopy(c)||deckPts([...out,k])>BAT.budget)continue}
   out.push(k)}return out}
 if(!S.deck2&&S.deck&&S.deck.length)S.deck2=S.deck.slice();
@@ -1620,7 +1621,7 @@ function autoDeck(){
   if(canEvo&&have.evo){sp.push('s:evo');have.evo--}
   const order=Object.entries(tc).sort((a,b)=>b[1]-a[1]).map(x=>x[0]);
   for(let g=0;g<3&&sp.length<ns;g++)for(const e of order){if(sp.length>=ns)break;if(have[e]>0){sp.push('s:'+e);have[e]--}}
-  for(const k of SUPK){while(sp.length<ns&&have[k]>0){sp.push('s:'+k);have[k]--}}
+  for(const k of SUPK){while(sp.length<ns&&have[k]>0){sp.push('s:'+k);have[k]--;if(k==='will')break}}
   return validDeck([...cr,...sp]);
 }
 // savaş destesi: kayıtlı deste, eksik yerler otomatik destenin kartlarıyla dolar
@@ -1653,7 +1654,7 @@ function openDeckEditor(){
     <small class="dinfo">${nc} yaratık · ${ns}/${BAT.maxS} destek · aynı karttan en fazla 2, Efsanevi ve EX'ten 1. Karttan çıkarmak için üstteki kartlara dokun.</small>
     <div class="drow d15">${Array.from({length:BAT.deck},(_,i)=>sel[i]!=null?tileK(sel[i],{sel:1,idx:i}):'<div class="dt empty"></div>').join('')}</div>${deckSummary(sel.filter(k=>!isS(k)))}
     <div class="filters">${[['all','Tümü'],['sup','Destek'],...ELS.map(e=>[e,T[e].n])].map(([k,n])=>`<button class="chip${flt===k?' on':''}" data-f="${k}">${T[k]?icon(k):k==='sup'?'<img class="cico" src="img/sup/evo.webp" alt="">':''}${n}</button>`).join('')}</div>
-    <div class="dgrid">${flt==='sup'?(SUPK.filter(k=>supHave(k)).map(k=>{const n=cntIn('s:'+k);return supTile(k,{sel:n>0,n:`${n}/${supHave(k)}`,dis:full||ns>=BAT.maxS||n>=supHave(k)})}).join('')||'<div class="empty">Henüz destek kartın yok. Zafer sandıklarından, maceradan ve günlük görevlerden kazanılır.</div>')
+    <div class="dgrid">${flt==='sup'?(SUPK.filter(k=>supHave(k)).map(k=>{const n=cntIn('s:'+k);return supTile(k,{sel:n>0,n:`${n}/${supHave(k)}`,dis:full||ns>=BAT.maxS||n>=supHave(k)||(k==='will'&&n>=1)})}).join('')||'<div class="empty">Henüz destek kartın yok. Zafer sandıklarından, maceradan ve günlük görevlerden kazanılır.</div>')
       :own.map(c=>{const n=cntIn(c.id),m=maxCopy(c);return deckTile(c,{sel:n>0,n:`${n}/${m}`,dis:full||n>=m||p+ptsOf(c)>BAT.budget})}).join('')}</div>
     <div class="ovb dbtns"><button class="btn alt" id="dauto">Otomatik doldur</button><button class="btn alt" id="dclear">Temizle</button><button class="btn" id="dsave">Kaydet</button></div></div>`;
     const kOf=v=>/^s:/.test(v)?v:+v;
@@ -1789,8 +1790,9 @@ function placeX(X,s,j,i){const f=mk(X[s].hand[j].c);X[s].hand.splice(j,1);X[s].b
 // sahada yaratık yok ve elde yaratık kalmadıysa: bir destek kartı desteye döner, yerine desteden yaratık gelir
 function rescue(X,s){const P=X[s];if(P.board.some(Boolean)||P.hand.some(x=>x.t==='c'))return false;const k=P.deck.findIndex(x=>x.t==='c');if(k<0)return false;const c=P.deck.splice(k,1)[0];const j=P.hand.findIndex(x=>x.t==='s');if(j>=0)P.deck.push(P.hand.splice(j,1,c)[0]);else P.hand.push(c);return true}
 function drawX(X,s){const P=X[s];if(P.deck.length&&P.hand.length<BAT.handMax){P.hand.push(P.deck.shift());return true}return false}
-function pickSup(X,s,needOwn){const P=X[s];let best=null;P.hand.forEach((x,j)=>{if(x.t!=='s')return;P.board.forEach((f,i)=>{if(!f||canSup(x.k,f,needOwn)!==true)return;const v=(x.k==='evo'?40:20)+f.hp/10;if(!best||v>best.v)best={j,i,v}})});return best}
+function pickSup(X,s,needOwn){const P=X[s];let best=null;P.hand.forEach((x,j)=>{if(x.t!=='s')return;P.board.forEach((f,i)=>{if(!f||canSup(x.k,f,needOwn)!==true)return;const v=(x.k==='will'?60:x.k==='evo'?40:20)+f.hp/10;if(!best||v>best.v)best={j,i,v}})});return best}
 function doSup(X,s,j,i){const P=X[s],x=P.hand[j],f=P.board[i];P.hand.splice(j,1);drawX(X,s);
+  if(x.k==='will'){X.skip=X.skip||{};X.skip[s==='me'?'foe':'me']=1;return{k:'will'}}
   if(x.k==='evo'){const e=evoNext(f.c),ratio=f.hp/mx(f);f.c=e;f.max=baseHp(e)+(f.st?30:0);f.hp=Math.max(10,Math.round(f.max*ratio/5)*5);f.evo=true;return{k:'evo',e}}
   f.st=x.k;f.max=mx(f)+30;f.hp+=30;return{k:x.k}}
 const outOf=(X,s)=>X[s].lives<=0||(!X[s].board.some(Boolean)&&!X[s].hand.some(x=>x.t==='c')&&!X[s].deck.some(x=>x.t==='c'));
@@ -1876,7 +1878,7 @@ function handPos(n){const W=(handW||Math.min(innerWidth,480)-8)-14,cw=84,gap=n>1
 function hk(x,j,pos=''){const my=B.turn==='me'&&!B.busy&&!B.over,sel=B.selH===j;
   if(x.t==='c'){const can=my&&B.me.board.some(f=>!f);return `<div class="hk${can?' can':''}${sel?' sel':''}" data-h="${j}" style="--ec:${AUC[x.c.el]};${pos}"><span class="hkt">YARATIK</span><div class="hka" style="background-image:url(img/t/${x.c.id}.webp)"></div><b>${x.c.name}</b><small>❤ ${x.c.hp} · ⚔ ${x.c.atks[0].dmg}</small></div>`}
   const can=my&&!B.supUsed&&B.me.board.some(f=>f&&canSup(x.k,f,true)===true);
-  return `<div class="hk sup${x.k==='evo'?' evo':''}${can?' can':''}${sel?' sel':''}${my&&B.supUsed?' off':''}" data-h="${j}" style="--ec:${x.k==='evo'?'#b07bff':AUC[x.k]};${pos}"><span class="hkt">DESTEK</span><div class="hki" style="background-image:url(${supArt(x.k)})"></div><b>${SUPN[x.k]}</b><small>${x.k==='evo'?'Temel kart evrimleşir':'+30 can · +10 hasar'}</small></div>`}
+  return `<div class="hk sup${x.k==='evo'?' evo':''}${can?' can':''}${sel?' sel':''}${my&&B.supUsed?' off':''}" data-h="${j}" style="--ec:${x.k==='evo'?'#b07bff':x.k==='will'?'#ffcf4a':AUC[x.k]};${pos}"><span class="hkt">DESTEK</span><div class="hki" style="background-image:url(${supArt(x.k)})"></div><b>${SUPN[x.k]}</b><small>${x.k==='evo'?'Temel kart evrimleşir':x.k==='will'?'Rakip 1 tur oynayamaz':'+30 can · +10 hasar'}</small></div>`}
 function auraChips(bd){const a=auras(bd),out=[];if(a.earth)out.push(['earth','−'+a.earth,'kalkan']);if(a.water)out.push(['water','+'+a.water,'can']);if(a.fire)out.push(['fire','+'+a.fire,'hasar']);if(a.light>=0)out.push(['light','✓','arınma']);if(a.shadow)out.push(['shadow','+'+a.shadow,'zayıflatma']);if(a.poison)out.push(['poison',''+a.poison,'zehir']);
   return out.length?`<div class="auras">${out.map(([e,v,t])=>`<span class="aur" title="${t}">${icon(e)}<b>${v}</b></span>`).join('')}</div>`:''}
 function renderBattle(){if(!B)return;
@@ -1925,12 +1927,13 @@ async function placeAnim(s,j,i){const src=s==='me'?document.querySelector(`.hk[d
   placeX(B,s,j,i);if(s==='me'&&B.tut&&B.tstep===0)B.tstep=1;renderBattle();const e=elOf(s,i);if(e)e.classList.add('drawn');SFX.flip();newCardFx(s);
   setTimeout(()=>{if(B)announceAuras(s,pk)},300);setTimeout(()=>{if(B)exEnter(s,i)},600)}
 async function supAnim(s,j,i){const src=s==='me'?document.querySelector(`.hk[data-h="${j}"]`):document.querySelector('.b2fh img'),x=B[s].hand[j],f=B[s].board[i],who=s==='me'?'Sen':'Rakip';
-  B.log=x.k==='evo'?`${who}: <b>Evrim Taşı</b> → ${f.c.name} evrimleşiyor!`:`${who}: <b>${SUPN[x.k]}</b> → ${f.c.name} · +30 can, +10 hasar`;
+  B.log=x.k==='will'?`${who}: <b>İrade</b> → ${s==='me'?'rakip':'sen'} bir tur oynayamayacak!`:x.k==='evo'?`${who}: <b>Evrim Taşı</b> → ${f.c.name} evrimleşiyor!`:`${who}: <b>${SUPN[x.k]}</b> → ${f.c.name} · +30 can, +10 hasar`;
   if(s==='foe'){renderBattle()}
   await flyTo(src,elOf(s,i),s==='me'?src.outerHTML.replace('class="hk','class="hk fl'):hk(x,-1).replace('class="hk','class="hk fl'),520);if(!B||B.over)return;
   if(x.k==='evo'){const e0=elOf(s,i);if(e0)await e0.animate([{filter:'none'},{filter:'brightness(4) saturate(0)'}],{duration:450,fill:'forwards'}).finished.catch(()=>{})}
   const r=doSup(B,s,j,i);if(s==='me'){B.supUsed=true;if(B.tut&&B.tstep<2)B.tstep=2}renderBattle();newCardFx(s);const e=elOf(s,i);
   if(r.k==='evo'){B.log=`${who}: <b>${r.e.name}</b> sahada!`;renderBattle();const e2=elOf(s,i);if(e2)e2.animate([{filter:'brightness(4)',transform:'scale(1.12)'},{filter:'none',transform:'none'}],{duration:600});ringFx(elOf(s,i),'light','Evrimleşti!');SFX.reveal(2)}
+  else if(r.k==='will'){ringFx(e,'light','İrade!');SFX.reveal(2)}
   else{ringFx(e,r.k,'+30 can · +10 hasar');bnum(e,'+30','h');SFX.newCard()}
   await wait(600)}
 async function tapHand(j){if(!B||B.busy||B.over||B.turn!=='me')return;B.lastAct=Date.now();const x=B.me.hand[j];if(!x)return;
@@ -1960,6 +1963,8 @@ function hitFx(el,k,tgt){const key=k==='w'?el+'S':el,C=FX2C[key];if(!tgt||!C)ret
 function newCardFx(s){if(s!=='me'||!B||B.me.hand.length<BAT.hand)return;const h=document.querySelector('#b2hand .hk:last-child');if(h)h.classList.add('newk')}
 function meTurnSetup(){B.turn='me';B.sel=null;B.selH=null;B.supUsed=false;B.lastAct=Date.now()}
 async function meTurn(first){if(!B||B.over)return;meTurnSetup();B.busy=true;
+  if(B.skip&&B.skip.me){B.skip.me=0;B.skipX=1;B.log='İrade: bu turu oynayamıyorsun';renderBattle();await wait(1300);if(B&&!B.over)await foeMove();return}
+  B.skipX=0;
   if(first)B.justCharged=chargeStep(B,'me');else if(await beginTurn('me'))return;
   if(!B||B.over)return;if(rescue(B,'me')){B.log='Elinde yaratık kalmadı · bir destek kartın desteye döndü, yerine yaratık geldi';renderBattle();const h=document.querySelector('#b2hand .hk:last-child');if(h)h.classList.add('newk')}
   B.busy=false;renderBattle()}
@@ -2146,6 +2151,8 @@ async function tap(s,i){
 }
 async function foeMove(){
   if(!B||B.over)return;B.turn='foe';B.busy=true;B.sel=null;B.selH=null;renderBattle();
+  if(B.skip&&B.skip.foe){B.skip.foe=0;B.skipX=1;B.log='İrade: rakip bu turu oynayamadı';renderBattle();await wait(1100);if(B&&!B.over)await meTurn(false);return}
+  B.skipX=0;
   if(await beginTurn('foe'))return;if(!B||B.over)return;
   rescue(B,'foe');renderBattle();await wait(450);
   for(let m;B&&!B.over&&(m=bestFill(B,'foe'));){await placeAnim('foe',m.j,m.i);await wait(250)}
@@ -2647,7 +2654,7 @@ async function openAdmin(who){const ov=$('#ov');ov.className='ov on';const A=win
    <div class="adsel">${sel.length?sel.map(([k,n])=>`<span class="adch">${n>0?'+':''}${n}× ${cardNm(+k)}<button data-adrm="${k}" aria-label="Kaldır">✕</button></span>`).join(''):'<small class="adsm">Seçili kart yok. Listeden + / − ile ekle.</small>'}</div>
    <div class="adrow"><button class="btn" id="adcgive" ${sel.length?'':'disabled'}>Seçili kartları uygula</button><button class="btn alt" id="adcclr" ${sel.length?'':'disabled'}>Temizle</button></div>
    <p class="frh">Destek kartı</p>
-   <div class="adrow"><select class="accin" id="adsk">${SUPK.map(k=>`<option value="${k}">${k==='evo'?'Evrim':k}</option>`).join('')}</select>${num('adsn','Adet (− alır)')}<button class="btn" id="adsgo">Uygula</button></div>
+   <div class="adrow"><select class="accin" id="adsk">${SUPK.map(k=>`<option value="${k}">${k==='evo'?'Evrim':k==='will'?'İrade':k}</option>`).join('')}</select>${num('adsn','Adet (− alır)')}<button class="btn" id="adsgo">Uygula</button></div>
    <p class="frh">Macera ilerlemesi (0–${m.advN})</p>
    <div class="adrow">${num('adav','Bölüm sayısı')}<button class="btn" id="adavgo">Ayarla</button></div>
    <p class="frh">Hediye mesajı (zil kutusuna 'Yönetici hediyesi' olarak düşer)</p>
