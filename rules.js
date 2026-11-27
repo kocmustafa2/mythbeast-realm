@@ -358,7 +358,7 @@ const ADV_D=59;   // zorluk eğrisi ilk 6 diyara göre sabit (eski bölümler de
 const advEX=ch=>ch<6?EXC[ch]:BY[[220,221][ch-6]];   // diyarın boss'u, o diyarın efsanevisinin uyanmış hali (Demir Kale→Çelik Mantikor'un EX'i)
 function advStageX(i){const ch=i-100,[el,cn]=ADV_CH[ch],X=advEX(ch),r=srnd(5000+ch*31);
   const pool=CARDS.filter(c=>c.el===el&&c.r>=1&&c.r<3&&setOf(c)<3);const deck=[];for(let k=0;k<7;k++)deck.push(pool[Math.floor(r()*pool.length)]);deck[1]=X;deck[4]=BY[X.base];
-  return{i,ch,p:ADV_P,el,cn,name:`${X.name} EX`,rule:'boss',deck,boss:X,mis:.04,gold:1200,dust:120,pack:2,x:1}}
+  return{i,ch,p:ADV_P,el,cn,name:`Kadim ${X.name}`,rule:'boss',deck,boss:X,mis:.04,gold:1200,dust:120,pack:2,x:1}}
 function advStage(i){if(i>=100)return advStageX(i);const ch=Math.floor(i/ADV_P),p=i%ADV_P,[el,cn]=ADV_CH[ch],d=Math.min(1,i/ADV_D),r=srnd(1000+i*97),last=p===ADV_P-1;
   const rule=last?'boss':['none','hp','first',ch%2?'burn':'charged','none','charged','hp','first',ch%2?'charged':'burn'][p];
   const pool=CARDS.filter(c=>c.el===el&&c.r<3&&setOf(c)<3),pk=rr=>{const L=pool.filter(c=>c.r===rr);return (L.length?L:pool)[Math.floor(r()*(L.length||pool.length))]};
@@ -578,7 +578,7 @@ function act(st,a,p,ctx){p=p||{};const rng=ctx.rng,now=ctx.now;normalize(st,ctx)
   case 'gift':{const n=st.gift||0;if(n<1)throw uerr('Henüz hediye paketi yok.');st.free+=n;st.gift=0;st.gt=now;return{n}}
   case 'evo':{const t=BY[p.id];if(!canEvo(st,t))throw uerr('Bu evrim için yeterli kopyan yok.');const root=rootOf(t);
     st.owned[root.id]-=EVO_NEED[t.stage];st.owned[t.id]=own(st,t.id)+1;st.evoN=(st.evoN||0)+1;if(st.tut===5&&t.id===TUT.evo)st.tut=6;return{id:t.id,from:root.id}}
-  case 'awaken':{const c=BY[p.id];if(!canAwaken(st,c))throw uerr('Uyanış şartları tamamlanmadı.');const X=exOf(c);
+  case 'awaken':{const c=BY[p.id];if(!canAwaken(st,c))throw uerr('Kadim şartları tamamlanmadı.');const X=exOf(c);
     st.owned[c.id]-=EXCOST.copies;st.dust-=EXCOST.dust;st.owned[X.id]=1;st.awkN=(st.awkN||0)+1;return{id:X.id}}
   case 'craft':{const c=BY[p.id];if(!c||c.ex||c.stage!==0||own(st,c.id))throw uerr('Bu kart üretilemez.');const R=RAR[c.r];
     if((st.dust||0)<R.craft)throw uerr('Yeterli tozun yok.');st.dust-=R.craft;st.owned[c.id]=1;return{id:c.id}}
@@ -667,7 +667,7 @@ const ACH=[
   {id:'c50',n:'Büyük Koleksiyoncu',d:'Koleksiyonun %50\'sini topla',g:Math.ceil(N*.5),v:s=>CARDS.filter(c=>own(s,c.id)>0).length},
   {id:'c100',n:'Tam Koleksiyon',d:'Bütün kartları topla',g:N,v:s=>CARDS.filter(c=>own(s,c.id)>0).length},
   {id:'evo',n:'İlk Evrim',d:'Bir kartı evrimleştir',g:1,v:s=>s.evoN||0},
-  {id:'awk',n:'Uyanış',d:'Bir kartı uyandır',g:1,v:s=>Math.max(s.awkN||0,EXC.some(c=>own(s,c.id)>0)?1:0)},
+  {id:'awk',n:'Kadim',d:'Bir Kadim kart aç',g:1,v:s=>Math.max(s.awkN||0,EXC.some(c=>own(s,c.id)>0)?1:0)},
   {id:'adv',n:'Diyarların Fatihi',d:'Maceradaki bütün bölümleri bitir',g:ADV_N,v:s=>Math.min(ADV_N,s.advC||0)},
   {id:'clan',n:'Klan Kardeşliği',d:'Bir klana katıl',g:1,v:(s,x)=>x&&x.inClan?1:0},
   {id:'d10',n:'Yardımsever',d:'10 kart bağışla',g:10,v:s=>s.dnTot||0},
