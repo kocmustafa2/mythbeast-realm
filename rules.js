@@ -30,9 +30,9 @@ const FX={
 };
 const round10=x=>Math.max(10,Math.round(x/10)*10);
 const atkDmg=(r,i,fx)=>Math.max(10,round5(ATK[i][r]-(fx?FX[fx].cost:0)));
-const PACK={cost:100,costs:{1:100,2:100,3:400},pity:60,
+const PACK={cost:100,costs:{1:100,2:200,3:400},pity:60,
   slots:[[85,13,2,0],[85,13,2,0],[85,13,2,0],[0,82.4,17,0.6],[0,66.5,32,1.5]]};  // her slot: Yaygın/Nadir/Destansı/Efsanevi %
-const packCost=set=>(PACK.costs&&PACK.costs[set])||PACK.cost;   // Seri 3 paketi 400 altın
+const packCost=set=>(PACK.costs&&PACK.costs[set])||PACK.cost;   // Seri 2 paketi 200, Seri 3 paketi 400 altın
 const XP={card:[2,5,12,30],newMult:2,need:l=>50+(l-1)*25,reward:{free:1,gold:50}};  // seviye sistemi
 const ECON={startGold:700,freePacks:5,win:150,loss:20,teamMax:10};
 
