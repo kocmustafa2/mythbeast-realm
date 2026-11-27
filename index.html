@@ -1018,7 +1018,7 @@ body.inb main{padding:0 10px 16px}
 <div id="title"><div class="tbg"></div><div class="tlogo"><img class="tlimg" src="img/logo.webp" alt="Mythbeast Realm"><span class="t3">Seri 1 · Elementler</span></div>
 <button class="sndb tsnd" id="tsnd" aria-label="Ses"></button><div class="tbtm"><button class="tgo" id="tgo" aria-label="Oyna"><img src="img/btn_play.webp" alt="Oyna"></button><p class="tinfo" id="tinfo"></p></div></div>
 
-<script src="rules.js?v=3"></script>
+<script src="rules.js?v=4"></script>
 <script>
 {
 // Ortak kurallar (rules.js): kart verisi ve ekonomi. Oyun ve sunucu aynı dosyayı kullanır.
@@ -1554,7 +1554,7 @@ function canSup(k,f,needOwn){if(!f)return 'Önce bir yaratık seç';
 const mx=f=>f.max||baseHp(f.c);   // deste: 7 kart, en fazla 24 puan (Yaygın 2, Nadir 3, Destansı 4, Efsanevi 5)
 let B=null;
 // savaşta vuruş gücü: normalde ilk saldırı; bir tur saldırmadan bekleyen kart "dolar" ve ikinci saldırısıyla vurur
-const atkOf=f=>Math.round(((f.ch&&f.c.atks[1]?f.c.atks[1].dmg:f.c.atks[0].dmg)+(f.st?10:0))*mulOf(f.c));
+const atkOf=f=>Math.round(((f.ch&&f.c.atks[1]?f.c.atks[1].dmg:f.c.atks[0].dmg)+(f.st?10:0))*mulOf(f.c)*(f.bf||1));
 function hitDmg(Af,D){const A=Af.c,k=rel(A.el,D.el);return{d:applyRel(atkOf(Af),A.el,D.el),w:k==='w',r:k==='r',i:k==='i'}}
 /* ---------- TÜR YETENEKLERİ (her kartın kendisinde) ----------
    değer evrim basamağından: temel / 1. evrim / 2. evrim / Efsanevi / EX (EX en güçlüsü) */
@@ -1696,13 +1696,13 @@ async function openChest(){
 }
 function lgBadge(i,big){return `<span class="lgb2${big?' big':''}"><img src="img/lg/${i}.webp" alt="${LEAGUES[i].n}"></span>`}
 // kolay rakip: üst üste 3+ arena yenilgisinden sonra (sunucunun tuttuğu lstreak)
-const easyFoe=()=>(S.lstreak||0)>=3;
+const easyFoe=()=>(S.lstreak||0)>=3&&lgOf(S.trophy||0)<4;   // Usta ve üstünde kolay rakip yok
 // Arena botu destesi. Lig başına nadirlik sınırı ve her karttan en fazla 1 kopya; EX/Ezeli yok.
-// Bronz/Gümüş: sadece Yaygın · Altın: en fazla 2 Nadir · Elmas/Usta: en fazla 3 Nadir + 1 Destansı · Efsane: en fazla 3 Nadir + 2 Destansı + 1 Efsanevi
-const FOE_CAP=[[99,0,0,0],[99,0,0,0],[99,2,0,0],[99,3,1,0],[99,3,1,0],[99,3,2,1]];
+// Bronz/Gümüş: sadece Yaygın · Altın: 2 Nadir · Elmas: 3 Nadir+1 Destansı · Usta: 4N+2D · Efsane: 4N+3D+1E · Mitik: 5N+3D+2E · Titan: 5N+4D+2E · Ölümsüz: 5N+4D+3E
+const FOE_CAP=[[99,0,0,0],[99,0,0,0],[99,2,0,0],[99,3,1,0],[99,4,2,0],[99,4,3,2],[99,5,4,2],[99,5,4,3],[99,5,4,4]];
 function foeDeck(mine,lg){const li=lg??lgOf(S.trophy||0),L=LEAGUES[li],easy=easyFoe(),cap=easy?FOE_CAP[0]:FOE_CAP[li];
   const rnd=a=>a[Math.floor(Math.random()*a.length)],used=new Set(),cnt=[0,0,0,0];
-  const ns=easy?2:[2,3,4,4,5,5][li],want=BAT.deck-ns;
+  const ns=easy?2:[2,3,4,4,5,5,6,6,6][li],want=BAT.deck-ns;
   const pick=(r,f)=>{for(;r>=0;r--){if(cnt[r]>=cap[r])continue;const p=POOL[r].filter(y=>!used.has(y.id)&&(!f||f(y)));if(!p.length)continue;
     const c=rnd(p);used.add(c.id);cnt[r]++;return c}return null};
   const cr=[];
@@ -1775,16 +1775,17 @@ function renderArena(){
 function side(entries){return{deck:entries.slice(),hand:[],board:[null,null,null],lives:BAT.lives}}
 function drawStart(P){const tot=P.deck.filter(x=>x.t==='c').length,need=Math.min(3,tot);for(let t=0;t<30;t++){P.hand=P.deck.splice(0,BAT.hand);if(P.hand.filter(x=>x.t==='c').length>=need)return;P.deck.push(...P.hand);shuffle(P.deck)}}
 const mkF=c=>mk(c);
-function foeMod(f){if(!B||!B.st)return f;const st=B.st;if(st.rule==='charged'||(st.rule==='boss'&&st.boss&&f.c.id===st.boss.id))f.ch=!!f.c.atks[1];return f}
+function foeMod(f,X){const bf=(X&&X.bf)||0;if(bf&&!f.bf){f.bf=1+bf;f.max=Math.round(f.max*f.bf/5)*5;f.hp=f.max}
+  if(!B||!B.st)return f;const st=B.st;if(st.rule==='charged'||(st.rule==='boss'&&st.boss&&f.c.id===st.boss.id))f.ch=!!f.c.atks[1];return f}
 // elden sahaya: en güçlü yaratık boş yere
 function bestFill(X,s){const i=X[s].board.findIndex(f=>!f);if(i<0)return null;let j=-1,bv=-1;X[s].hand.forEach((x,k)=>{if(x.t==='c'&&power(x.c)>bv){bv=power(x.c);j=k}});return j<0?null:{j,i}}
-function placeX(X,s,j,i){const f=mk(X[s].hand[j].c);X[s].hand.splice(j,1);X[s].board[i]=s==='foe'?foeMod(f):f;drawX(X,s);return f}
+function placeX(X,s,j,i){const f=mk(X[s].hand[j].c);X[s].hand.splice(j,1);X[s].board[i]=s==='foe'?foeMod(f,X):f;drawX(X,s);return f}
 // sahada yaratık yok ve elde yaratık kalmadıysa: bir destek kartı desteye döner, yerine desteden yaratık gelir
 function rescue(X,s){const P=X[s];if(P.board.some(Boolean)||P.hand.some(x=>x.t==='c'))return false;const k=P.deck.findIndex(x=>x.t==='c');if(k<0)return false;const c=P.deck.splice(k,1)[0];const j=P.hand.findIndex(x=>x.t==='s');if(j>=0)P.deck.push(P.hand.splice(j,1,c)[0]);else P.hand.push(c);return true}
 function drawX(X,s){const P=X[s];if(P.deck.length&&P.hand.length<BAT.handMax){P.hand.push(P.deck.shift());return true}return false}
 function pickSup(X,s,needOwn){const P=X[s];let best=null;P.hand.forEach((x,j)=>{if(x.t!=='s')return;P.board.forEach((f,i)=>{if(!f||canSup(x.k,f,needOwn)!==true)return;const v=(x.k==='evo'?40:20)+f.hp/10;if(!best||v>best.v)best={j,i,v}})});return best}
 function doSup(X,s,j,i){const P=X[s],x=P.hand[j],f=P.board[i];P.hand.splice(j,1);drawX(X,s);
-  if(x.k==='evo'){const e=evoNext(f.c),ratio=f.hp/mx(f);f.c=e;f.max=baseHp(e)+(f.st?30:0);f.hp=Math.max(10,Math.round(f.max*ratio/5)*5);f.evo=true;return{k:'evo',e}}
+  if(x.k==='evo'){const e=evoNext(f.c),ratio=f.hp/mx(f);f.c=e;f.max=Math.round((baseHp(e)+(f.st?30:0))*(f.bf||1));f.hp=Math.max(10,Math.round(f.max*ratio/5)*5);f.evo=true;return{k:'evo',e}}
   f.st=x.k;f.max=mx(f)+30;f.hp+=30;return{k:x.k}}
 const outOf=(X,s)=>X[s].lives<=0||(!X[s].board.some(Boolean)&&!X[s].hand.some(x=>x.t==='c')&&!X[s].deck.some(x=>x.t==='c'));
 async function startBattle(adv,fr){if(window.__btStart)return;
@@ -1800,6 +1801,7 @@ async function startBattle(adv,fr){if(window.__btStart)return;
     const sp=st.el?[st.el,st.el,st.el,'evo']:['evo'];fd=shuffle([...cr.map(c=>({t:'c',c})),...sp.map(k=>({t:'s',k}))])}else fd=fr?frDeck(fr.deck):foeDeck(md);
   B={me:side(md),foe:side(fd),turn:'me',sel:null,selH:null,supUsed:false,busy:true,auto:(()=>{try{return localStorage.getItem('mr.auto')==='1'}catch(e){return false}})(),lastAct:Date.now(),over:false,win:null,adv:st?adv:null,mis:st?st.mis:null,st,dmg:{me:0,foe:0},log:fr?escH(fr.name)+' destesiyle dostluk maçı':'Eller dağıtıldı',fr:fr||null,bid,stats:{hit:{},weak:0,ko:0}};
   if(!st&&!fr&&easyFoe()){B.easy=1;B.mis=Math.max(LEAGUES[lgOf(S.trophy||0)].mis,.45);B.log='Daha kolay bir rakip geldi';setTimeout(()=>toast('Üst üste kayıplar: bu sefer daha kolay bir rakip geldi'),900)}
+  if(!st&&!fr&&!B.easy)B.bf=LEAGUES[lgOf(S.trophy||0)].bf||0;   // üst liglerde botlara ek can/hasar
   const tutB=S.tut===6&&!st&&!fr;
   if(tutB){// öğretici savaşı: kolay rakip; sahada Kıvılcık + 1 yaratık, 3. yer boş; elde 1 yaratık ve Evrim Taşı
     B.tut=true;B.tstep=0;B.mis=.45;
@@ -2154,7 +2156,7 @@ async function foeMove(){
 // denge testi için arayüzsüz savaş: oyuncu açgözlü oynar, rakip ligin hata oranıyla
 function simBattle(lg){
   const md=shuffle(autoDeck().map(k=>isS(k)?{t:'s',k:k.slice(2)}:{t:'c',c:BY[k]})),fd=foeDeck(md,lg),L=LEAGUES[lg];
-  const X={me:side(md),foe:side(fd),dmg:{me:0,foe:0}};drawStart(X.me);drawStart(X.foe);
+  const X={me:side(md),foe:side(fd),dmg:{me:0,foe:0},bf:L.bf||0};drawStart(X.me);drawStart(X.foe);
   for(const sd of['me','foe'])for(let m;(m=bestFill(X,sd));)placeX(X,sd,m.j,m.i);
   const sw=()=>['me','foe'].forEach(s=>X[s].board.forEach((f,i)=>{if(f&&f.hp<=0){X[s].lives-=koL(f.c);X[s].board[i]=null}}));
   const pick=(s,mis)=>{const o=s==='me'?'foe':'me';let best=null;X[s].board.forEach((a,ai)=>{if(!a)return;X[o].board.forEach((d,di)=>{if(!d)return;const sc=aiScore(a,d,X[s].board,X[o].board);if(!best||sc>best.sc)best={sc,ai,di}})});
@@ -2251,7 +2253,7 @@ function renderRules(){
   <p><b>Arena rakipleri:</b> Bronz ve Gümüş ligde rakipler sadece Yaygın kart kullanır; lig yükseldikçe rakipler güçlenir. Üst üste 3 yenilgiden sonra bir sonraki rakip daha kolay olur.</p>
   <p><b>Otomatik oynama:</b> Sıra sendeyken 15 saniye hamle yapmazsan oyun senin yerine oynar. Savaştaki <b>Otomatik</b> düğmesiyle savaşın tamamını otomatik oynatabilirsin.</p>
   <p><b>Ödüller:</b> Arena galibiyeti ${ECON.win} altın (+lig bonusu) ve kupa verir. Dostluk maçları ödülsüzdür. Ödül için savaş en az 30 saniye sürmeli.</p></div>
-  <h3>Ligler</h3><div class="box scroll"><table><tr><th>Lig</th><th>Kupa</th><th>Ek altın</th><th>Rakip güçlenme</th><th>İlk ulaşma ödülü</th></tr>${LEAGUES.map(l=>`<tr><td>${l.n}</td><td>${l.min}+</td><td>+${l.gold}</td><td>%${Math.round(l.up*100)}</td><td>${l.reward?l.reward+' paket':'-'}</td></tr>`).join('')}</table><p>Galibiyet <code>+${TROPHY.win}</code>, mağlubiyet <code>${TROPHY.loss}</code> kupa. Bir lige ulaştıktan sonra o ligin tabanının altına düşülmez. Rakip güçlenme: rakibin her kartının bir üst nadirlikten gelme ihtimali.</p></div>
+  <h3>Ligler</h3><div class="box scroll"><table><tr><th>Lig</th><th>Kupa</th><th>Ek altın</th><th>Rakip güçlenme</th><th>İlk ulaşma ödülü</th></tr>${LEAGUES.map(l=>`<tr><td>${l.n}</td><td>${l.min}+</td><td>+${l.gold}</td><td>%${Math.round(l.up*100)}${l.bf?` · +%${Math.round(l.bf*100)} can/hasar`:''}</td><td>${l.reward?l.reward+' paket':'-'}</td></tr>`).join('')}</table><p>Galibiyet <code>+${TROPHY.win}</code>, mağlubiyet <code>${TROPHY.loss}</code> kupa. Bir lige ulaştıktan sonra o ligin tabanının altına düşülmez. Rakip güçlenme: rakibin her kartının bir üst nadirlikten gelme ihtimali.</p></div>
   <h3>4. Ekonomi</h3>
   <div class="box scroll"><table><tr><th></th>${RAR.map(r=>`<th>${r.n}</th>`).join('')}</tr><tr><td>Kopya → toz</td>${RAR.map(r=>`<td>${r.dust}</td>`).join('')}</tr><tr><td>Üretim bedeli</td>${RAR.map(r=>`<td>${r.craft}</td>`).join('')}</tr><tr><td>Setteki adet</td>${POOL.map(p=>`<td>${p.length}</td>`).join('')}</tr></table>
   <p>Paket <code>${PACK.cost}</code> altın. Galibiyet <code>${ECON.win}</code>, mağlubiyet <code>${ECON.loss}</code> altın. Başlangıçta ${ECON.startGold} altın ve ${ECON.freePacks} ücretsiz paket verilir. Her <code>6 saatte</code> 1 hediye paketi birikir (en fazla ${GIFT.max}); Paketler ekranından alınır. Her 3 arena galibiyetinde bir zafer sandığı açılır. <b>Uyanmış EX kartlar:</b> her Efsanevi'nin bir uyanmış hali vardır. Bölgenin macerasını bitirip uyanmış boss'u yenince, Efsanevi'nin kart detayından 3 kopya ve 1500 tozla uyandırılır. EX kartlar 7 puan tutar, özel yetenekleri vardır; yenilince sahibi 1 kart daha kaybeder. Her gün 3 <b>günlük görev</b> gelir (gece yarısı yenilenir); üçünü de bitirince +1 paket. <b>Macera</b> modunda 6 bölge ve 30 bölüm var; her bölgenin 5. bölümü boss'tur, ilk geçişte altın, toz ve boss'larda paket verir.</p></div>
@@ -2365,7 +2367,7 @@ const ASSET_V=8;try{if('serviceWorker' in navigator&&location.protocol==='https:
   const own=ALLC().filter(c=>owned(c.id)).map(c=>c.id),rest=ALLC().map(c=>c.id).filter(id=>!own.includes(id));
   const L=[...own,...rest].map(id=>`img/t/${id}.webp`);
   L.push('img/back.webp','img/pack.webp','img/packbg.jpg','img/menubg.jpg','img/arena2.jpg','img/lgbg.jpg','img/fr_leg.webp','img/panel.webp','img/ic/chest.webp','img/ic/gift.webp','img/ic/legmed.webp');
-  ['fire','water','earth','air','light','shadow'].forEach(e=>['a','b','c'].forEach(v=>L.push(`img/fr_${e}_${v}.webp`)));L.push('img/pack2.webp','img/back2.webp');for(let k=0;k<6;k++)L.push(`img/lg/${k}.webp`);
+  ['fire','water','earth','air','light','shadow'].forEach(e=>['a','b','c'].forEach(v=>L.push(`img/fr_${e}_${v}.webp`)));L.push('img/pack2.webp','img/back2.webp');for(let k=0;k<LEAGUES.length;k++)L.push(`img/lg/${k}.webp`);
   let i=0;const next=()=>{if(i>=L.length)return;const im=new Image();im.decoding='async';im.onload=im.onerror=()=>setTimeout(next,0);im.src=L[i++]};
   setTimeout(()=>{for(let k=0;k<5;k++)next()},150)})();
 

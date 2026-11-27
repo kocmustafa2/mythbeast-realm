@@ -182,13 +182,16 @@ const cw=c=>c.r===3?1:STAGE_W[c.stage];
 
 const SHINY={chance:.015};
 
-const LEAGUES=[
-  {n:'Bronz',  min:0,   col:'#c98a54',up:0,   down:.35,mis:.45,gold:0, reward:0},
-  {n:'Gümüş',  min:200, col:'#c7d2da',up:0,   down:.15,mis:.30,gold:10,reward:1},
-  {n:'Altın',  min:500, col:'#f5c451',up:.10, down:0,  mis:.18,gold:20,reward:2},
-  {n:'Elmas',  min:900, col:'#7fd8ff',up:.25, down:0,  mis:.10,gold:35,reward:3},
-  {n:'Usta',   min:1400,col:'#c27bff',up:.40, down:0,  mis:.05,gold:50,reward:4},
-  {n:'Efsane', min:2000,col:'#ff6a5a',up:.55, down:0,  mis:0,  gold:70,reward:5}
+const LEAGUES=[   // bf: bot kartlarına ek can ve hasar (yalnız üst liglerde)
+  {n:'Bronz',  min:0,   col:'#c98a54',up:0,   down:.35,mis:.45,gold:0,  reward:0, bf:0},
+  {n:'Gümüş',  min:200, col:'#c7d2da',up:0,   down:.15,mis:.30,gold:10, reward:1, bf:0},
+  {n:'Altın',  min:500, col:'#f5c451',up:.10, down:0,  mis:.18,gold:20, reward:2, bf:0},
+  {n:'Elmas',  min:900, col:'#7fd8ff',up:.25, down:0,  mis:.10,gold:35, reward:3, bf:0},
+  {n:'Usta',   min:1400,col:'#c27bff',up:.50, down:0,  mis:.03,gold:50, reward:4, bf:0.17},
+  {n:'Efsane', min:2000,col:'#ff6a5a',up:.65, down:0,  mis:0,  gold:70, reward:5, bf:0.25},
+  {n:'Mitik',  min:2700,col:'#3ee6b5',up:.75, down:0,  mis:0,  gold:90, reward:6, bf:0.3},
+  {n:'Titan',  min:3500,col:'#ffb340',up:.85, down:0,  mis:0,  gold:110,reward:7, bf:0.25},
+  {n:'Ölümsüz',min:4500,col:'#ff3d7f',up:1,   down:0,  mis:0,  gold:140,reward:8, bf:0.22}
 ];
 const TROPHY={win:30,loss:-18,floorStep:true};   // lig tabanının altına düşülmez
 // galibiyet serisi: 2. galibiyetten itibaren ek kupa/altın (4'te sabitlenir)
@@ -432,7 +435,7 @@ const ACH=[
   {id:'w200',n:'Arena Efsanesi',d:'Arenada 200 galibiyet',g:200,v:s=>s.wins||0},
   {id:'s5',n:'Seri Avcısı',d:'Üst üste 5 galibiyet',g:5,v:s=>s.bestStk||0},
   {id:'s10',n:'Durdurulamaz',d:'Üst üste 10 galibiyet',g:10,v:s=>s.bestStk||0},
-  ...[1,2,3,4,5].map(k=>({id:'lg'+k,n:LEAGUES[k].n+' Lig',d:LEAGUES[k].n+' lige yüksel',g:1,v:s=>(s.bestLg||0)>=k?1:0,lg:k})),
+  ...[1,2,3,4,5,6,7,8].map(k=>({id:'lg'+k,n:LEAGUES[k].n+' Lig',d:LEAGUES[k].n+' lige yüksel',g:1,v:s=>(s.bestLg||0)>=k?1:0,lg:k})),
   {id:'p10',n:'Paket Meraklısı',d:'10 paket aç',g:10,v:s=>s.opened||0},
   {id:'p50',n:'Paket Avcısı',d:'50 paket aç',g:50,v:s=>s.opened||0},
   {id:'p200',n:'Paket Ustası',d:'200 paket aç',g:200,v:s=>s.opened||0},
@@ -448,7 +451,7 @@ const ACH=[
   {id:'ss3',n:'Sezon Şampiyonu',d:'Haftalık sezonu ilk 3\'te bitir',g:1,v:s=>s.ssBest&&s.ssBest<=3?1:0}];
 // başarım ödülleri: g = altın, f = ücretsiz paket (ödül 'Ödülü al' ile bir kez alınır)
 const ACH_RW={w1:{g:100},w10:{g:300},w50:{f:2},w200:{f:5,g:1000},s5:{g:300},s10:{f:2},
-  lg1:{g:200},lg2:{f:1},lg3:{f:2},lg4:{f:3},lg5:{f:5},p10:{g:100},p50:{f:1},p200:{f:3},
+  lg1:{g:200},lg2:{f:1},lg3:{f:2},lg4:{f:3},lg5:{f:5},lg6:{f:6,g:500},lg7:{f:8,g:1000},lg8:{f:10,g:2000},p10:{g:100},p50:{f:1},p200:{f:3},
   c25:{f:1},c50:{f:3},c100:{f:5,g:1000},evo:{g:200},awk:{f:1},adv:{f:5,g:1000},clan:{g:200},d10:{g:200},d100:{f:2},ss3:{f:2}};
 function achList(st,x){const done=new Set(st.ach||[]),cl=new Set(st.achC||[]);return ACH.map(a=>{const v=Math.min(a.g,a.v(st,x)||0);
   return{id:a.id,n:a.n,d:a.d,g:a.g,v,done:done.has(a.id)||v>=a.g,lg:a.lg,rw:ACH_RW[a.id]||{},cl:cl.has(a.id)}})}
