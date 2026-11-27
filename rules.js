@@ -349,14 +349,17 @@ function srnd(seed){let a=seed>>>0;return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.i
 
 const SUPK=['fire','water','earth','air','light','shadow','metal','poison','evo','will','feda','bedel'];   // will = İrade: rakip bir tur oynayamaz
 
-const ADV_CH=[['fire','Kor Dağları'],['water','Mercan Denizi'],['earth','Kadim Orman'],['air','Bulut Zirvesi'],['light','Işık Tapınağı'],['shadow','Gece Diyarı']];
+const ADV_CH=[['fire','Kor Dağları'],['water','Mercan Denizi'],['earth','Kadim Orman'],['air','Bulut Zirvesi'],['light','Işık Tapınağı'],['shadow','Gece Diyarı'],['metal','Demir Kale'],['poison','Zehir Bataklığı']];
 const ADV_RULE={none:['Normal savaş',''],hp:['Dayanıklı rakip','Rakip kartları %20 fazla canla başlar'],first:['Pusu','Rakip ilk saldırır'],charged:['Hazırlıklı rakip','Rakip kartları dolu başlar'],burn:['Kızgın zemin','Senin kartların yanık başlar'],boss:['BOSS','Boss %50 fazla canla ve dolu başlar']};
 const ADV_P=10;                       // her diyardaki bölüm sayısı (son bölüm boss)
 const ADV_N=ADV_CH.length*ADV_P;
-function advStageX(i){const ch=i-100,[el,cn]=ADV_CH[ch],X=EXC[ch],r=srnd(5000+ch*31);
+const ADV_D=59;   // zorluk eğrisi ilk 6 diyara göre sabit (eski bölümler değişmesin); Demir Kale ve Zehir Bataklığı en zor seviyede
+// her diyarın uyanmış boss'u: ilk 6 diyar Seri 1 EX'leri, Demir Kale Demir Wyvern, Zehir Bataklığı Veba Mantikoru
+const advEX=ch=>ch<6?EXC[ch]:BY[[221,220][ch-6]];
+function advStageX(i){const ch=i-100,[el,cn]=ADV_CH[ch],X=advEX(ch),r=srnd(5000+ch*31);
   const pool=CARDS.filter(c=>c.el===el&&c.r>=1&&c.r<3&&setOf(c)<3);const deck=[];for(let k=0;k<7;k++)deck.push(pool[Math.floor(r()*pool.length)]);deck[1]=X;deck[4]=BY[X.base];
   return{i,ch,p:ADV_P,el,cn,name:`${X.name} EX`,rule:'boss',deck,boss:X,mis:.04,gold:1200,dust:120,pack:2,x:1}}
-function advStage(i){if(i>=100)return advStageX(i);const ch=Math.floor(i/ADV_P),p=i%ADV_P,[el,cn]=ADV_CH[ch],d=i/(ADV_N-1),r=srnd(1000+i*97),last=p===ADV_P-1;
+function advStage(i){if(i>=100)return advStageX(i);const ch=Math.floor(i/ADV_P),p=i%ADV_P,[el,cn]=ADV_CH[ch],d=Math.min(1,i/ADV_D),r=srnd(1000+i*97),last=p===ADV_P-1;
   const rule=last?'boss':['none','hp','first',ch%2?'burn':'charged','none','charged','hp','first',ch%2?'charged':'burn'][p];
   const pool=CARDS.filter(c=>c.el===el&&c.r<3&&setOf(c)<3),pk=rr=>{const L=pool.filter(c=>c.r===rr);return (L.length?L:pool)[Math.floor(r()*(L.length||pool.length))]};
   const w=[Math.max(.1,.85-1.1*d),.15+.45*d,Math.max(0,.6*d-.05)];
@@ -688,7 +691,7 @@ function achSync(st,x){const have=new Set(st.ach||[]),nw=[];
 
 const MR={ELS,round5,round10,RAR,TYPE_HP,TYPE_RET,DMG,ATK,FXV,FX,atkDmg,PACK,packCost,XP,ECON,RAW,E1,E2,CARDS,BY,rootOf,N,pad,setOf,setCards,cno,setN,
   EXA,EXCOST,EXD,EXC,exOf,EZA,EZDR,EZC,POOL,POOLS,EVO_NEED,STAGE_W,cw,SHINY,LEAGUES,lgOf,TROPHY,STREAK,strkB,CHEST,GIFT,DQP,DQB,srnd,SUPK,
-  ADV_CH,ADV_RULE,ADV_N,ADV_P,advStage,advStageX,TUT,fresh,
+  ADV_CH,ADV_RULE,ADV_N,ADV_P,advStage,advStageX,advEX,TUT,fresh,
   PRL,PRL_OFF,PRL_MUL,PRL_PACK,SETS,prlOf,givePrl,ECON_KEYS,CLIENT_KEYS,BATTLE_MIN_MS,BATTLE_PER_HOUR,own,tutOn,roll,drawCard,rollPack,copies,canEvo,canAwaken,giveSup,rndSup,addXp,
   giftTick,dayKey,dqList,dqInc,normalize,mergeClient,act,pubStats,avatarOf,ACH,ACH_RW,achList,achSync,achUnclaimed,
   SEASON,seasonOf,seasonEnd,seasonRewardFor,seasonGive,
