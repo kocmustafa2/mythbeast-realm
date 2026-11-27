@@ -182,16 +182,16 @@ const cw=c=>c.r===3?1:STAGE_W[c.stage];
 
 const SHINY={chance:.015};
 
-const LEAGUES=[   // bf: bot kartlarına ek can ve hasar (yalnız üst liglerde)
-  {n:'Bronz',  min:0,   col:'#c98a54',up:0,   down:.35,mis:.45,gold:0,  reward:0, bf:0},
-  {n:'Gümüş',  min:200, col:'#c7d2da',up:0,   down:.15,mis:.30,gold:10, reward:1, bf:0},
-  {n:'Altın',  min:500, col:'#f5c451',up:.10, down:0,  mis:.18,gold:20, reward:2, bf:0},
-  {n:'Elmas',  min:900, col:'#7fd8ff',up:.25, down:0,  mis:.10,gold:35, reward:3, bf:0},
-  {n:'Usta',   min:1400,col:'#c27bff',up:.50, down:0,  mis:.03,gold:50, reward:4, bf:0.17},
-  {n:'Efsane', min:2000,col:'#ff6a5a',up:.65, down:0,  mis:0,  gold:70, reward:5, bf:0.25},
-  {n:'Mitik',  min:2700,col:'#3ee6b5',up:.75, down:0,  mis:0,  gold:90, reward:6, bf:0.3},
-  {n:'Titan',  min:3500,col:'#ffb340',up:.85, down:0,  mis:0,  gold:110,reward:7, bf:0.25},
-  {n:'Ölümsüz',min:4500,col:'#ff3d7f',up:1,   down:0,  mis:0,  gold:140,reward:8, bf:0.22}
+const LEAGUES=[   // top: bot kart seçimi (havuzun en güçlü yüzde kaçından seçer; 1 = rastgele)
+  {n:'Bronz',  min:0,   col:'#c98a54',up:0,   down:.35,mis:.45,gold:0,  reward:0, top:1},
+  {n:'Gümüş',  min:200, col:'#c7d2da',up:0,   down:.15,mis:.30,gold:10, reward:1, top:1},
+  {n:'Altın',  min:500, col:'#f5c451',up:.10, down:0,  mis:.18,gold:20, reward:2, top:1},
+  {n:'Elmas',  min:900, col:'#7fd8ff',up:.25, down:0,  mis:.10,gold:35, reward:3, top:1},
+  {n:'Usta',   min:1400,col:'#c27bff',up:.50, down:0,  mis:.03,gold:50, reward:4, top:0.5},
+  {n:'Efsane', min:2000,col:'#ff6a5a',up:.65, down:0,  mis:0,  gold:70, reward:5, top:0.35, ex:1},
+  {n:'Mitik',  min:2700,col:'#3ee6b5',up:.75, down:0,  mis:0,  gold:90, reward:6, top:0.25, ex:2},
+  {n:'Titan',  min:3500,col:'#ffb340',up:.85, down:0,  mis:0,  gold:110,reward:7, top:0.18, ex:3},
+  {n:'Ölümsüz',min:4500,col:'#ff3d7f',up:1,   down:0,  mis:0,  gold:140,reward:8, top:0.12, ex:4}
 ];
 const TROPHY={win:30,loss:-18,floorStep:true};   // lig tabanının altına düşülmez
 // galibiyet serisi: 2. galibiyetten itibaren ek kupa/altın (4'te sabitlenir)
