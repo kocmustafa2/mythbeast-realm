@@ -1157,7 +1157,7 @@ body.nui .grid:has(>.ct){grid-template-columns:repeat(4,minmax(0,1fr))!important
 .ct img{width:100%;height:100%;object-fit:cover;object-position:50% 22%;display:block}
 .ct.r1{border-color:#c9d3e0}.ct.r2{border-color:#ffc95e}.ct.r3{border-color:#ff7ad9;box-shadow:0 0 8px #ff7ad966}.ct.ex{border-color:#3fd18f;box-shadow:0 0 8px #3fd18f66}.ct.ez{border-color:#c41a1a}.ct.prl{border-color:#7ad8ff;box-shadow:0 0 8px #7ad8ff88}
 .ct.miss img{filter:grayscale(1) brightness(.35)}.ct.miss{border-style:dashed;opacity:.85}
-.ct b{position:absolute;right:3px;bottom:3px;font:11px/1 'MRDisplay',sans-serif;background:#000b;border-radius:6px;padding:2px 4px}
+.ct .ctc{position:absolute;right:3px;bottom:3px;font:11px/1 'MRDisplay',sans-serif;background:#000b;border-radius:6px;padding:2px 4px}
 .ct em{position:absolute;left:0;right:0;bottom:0;font:800 9px Rubik,sans-serif;font-style:normal;text-align:center;background:#3fd18fdd;color:#063;padding:2px 0}
 .ct u{position:absolute;left:3px;top:3px;text-decoration:none;font:10px/1 'MRDisplay',sans-serif;background:linear-gradient(90deg,#ff7a7a,#ffd36a,#7dff9a,#7ad8ff);color:#1a1530;border-radius:5px;padding:2px 3px}
 .ct .ctk{position:absolute;right:2px;top:2px;line-height:0}.ct .ctk .kdi{width:18px;height:18px;margin:0}
@@ -1173,6 +1173,54 @@ body.nui .advc:not(.open){min-height:0}
 .advlk{font-style:normal;font-size:18px;opacity:.75}
 body.nui .advc.open .advp{animation:popin .25s ease}
 .card.ct{width:auto!important;min-width:0!important;max-width:none!important;height:auto!important;margin:0!important;transform:none!important;padding:0!important;content-visibility:visible!important;contain:none!important}
+.ctl{display:flex;flex-direction:column;background:linear-gradient(170deg,var(--bd1),var(--bd2))}
+.ctl>img{height:auto!important;aspect-ratio:16/10;object-position:50% 40%!important;flex:none;border-bottom:1.5px solid #0003}
+.ctn{flex:1;display:flex;flex-direction:column;justify-content:center;padding:2px 4px 3px;color:#2a1a10;min-height:0}
+.ctn b{font:10.5px/1.1 'MRDisplay',sans-serif;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ctn span{display:flex;align-items:center;gap:2px;font:10px 'MRDisplay',sans-serif;color:#b8251a;margin-top:2px}.ctn .eic{width:13px;height:13px}
+.ctl.miss{filter:grayscale(1) brightness(.45)}.ctl.miss img{filter:none}
+.ctl em{bottom:0}
+
+/* ===== YENİ ARAYÜZ 3. tur: klan, arkadaşlar, lig (animasyonlu) ===== */
+@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+@keyframes rowin{from{opacity:0;transform:translateX(-14px)}to{opacity:1;transform:none}}
+@keyframes ringp{0%{box-shadow:0 0 0 0 #3fd18faa}70%{box-shadow:0 0 0 7px #3fd18f00}100%{box-shadow:0 0 0 0 #3fd18f00}}
+@keyframes sweep{0%{transform:translateX(-120%) rotate(20deg)}60%,100%{transform:translateX(220%) rotate(20deg)}}
+@keyframes barin{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes flip{0%,80%{transform:rotate(0)}90%,100%{transform:rotate(180deg)}}
+@keyframes bubin{from{opacity:0;transform:translateY(8px) scale(.96)}to{opacity:1;transform:none}}
+.clhero{position:relative;display:flex;gap:12px;align-items:center;padding:14px;border-radius:18px;margin:0 0 12px;overflow:hidden;
+  background:linear-gradient(110deg,#3a1d6e 0%,#5a2fa0 40%,#3a1d6e 60%,#1d1240 100%);background-size:250% 100%;animation:shimmer 7s linear infinite;border:1px solid #b08cff66;box-shadow:0 8px 24px #0006}
+.clem{width:64px;height:64px;flex:none;animation:floaty 3s ease-in-out infinite;filter:drop-shadow(0 4px 8px #0008)}
+.clhi{flex:1;min-width:0}.clhi>small{display:block;font:500 12px Rubik,sans-serif;color:#e2d6ff;margin-bottom:5px}
+.clst{display:flex;gap:6px;flex-wrap:wrap}.clst span{font:700 11.5px Rubik,sans-serif;background:#0004;border-radius:10px;padding:3px 8px}.clst .on{color:#7dffb5}
+.clav{display:flex;margin-top:8px}.clav img{width:28px;height:28px;border-radius:50%;object-fit:cover;object-position:50% 20%;border:2px solid #1d1240;margin-right:-7px;background:#000}
+.clav img.on{border-color:#3fd18f}.clav i{font:700 11px Rubik,sans-serif;font-style:normal;margin-left:12px;align-self:center;color:#d8cbff}
+body.nui .frtabs{background:#ffffff10;border-radius:14px;padding:3px;gap:3px}
+body.nui .frtabs button{border-radius:11px;transition:background .2s,color .2s,transform .15s}
+body.nui .frtabs button.on{background:linear-gradient(#ffd36a,#f2a632);color:#3a1a06;box-shadow:0 3px 10px #f2a63266}
+body.nui .frl>.frr{animation:rowin .35s cubic-bezier(.2,.8,.3,1) both;transition:transform .15s}
+body.nui .frl>.frr:nth-child(2){animation-delay:.04s}body.nui .frl>.frr:nth-child(3){animation-delay:.08s}body.nui .frl>.frr:nth-child(4){animation-delay:.12s}body.nui .frl>.frr:nth-child(5){animation-delay:.16s}body.nui .frl>.frr:nth-child(6){animation-delay:.2s}body.nui .frl>.frr:nth-child(n+7){animation-delay:.24s}
+body.nui .frr.me{background:linear-gradient(90deg,#ffcf6a22,#ffffff08);border-color:#ffcf6a66}
+body.nui .frl>.frr:nth-child(1) .rk{color:#ffd36a;text-shadow:0 0 8px #ffd36a88}body.nui .frl>.frr:nth-child(2) .rk{color:#dfe7f2}body.nui .frl>.frr:nth-child(3) .rk{color:#e3a06a}
+body.nui .avw.on .avm{animation:ringp 1.8s infinite;border-radius:50%}
+body.nui .frr .btn{box-shadow:0 3px 0 #8c2208,0 0 12px #ff6a1a44}
+body.nui .chm{animation:bubin .25s ease both}
+body.nui .chm.me .chb{background:linear-gradient(135deg,#ff8a3c,#e2401c)!important;color:#fff}
+body.nui .chm:not(.me) .chb{background:#ffffff14!important}
+body.nui .lgc{position:relative;overflow:hidden}
+body.nui .lgc::after{content:'';position:absolute;top:-30%;bottom:-30%;width:40px;left:0;background:linear-gradient(90deg,transparent,#ffffff40,transparent);animation:sweep 4s ease-in-out infinite;pointer-events:none}
+body.nui .lgc>:first-child{animation:floaty 3.2s ease-in-out infinite}
+body.nui .lgbar i{transform-origin:left;animation:barin .9s cubic-bezier(.2,.8,.3,1) both}
+body.nui .lgs{transition:transform .2s,opacity .2s}body.nui .lgs.lock{opacity:.45;filter:grayscale(.6)}
+body.nui .lgs.on{animation:floaty 2.4s ease-in-out infinite}body.nui .lgs.on img{filter:drop-shadow(0 0 8px var(--lc,#ffcf6a))}
+body.nui .snc .fri{animation:flip 5s ease-in-out infinite}
+body.nui #sncd{color:#ffd36a;text-shadow:0 0 8px #ffd36a66}
+body.nui .frc{transition:transform .15s;position:relative;overflow:hidden}body.nui .frc:active{transform:scale(.98)}
+body.nui #frbtn .fri{animation:floaty 2.8s ease-in-out infinite}
+body.nui .frbd{animation:glowd 1.4s infinite}
+body.nui .frp{animation:popin .25s ease}
 </style>
 </head>
 <body>
@@ -1698,8 +1746,10 @@ function showSummary(res,dustGain){SFX.fan();
 /* ---------- KOLEKSİYON ---------- */
 let colF='all';
 // yeni arayüz: koleksiyonda küçük resimli kart (dokununca büyük kart açılır)
-function thumb(c,o={}){const src=IMG[c.id]?`img/t/${c.id}.webp`:'img/back.webp';
-  return `<div class="card ct r${c.r}${c.ex?' ex':''}${c.ez?' ez':''}${c.prl?' prl':''}${o.miss?' miss':''}" data-id="${c.id}"><img src="${src}" alt="" loading="lazy" decoding="async">${c.ex?`<span class="ctk">${KDI}</span>`:''}${o.n>1?`<b>×${o.n}</b>`:''}${o.evo?'<em>Evrim</em>':''}${MR.lvable(c)&&MR.lvOf(S,c.id)?`<u>+${MR.lvOf(S,c.id)}</u>`:''}</div>`}
+function thumb(c,o={}){const pt=c.ez?'st':(c.prl||c.r===3||c.ex)?'t':'';   // dikey resmi olanlar tam, yatay resimliler mini kart
+  if(!pt&&IMG[c.id])return `<div class="card ct ctl r${c.r}${o.miss?' miss':''} t-${c.el}" data-id="${c.id}"><img src="img/t/${c.id}.webp" alt="" loading="lazy" decoding="async"><div class="ctn"><b>${c.name}</b><span>${icon(c.el)}${baseHp(c)}</span></div>${o.n>1?`<b class="ctc">×${o.n}</b>`:''}${o.evo?'<em>Evrim</em>':''}${MR.lvable(c)&&MR.lvOf(S,c.id)?`<u>+${MR.lvOf(S,c.id)}</u>`:''}</div>`;
+  const src=IMG[c.id]?`img/${pt||'t'}/${c.id}.webp`:'img/back.webp';
+  return `<div class="card ct r${c.r}${c.ex?' ex':''}${c.ez?' ez':''}${c.prl?' prl':''}${o.miss?' miss':''}" data-id="${c.id}"><img src="${src}" alt="" loading="lazy" decoding="async">${c.ez?'<span class="ctk"><img class="kdi" src="img/ic/blood.webp" alt=""></span>':c.ex?`<span class="ctk">${KDI}</span>`:''}${o.n>1?`<b class="ctc">×${o.n}</b>`:''}${o.evo?'<em>Evrim</em>':''}${MR.lvable(c)&&MR.lvOf(S,c.id)?`<u>+${MR.lvOf(S,c.id)}</u>`:''}</div>`}
 function colRings(){const R=(p,c,lbl,a,b)=>`<div class="crg"><i style="--p:${p};--c:${c}" data-t="${lbl}"></i><span><b>${a}</b><small>${b}</small></span></div>`,u=uniq(),k=EXC.filter(x=>owned(x.id)).length,pr=PRL.filter(x=>owned(x.id)).length;
   return `<div class="crgs">${R(u/N*100,'#ffcf6a',Math.round(u/N*100)+'%','Koleksiyon',`${u} / ${N}`)}${R(k/EXC.length*100,'#3fd18f',k,'Kadim',`${k} / ${EXC.length}`)}${R(pr/PRL.length*100,'#7ad8ff',pr,'Parlak',`${pr} / ${PRL.length}`)}</div>`}
 function renderCol(){
@@ -2655,7 +2705,7 @@ document.addEventListener('pointerdown',e=>{if(e.target.closest('.btn,.tgo,nav b
 // dosyaları telefonda saklayan servis: içeriği değişen bir görsel/ses olursa ASSET_V artırılır
 // SÜRÜM KONTROLÜ: yeni sürüm yayınlanınca APP_V ve version.txt birlikte artırılır.
 // İnternet varken oyun arada bir version.txt'ye bakar; farklıysa üstte 'Yeni sürüm hazır · Yenile' çıkar (savaş sırasında beklenir).
-const APP_V='2026.11.27-14';
+const APP_V='2026.11.27-15';
 function verCheck(){if(window.claude||!navigator.onLine)return;
   fetch('version.txt?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{t=(t||'').trim();if(/^[\w.-]{3,40}$/.test(t)&&t!==APP_V){window.__upd=t;updShow()}}).catch(()=>{})}
 function updShow(){if(!window.__upd||document.getElementById('updb'))return;if(B&&!B.over){window.__updLater=1;return}
@@ -2866,6 +2916,8 @@ async function openClan(view){if(tab!=='clan'||(B&&!B.over))return;const ov=$('#
   const C=j.clan,off=j.role==='leader'||j.role==='co',me=accGet().user,RL={leader:'Lider',co:'Yardımcı',member:''};
   const tabs=`<div class="frtabs"><button data-v="chat" class="${view==='chat'?'on':''}">Sohbet</button><button data-v="feed" class="${view==='feed'?'on':''}">Akış</button><button data-v="mem" class="${view==='mem'?'on':''}">Üyeler${off&&j.joins.length?` (${j.joins.length})`:''}</button><button data-v="req" class="${view==='req'?'on':''}">Kartlar</button><button data-v="set" class="${view==='set'?'on':''}">Ayarlar</button></div>`;
   const head=`<div class="clh"><small>${C.descr?escH(C.descr):'&nbsp;'}</small><span>🏆 ${C.total} · ${j.members.length}/${C.max} üye</span></div>`;
+  const onN=j.members.filter(m=>m.on||m.name===me).length;
+  const head2=NUI()?`<div class="clhero"><img class="clem" src="img/ic/clan.webp" alt=""><div class="clhi"><small>${C.descr?escH(C.descr):'Klan'}</small><div class="clst"><span>🏆 ${C.total}</span><span>👥 ${j.members.length}/${C.max}</span><span class="on">● ${onN} çevrimiçi</span></div><div class="clav">${j.members.slice(0,7).map(m=>`<img src="img/t/${(m.stats||{}).av||MR.TUT.card}.webp" class="${m.on||m.name===me?'on':''}" alt="">`).join('')}${j.members.length>7?`<i>+${j.members.length-7}</i>`:''}</div></div></div>`:head;
   let body='';
   if(view==='chat')body='<div id="clchat"></div>';
   else if(view==='feed')body=feedHTML(j.feed);
@@ -2880,7 +2932,7 @@ async function openClan(view){if(tab!=='clan'||(B&&!B.over))return;const ov=$('#
   else if(view==='req')body='<div id="clreq"></div>';
   else body=`${j.role==='leader'?`<p class="frh">Klan açıklaması</p><input class="accin" id="cldsc" maxlength="80" value="${escH(C.descr||'')}"><button class="btn alt" id="cldsv">Kaydet</button>`:''}
     <p class="sionote">Rolün: <b>${RL[j.role]||'Üye'}</b>. Lider ayrılırsa liderlik en eski yardımcıya, yoksa en eski üyeye geçer. Son üye ayrılırsa klan silinir.</p><button class="btn alt" id="clleave">Klandan ayrıl</button>`;
-  shell(head+tabs+body,escH(C.name));
+  shell(head2+tabs+body,escH(C.name));
   ov.querySelectorAll('.frtabs button').forEach(b=>b.onclick=()=>openClan(b.dataset.v));
   if(view==='req')renderReqs($('#clreq'),()=>openClan('req'));
   if(view==='chat')chatView($('#clchat'),'room=clan');
