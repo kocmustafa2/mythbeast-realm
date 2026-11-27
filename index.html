@@ -1256,6 +1256,8 @@ body.nui .frp{animation:popin .25s ease}
 .pfa1 .pfcl{margin-top:4px;padding:6px;font-size:12px}
 .pfhero,.pkrs,.pfmini,.pfform,.pfach,.pfbtn,.pfa1{flex-shrink:0}
 .setp{max-height:calc(100dvh - 40px);overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}.setp>*{flex-shrink:0}
+.tgrp .tgh{cursor:pointer;user-select:none}.tgrp .tgh::after{content:'';flex:none;width:9px;height:9px;margin-left:4px;border-right:2.5px solid currentColor;border-bottom:2.5px solid currentColor;transform:rotate(45deg) translateY(-3px);transition:transform .2s;opacity:.8}
+.tgrp.cl .tgh::after{transform:rotate(-45deg)}.tgrp.cl>.grid{display:none}.tgrp.cl .tgh{opacity:.85}
 </style>
 </head>
 <body>
@@ -1802,6 +1804,11 @@ function renderCol(){
   ${colF==='sup'||colF==='all'?`<section class="tgrp supg"><div class="tgh"><img class="cico" src="img/sup/evo.webp" alt=""><b>Destek kartları</b><span>${SUPK.reduce((t,k)=>t+supHave(k),0)} adet</span></div><div class="grid sgrid">${SUPK.map(k=>supCard(k,{n:supHave(k),desc:false})).join('')}</div></section>`:''}
   ${colF==='sup'?'':body||(colF==='shiny'?'<div class="empty">Henüz holo kartın yok. Paketlerdeki her kart %'+(SHINY.chance*100).toFixed(1).replace('.',',')+' ihtimalle holo çıkar.</div>':'<div class="empty">Eksik kart yok, seri tamam!</div>')}`;
   document.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{colF=b.dataset.f;renderCol();scrollTo(0,0)});
+  {// bölüm başlığına dokununca kartları aç/kapa (seçim telefonda hatırlanır)
+   const key=sec=>[...sec.classList].find(c=>c!=='tgrp'&&c!=='cl')||'',get=()=>{try{return JSON.parse(localStorage.getItem('mr.colc')||'[]')}catch(e){return[]}};
+   const C=new Set(get());document.querySelectorAll('#main .tgrp').forEach(sec=>{const k=key(sec);if(C.has(k))sec.classList.add('cl');const h=sec.querySelector('.tgh');if(!h)return;
+     h.onclick=()=>{const on=sec.classList.toggle('cl');const S2=new Set(get());on?S2.add(k):S2.delete(k);try{localStorage.setItem('mr.colc',JSON.stringify([...S2]))}catch(e){}
+       if(!on){}else{const r=h.getBoundingClientRect();if(r.top<70)window.scrollTo({top:window.scrollY+r.top-70})}}})}
   $('#coldeck').onclick=()=>openDeckEditor(()=>renderCol());$('#colinv').onclick=openInv;
   document.querySelectorAll('.grid .card').forEach(el=>el.onclick=()=>showCard(BY[el.dataset.id],true));
   document.querySelectorAll('.sgrid .spc').forEach(el=>el.onclick=()=>showSup(el.dataset.sk));
@@ -2740,7 +2747,7 @@ document.addEventListener('pointerdown',e=>{if(e.target.closest('.btn,.tgo,nav b
 // dosyaları telefonda saklayan servis: içeriği değişen bir görsel/ses olursa ASSET_V artırılır
 // SÜRÜM KONTROLÜ: yeni sürüm yayınlanınca APP_V ve version.txt birlikte artırılır.
 // İnternet varken oyun arada bir version.txt'ye bakar; farklıysa üstte 'Yeni sürüm hazır · Yenile' çıkar (savaş sırasında beklenir).
-const APP_V='2026.11.28-2';
+const APP_V='2026.11.28-3';
 function verCheck(){if(window.claude||!navigator.onLine)return;
   fetch('version.txt?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{t=(t||'').trim();if(/^[\w.-]{3,40}$/.test(t)&&t!==APP_V){window.__upd=t;updShow()}}).catch(()=>{})}
 function updShow(){if(!window.__upd||document.getElementById('updb'))return;if(B&&!B.over){window.__updLater=1;return}
