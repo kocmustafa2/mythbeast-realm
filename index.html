@@ -1648,7 +1648,7 @@ function ensDecks(){if(!Array.isArray(S.decks))S.decks=[];
   if(!(S.dA>=0&&S.dA<S.decks.length))S.dA=0;if(!(S.dM>=0&&S.dM<S.decks.length))S.dM=0;if(!(S.dT>=0&&S.dT<S.decks.length))S.dT=S.dM;return S.decks}
 let deckMode='a';
 const deckSlot=m=>{ensDecks();const x=m||deckMode;return x==='t'?S.dT:x==='m'?S.dM:S.dA};
-const deckKeys=m=>{const d=ensDecks()[deckSlot(m)];return d.k.length?validDeck(d.k):autoDeck()};
+const deckKeys=m=>{const d=ensDecks()[deckSlot(m)];return d.k.length?validDeck(d.k):(S.tut>0&&S.tut<8?autoDeck():[])};
 const deckIds=()=>deckKeys().filter(k=>!isS(k));
 const power=c=>c.hp+c.atks[0].dmg*1.5+(c.atks[1]?c.atks[1].dmg:0);
 // otomatik deste: puan sınırı içinde güçlü ve türce dengeli yaratıklar + elindeki destek kartları
@@ -1665,7 +1665,9 @@ function autoDeck(){
   return validDeck([...cr,...sp]);
 }
 // savaş destesi: kayıtlı deste, eksik yerler otomatik destenin kartlarıyla dolar
-function myDeck(){let ks=deckKeys();if(ks.length<BAT.deck){for(const k of autoDeck()){if(ks.length>=BAT.deck)break;const nx=validDeck([...ks,k]);if(nx.length>ks.length)ks=nx}}
+// otomatik doldurma kapalı: savaş sadece seçilen destedeki kartlarla yapılır (deste hiç kurulmamışsa sadece öğreticide otomatik deste)
+const DECK_MIN_C=3;
+function myDeck(){const ks=deckKeys();
   return shuffle(ks.map(k=>isS(k)?{t:'s',k:k.slice(2)}:{t:'c',c:MR.lvCard(BY[k],MR.lvOf(S,k))}))}
 function deckSummary(ids){
   const cnt={};ids.forEach(id=>{const e=BY[id].el;cnt[e]=(cnt[e]||0)+1});
@@ -1840,6 +1842,8 @@ function doSup(X,s,j,i,r){const P=X[s],x=P.hand[j],f=P.board[i];P.hand.splice(j,
   f.st=x.k;f.max=mx(f)+30;f.hp+=30;return{k:x.k}}
 const outOf=(X,s)=>X[s].lives<=0||(!X[s].board.some(Boolean)&&!X[s].hand.some(x=>x.t==='c')&&!X[s].deck.some(x=>x.t==='c'));
 async function startBattle(adv,fr,tw){if(window.__btStart)return;
+  {const m=tw?'t':adv!=null?'m':'a',ks=deckKeys(m),nc=ks.filter(k=>!isS(k)).length,nm=ensDecks()[deckSlot(m)].n;
+   if(nc<DECK_MIN_C){toast(nc?`${nm} destesinde en az ${DECK_MIN_C} yaratık olmalı`:`${nm} destesi boş. Önce desteni kur`);openDeckEditor(tw?()=>towerInfo(tw.el,tw.f):adv!=null?()=>advInfo(adv):null,deckSlot(m));return}}
   if(pendGet()&&!(await flushPend())){toast('Önceki savaşın sonucu henüz kaydedilemedi. Bağlantı gelince tekrar dene.');return}
   window.__btStart=1;let bid,fo;
   // savaşı sunucu başlatır (kimlik + başlangıç zamanı); ödülleri bitişte sunucu hesaplar
@@ -3101,7 +3105,7 @@ function towerInfo(el,f){const st=MR.towerStage(el,f),ov=$('#ov'),first=f>=MR.tw
   $('#tigo').onclick=()=>{if(!uniq()){toast('Önce bir paket aç');return}ov.className='ov';ov.innerHTML='';startBattle(undefined,undefined,{el,f})}}
 function twDeckBox(el,f){const dd=ensDecks(),ks=deckKeys('t'),cs=ks.filter(k=>!isS(k)).map(k=>BY[k]),own=dd[S.dT].k.length>0;
   return `<div class="twdk"><small class="advs">Kule destesi</small><div class="twdks">${dd.map((d,i)=>`<button class="chip${i===S.dT?' on':''}" data-twd="${i}">${escH(d.n)} · ${d.k.length}</button>`).join('')}</div>
-   <div class="twdp">${cs.map(c=>`<img src="img/t/${c.id}.webp" alt="${escH(c.name)}">`).join('')}</div><small>${own?'':'Bu deste boş: otomatik deste kullanılır · '}${ks.length}/${BAT.deck} kart · ${deckPts(ks)}/${BAT.budget} puan</small>
+   <div class="twdp">${cs.map(c=>`<img src="img/t/${c.id}.webp" alt="${escH(c.name)}">`).join('')}</div><small>${own?'':'Bu deste boş, savaşmak için kart ekle · '}${ks.length}/${BAT.deck} kart · ${deckPts(ks)}/${BAT.budget} puan</small>
    <button class="btn alt" id="twded">Desteyi düzenle</button></div>`}
 function towerEnd(){const el=B.tw.el,f=B.tw.f,top=f+1>=MR.TOWER.floors;
   return `<div class="endb ${B.win?'w':'l'}"><div class="ent">${B.win?(B.first?(top?'Zirveye ulaştın!':'Kat geçildi!'):'Zafer!'):'Yenilgi'}</div>${B.why?`<small class="ewhy">${B.why}</small>`:''}
