@@ -1546,7 +1546,7 @@ const supArt=k=>`img/sup/${k}.webp`;
 // destek kartının büyük görünümü: kendi çerçevesi (tür taşları fildişi, Evrim Taşı altın)
 function supCard(k,o={}){return `<div class="spc${k==='evo'?' evo':''}" data-sk="${k}" style="${o.w?`width:${o.w}`:''}"><div class="spa" style="background-image:url(img/sup/${k}.webp)"></div>${o.desc===false?'':`<div class="spd">${supTxt(k)}</div>`}<img class="spf" src="img/sup/${k==='evo'?'fr_evo':'fr'}.webp" alt="" draggable="false"><b class="spn">${SUPN[k]}</b>${o.n!=null?`<span class="spx${o.n?'':' z'}">×${o.n}</span>`:''}</div>`}
 function showSup(k){const ov=$('#ov');ov.className='ov on';ov.innerHTML=`<div class="ovt">${SUPN[k]}</div><div class="spbig">${supCard(k,{w:'min(70vw,300px)',n:supHave(k),desc:false})}</div><p class="ttx">${supTxt(k)}.<br>Her tur en fazla 1 destek kartı oynayabilirsin. Destek kartları zafer sandıklarından, maceradan ve günlük görevlerden gelir.</p><div class="ovb"><button class="btn" id="close">Kapat</button></div>`;$('#close').onclick=()=>{ov.className='ov';ov.innerHTML=''}}
-const supTxt=k=>k==='will'?'Rakip bir sonraki turunu oynayamaz (destede en fazla 1)':k==='evo'?'Temel yaratık yenilene kadar evrimleşir (evrimi koleksiyonunda olmalı)':`${T[k].n} yaratığa +30 can ve +10 hasar`;
+const supTxt=k=>k==='will'?'Rakip bir sonraki turunu oynayamaz; sahasında Işık yaratığı varsa o tur sadece Işık yaratığıyla saldırabilir (destede en fazla 1)':k==='evo'?'Temel yaratık yenilene kadar evrimleşir (evrimi koleksiyonunda olmalı)':`${T[k].n} yaratığa +30 can ve +10 hasar`;
 const supHave=k=>(S.sup||{})[k]||0;
 function giveSup(k,n=1){MR.giveSup(S,k,n)}
 if(S.supV===1&&!S.supV2){giveSup('metal',1);giveSup('poison',1);S.supV2=1}
@@ -1844,10 +1844,10 @@ const IDLE_MS=15000;
 function autoDue(){if(!B||B.over||B.busy||B.turn!=='me'||B.tut)return false;const idle=Date.now()-(B.lastAct||Date.now());return B.auto?idle>700:idle>=IDLE_MS}
 async function autoMove(){if(!autoDue()&&!(B&&B.auto&&!B.busy&&!B.over&&B.turn==='me'))return;B.busy=true;B.sel=null;B.selH=null;
   if(!B.auto)B.log='Süre doldu · otomatik hamle yapıldı';
-  for(let m;B&&!B.over&&(m=bestFill(B,'me'));){await placeAnim('me',m.j,m.i);await wait(220)}
+  if(!B.lock)for(let m;B&&!B.over&&(m=bestFill(B,'me'));){await placeAnim('me',m.j,m.i);await wait(220)}
   if(!B||B.over)return;
   if(!B.supUsed){const ms=pickSup(B,'me',false);if(ms){await supAnim('me',ms.j,ms.i);if(!B||B.over)return}}
-  let best=null;B.me.board.forEach((a,ai)=>{if(!a)return;B.foe.board.forEach((d,di)=>{if(!d)return;const sc=aiScore(a,d,B.me.board,B.foe.board);if(!best||sc>best.sc)best={sc,ai,di}})});
+  let best=null;B.me.board.forEach((a,ai)=>{if(!a||(B.lock&&a.c.el!==B.lock))return;B.foe.board.forEach((d,di)=>{if(!d)return;const sc=aiScore(a,d,B.me.board,B.foe.board);if(!best||sc>best.sc)best={sc,ai,di}})});
   if(best){if(await strike('me',best.ai,best.di))return}else{B.log='Saldıracak yaratık yok, sıra geçti';renderBattle();await wait(500)}
   if(!B||B.over)return;await foeMove()}
 function clockTick(){if(!B||B.over){if(B&&B.iv)clearInterval(B.iv);return}
@@ -1936,7 +1936,7 @@ async function supAnim(s,j,i){const src=s==='me'?document.querySelector(`.hk[dat
   else if(r.k==='will'){ringFx(e,'light','İrade!');SFX.reveal(2)}
   else{ringFx(e,r.k,'+30 can · +10 hasar');bnum(e,'+30','h');SFX.newCard()}
   await wait(600)}
-async function tapHand(j){if(!B||B.busy||B.over||B.turn!=='me')return;B.lastAct=Date.now();const x=B.me.hand[j];if(!x)return;
+async function tapHand(j){if(!B||B.busy||B.over||B.turn!=='me')return;B.lastAct=Date.now();if(B.lock){toast('İrade: bu tur kart oynayamazsın, sadece Işık yaratığınla saldırabilirsin');return}const x=B.me.hand[j];if(!x)return;
   if(x.t==='c'){const i=B.me.board.findIndex(f=>!f);if(i<0){toast('Sahada boş yer yok');return}B.busy=true;B.sel=null;B.selH=null;await placeAnim('me',j,i);if(B){B.busy=false;renderBattle()}return}
   if(B.supUsed){toast('Bu tur destek kartı kullandın');return}
   if(!B.me.board.some(f=>f&&canSup(x.k,f,true)===true)){const f0=B.me.board.find(Boolean);toast(f0?canSup(x.k,B.me.board.find(f=>f&&canSup(x.k,f,true)!==true)||f0,true):'Sahada yaratığın yok');return}
@@ -1963,8 +1963,10 @@ function hitFx(el,k,tgt){const key=k==='w'?el+'S':el,C=FX2C[key];if(!tgt||!C)ret
 function newCardFx(s){if(s!=='me'||!B||B.me.hand.length<BAT.hand)return;const h=document.querySelector('#b2hand .hk:last-child');if(h)h.classList.add('newk')}
 function meTurnSetup(){B.turn='me';B.sel=null;B.selH=null;B.supUsed=false;B.lastAct=Date.now()}
 async function meTurn(first){if(!B||B.over)return;meTurnSetup();B.busy=true;
-  if(B.skip&&B.skip.me){B.skip.me=0;B.skipX=1;B.log='İrade: bu turu oynayamıyorsun';renderBattle();await wait(1300);if(B&&!B.over)await foeMove();return}
-  B.skipX=0;
+  B.lock=null;if(B.skip&&B.skip.me){B.skip.me=0;B.skipX=1;
+    if(B.me.board.some(f=>f&&f.c.el==='light')){B.lock='light';B.supUsed=true;B.log='İrade: bu tur sadece Işık yaratığınla saldırabilirsin';renderBattle()}
+    else{B.log='İrade: bu turu oynayamıyorsun';renderBattle();await wait(1300);if(B&&!B.over)await foeMove();return}}
+  else B.skipX=0;
   if(first)B.justCharged=chargeStep(B,'me');else if(await beginTurn('me'))return;
   if(!B||B.over)return;if(rescue(B,'me')){B.log='Elinde yaratık kalmadı · bir destek kartın desteye döndü, yerine yaratık geldi';renderBattle();const h=document.querySelector('#b2hand .hk:last-child');if(h)h.classList.add('newk')}
   B.busy=false;renderBattle()}
@@ -2143,7 +2145,7 @@ async function tap(s,i){
   if(!B||B.busy||B.over||B.turn!=='me')return;B.lastAct=Date.now();
   if(s==='me'&&B.selH!==null){const x=B.me.hand[B.selH],f=B.me.board[i];if(!f)return;const ok=canSup(x.k,f,true);if(ok!==true){toast(ok);return}
     B.busy=true;const j=B.selH;B.selH=null;await supAnim('me',j,i);if(B&&!B.over){B.busy=false;renderBattle()}return}
-  if(s==='me'){if(!B.me.board[i])return;B.sel=B.sel===i?null:i;SFX.select();renderBattle();return}
+  if(s==='me'){if(!B.me.board[i])return;if(B.lock&&B.me.board[i].c.el!==B.lock){toast('İrade: bu tur sadece Işık yaratığın saldırabilir');return}B.sel=B.sel===i?null:i;SFX.select();renderBattle();return}
   if(B.sel===null||!B.foe.board[i]||!B.me.board[B.sel])return;
   B.busy=true;const ai=B.sel;B.sel=null;tutHit();
   if(await strike('me',ai,i))return;
@@ -2151,16 +2153,18 @@ async function tap(s,i){
 }
 async function foeMove(){
   if(!B||B.over)return;B.turn='foe';B.busy=true;B.sel=null;B.selH=null;renderBattle();
-  if(B.skip&&B.skip.foe){B.skip.foe=0;B.skipX=1;B.log='İrade: rakip bu turu oynayamadı';renderBattle();await wait(1100);if(B&&!B.over)await meTurn(false);return}
-  B.skipX=0;
+  let lk=null;if(B.skip&&B.skip.foe){B.skip.foe=0;B.skipX=1;
+    if(B.foe.board.some(f=>f&&f.c.el==='light')){lk='light';B.log='İrade: rakip sadece Işık yaratığıyla saldırabilir';renderBattle();await wait(900)}
+    else{B.log='İrade: rakip bu turu oynayamadı';renderBattle();await wait(1100);if(B&&!B.over)await meTurn(false);return}}
+  else B.skipX=0;
   if(await beginTurn('foe'))return;if(!B||B.over)return;
-  rescue(B,'foe');renderBattle();await wait(450);
+  if(!lk){rescue(B,'foe');renderBattle();await wait(450);
   for(let m;B&&!B.over&&(m=bestFill(B,'foe'));){await placeAnim('foe',m.j,m.i);await wait(250)}
   if(!B||B.over)return;
-  const ms=pickSup(B,'foe',false);if(ms){await supAnim('foe',ms.j,ms.i);if(!B||B.over)return}
+  const ms=pickSup(B,'foe',false);if(ms){await supAnim('foe',ms.j,ms.i);if(!B||B.over)return}}
   let best=null;
-  B.foe.board.forEach((a,ai2)=>{if(!a)return;B.me.board.forEach((d,di)=>{if(!d)return;const sc=aiScore(a,d,B.foe.board,B.me.board);if(!best||sc>best.sc)best={sc,ai:ai2,di}})});
-  if(Math.random()<(B.mis??LEAGUES[lgOf(S.trophy||0)].mis)){const as=B.foe.board.map((f,i)=>f?i:-1).filter(i=>i>=0),ds=B.me.board.map((f,i)=>f?i:-1).filter(i=>i>=0);if(as.length&&ds.length)best={ai:as[Math.floor(Math.random()*as.length)],di:ds[Math.floor(Math.random()*ds.length)]}}
+  B.foe.board.forEach((a,ai2)=>{if(!a||(lk&&a.c.el!==lk))return;B.me.board.forEach((d,di)=>{if(!d)return;const sc=aiScore(a,d,B.foe.board,B.me.board);if(!best||sc>best.sc)best={sc,ai:ai2,di}})});
+  if(Math.random()<(B.mis??LEAGUES[lgOf(S.trophy||0)].mis)){const as=B.foe.board.map((f,i)=>f&&(!lk||f.c.el===lk)?i:-1).filter(i=>i>=0),ds=B.me.board.map((f,i)=>f?i:-1).filter(i=>i>=0);if(as.length&&ds.length)best={ai:as[Math.floor(Math.random()*as.length)],di:ds[Math.floor(Math.random()*ds.length)]}}
   if(best){if(await strike('foe',best.ai,best.di))return}else{B.log='Rakip saldıramadı';renderBattle();await wait(600)}
   if(!B||B.over)return;
   await meTurn(false);
