@@ -253,7 +253,7 @@ const fresh=()=>({gold:ECON.startGold,dust:0,free:ECON.freePacks,owned:{},pity:0
 // Sunucunun sahip olduğu alanlar: istemcinin kaydetme isteği bunları DEĞİŞTİREMEZ.
 const ECON_KEYS=['gold','dust','free','owned','shiny','sup','supV','supV2','pity','xp','lvl','opened','trophy','bestLg','wins','losses',
   'streak','lstreak','chest','chests','hist','gift','gt','advC','advV','exB','rqT','dn','dq','rare','tp','uidN','tut','bt','bl',
-  'av','bestStk','dnTot','evoN','awkN','ssBest','ach','achC','rq'];
+  'av','bestStk','dnTot','evoN','awkN','ssBest','ach','achC','rq','lgn','lv','ss','ks','tw','twd'];
 // İstemcinin değiştirebildiği zararsız alanlar (ayarlar, deste seçimi, ipuçları).
 const CLIENT_KEYS=['mv','sv','snd','deck','deck2','decks','dA','dM','shOff','pset','th','sid','t'];
 const TUT_CLIENT_MAX=2;            // istemci öğreticiyi en fazla bu adıma kendisi ilerletebilir (hoş geldin → paket aç)
@@ -332,6 +332,13 @@ function battleEnd(st,p,ctx){const bt=st.bt,now=ctx.now;
   const nb=st.bl.length,rf=nb<BATTLE_PER_HOUR?1:Math.max(0,Math.round((1-(nb-BATTLE_PER_HOUR+1)/BATTLE_PER_HOUR)*100)/100);
   st.bl.push(now);if(st.bl.length>3*BATTLE_PER_HOUR)st.bl=st.bl.slice(-3*BATTLE_PER_HOUR);
   const sc=v=>Math.round(v*rf);
+  if(bt.mode==='tower'&&bt.tw){const rng=ctx.rng,{el,f}=bt.tw,T0=towerStage(el,f),first=f>=twDone(st,el),R={mode:'tower',win,el,f,first:win&&first,ss:0,ks:0,g:0,pk:0,prl:0,rf,rep:0};
+    if(!win){R.g=sc(10);st.gold+=R.g;return R}
+    if(first){st.tw=st.tw||{};st.tw[el]=f+1;R.ss=sc(T0.ss);R.g=sc(T0.gold);R.ks=T0.ks?Math.max(1,sc(T0.ks)):0;
+      if(T0.boss&&rf>=.5){R.prl=givePrlEl(st,rng,el)||givePrl(st,rng);if(!R.prl){R.pk=1;st.free++}}}
+    else{const d=dayKey(now),left=twLeft(st,now);R.left=left;if(left>0){st.twd={day:d,n:(st.twd&&st.twd.day===d?st.twd.n:0)+1};R.rep=1;R.left=left-1;
+      R.ss=sc(Math.ceil(T0.ss/3));R.g=sc(Math.round(T0.gold/4));if(T0.boss&&rng()<TOWER.ksRep*rf)R.ks=1;if(T0.boss&&rng()<TOWER.prlRep*rf)R.prl=givePrlEl(st,rng,el)}}
+    if(R.ss)giveSS(st,el,R.ss);if(R.ks)giveKS(st,el,R.ks);st.gold+=R.g;return R}
   if(bt.mode==='adv'){const st0=advStage(bt.adv),first=st0.x?!(st.exB||{})[st0.ch]:bt.adv>=(st.advC||0),R={mode:'adv',win,adv:bt.adv,first:win&&first,pk:0,du:0,sup:null,rf};
     R.g=sc(win?(first?st0.gold:Math.round(st0.gold/4)):10);st.gold+=R.g;
     if(R.first){R.du=sc(st0.dust);st.dust+=R.du;if(st0.x){st.exB=st.exB||{};st.exB[st0.ch]=1}else st.advC=bt.adv+1;if(st0.pack){R.pk=Math.floor(st0.pack*rf+.5);st.free+=R.pk}if(rf>=.5){R.sup=st0.x||st0.p===ADV_P-1?'evo':st0.el;giveSup(st,R.sup)}}
@@ -357,6 +364,64 @@ function forfeit(st,now){const bt=st.bt;st.bt=null;if(!bt||bt.mode!=='arena'||bt
 // ödülden Parlak kart: Temel basamaktan, nadirlik ağırlığı sandıkla aynı
 function givePrl(st,rng){const P=PRL.filter(c=>c.stage===0);if(!P.length)return 0;const r=roll(CHEST.card,rng);let L=P.filter(c=>c.r===r);if(!L.length)L=P;
   const c=L[Math.floor(rng()*L.length)];st.owned[c.id]=own(st,c.id)+1;return c.id}
+function givePrlEl(st,rng,el){const P=PRL.filter(c=>c.stage===0&&c.el===el);if(!P.length)return 0;const c=P[Math.floor(rng()*P.length)];st.owned[c.id]=own(st,c.id)+1;return c.id}
+
+/* ---------- 30 GÜNLÜK GİRİŞ ÖDÜLLERİ ----------
+   Her gün (Türkiye saatiyle) bir kez alınır. Kaçırılan gün sıfırlamaz, takvim kaldığı yerden devam eder.
+   30. gün alınınca takvim baştan başlar. g altın · d toz · pk paket · sup destek ('rnd' rastgele) · ss ruh taşı · ks kadim taş (rastgele tür) */
+const LOGIN=[{g:100},{d:30},{sup:'evo'},{g:150},{ss:3},{d:50},{pk:1},
+  {g:200},{sup:'rnd'},{ss:5},{g:250},{d:80},{sup:'rnd'},{pk:2},
+  {ks:1},{g:300},{d:100},{ss:8},{sup:'will'},{pk:2},{g:400},
+  {d:120},{ss:10},{sup:'rnd'},{ks:2},{g:500},{pk:3},{d:150},{ss:15},
+  {pk:5,g:1000,prl:1,big:1}];
+const loginCan=(st,now)=>!st.lgn||st.lgn.k!==dayKey(now);
+function loginClaim(st,rng,now){if(!loginCan(st,now))throw uerr('Bugünün giriş ödülünü zaten aldın.');
+  const L=st.lgn||{d:0,c:0},day=L.d,R=LOGIN[day],out={day:day+1};
+  if(R.g){st.gold+=R.g;out.g=R.g}if(R.d){st.dust+=R.d;out.d=R.d}if(R.pk){st.free+=R.pk;out.pk=R.pk}
+  if(R.sup){const k=R.sup==='rnd'?rndSup(rng):R.sup;giveSup(st,k);out.sup=k}
+  if(R.ss){const e=ELS[Math.floor(rng()*ELS.length)];giveSS(st,e,R.ss);out.ss={el:e,n:R.ss}}
+  if(R.ks){const e=ELS[Math.floor(rng()*ELS.length)];giveKS(st,e,R.ks);out.ks={el:e,n:R.ks}}
+  if(R.prl){const id=givePrl(st,rng);if(id)out.prl=id;else{const e=ELS[Math.floor(rng()*ELS.length)];giveKS(st,e,2);out.ks={el:e,n:2}}}
+  st.lgn={d:day+1>=LOGIN.length?0:day+1,c:(L.c||0)+(day+1>=LOGIN.length?1:0),k:dayKey(now)};return out}
+
+/* ---------- SEVİYE SİSTEMİ (son evrim kartları) ----------
+   Evrimi olmayan kartlar (son evrimler, Efsanevi, EX, Parlak son evrimler) 10 seviyeye kadar yükselir.
+   Her seviye +%3 hasar, +%2 can. Bedel: kartın türünden ruh taşı + altın; Efsanevi ve EX ayrıca kadim taş ister.
+   Seviye sadece oyuncunun kendi kartlarına (ve arkadaş maçında arkadaşın kartlarına) uygulanır; botlar normal değerlerle oynar. */
+const LV={max:10,dmg:.03,hp:.02,ss:[5,8,12,16,20,25,30,35,40,50],gold:[200,300,400,500,700,900,1100,1400,1700,2000],ks:[1,1,1,2,2,2,3,3,4,5]};
+const hasEvo=new Set();CARDS.forEach(c=>{if(c.from)hasEvo.add(c.from)});PRL.forEach(c=>{if(c.from)hasEvo.add(c.from)});
+const lvable=c=>!!c&&!c.ez&&!hasEvo.has(c.id);
+const lvOf=(st,id)=>Math.max(0,Math.min(LV.max,Math.floor(+((st.lv||{})[id])||0)));
+const lvCost=(c,L)=>L>=LV.max?null:{ss:LV.ss[L],g:LV.gold[L],ks:c.r>=3?LV.ks[L]:0};
+const LVC={};
+function lvCard(c,L){if(!c||!(L>0))return c;const k=c.id+'_'+L;if(LVC[k])return LVC[k];
+  return LVC[k]={...c,lv:L,hp:round5(c.hp*(1+LV.hp*L)),atks:c.atks.map(a=>({...a,dmg:Math.round(a.dmg*(1+LV.dmg*L))}))}}
+function giveSS(st,el,n){st.ss=st.ss||{};st.ss[el]=(st.ss[el]||0)+n}
+function giveKS(st,el,n){st.ks=st.ks||{};st.ks[el]=(st.ks[el]||0)+n}
+function canLv(st,c){if(!lvable(c)||!(own(st,c.id)>0))return false;const C=lvCost(c,lvOf(st,c.id));if(!C)return false;
+  return ((st.ss||{})[c.el]||0)>=C.ss&&(st.gold||0)>=C.g&&((st.ks||{})[c.el]||0)>=C.ks}
+
+/* ---------- TÜR KULELERİ ----------
+   8 türün her biri için 30 katlı kule. Her 5. kat boss (o türün Efsanevisi), son kat o türün en güçlü bossu (varsa EX).
+   Bot kartları oyuncununkilerle aynı değerdedir: zorluk sadece deste kalitesi ve yapay zekâdan gelir.
+   İlk geçiş: ruh taşı + altın; boss katı: kadim taş ve Parlak kart (o türde Parlak yoksa paket).
+   Geçilmiş katlar tekrar oynanabilir: günde TOWER.daily tekrar ödüllü (taşın üçte biri, altının dörtte biri, boss'ta küçük Parlak şansı). */
+const TOWER={floors:30,boss:5,daily:10,prlRep:.08,ksRep:.25};
+const twBoss=f=>f%TOWER.boss===TOWER.boss-1;
+function towerStage(el,f){const d=f/(TOWER.floors-1),r=srnd(7000+ELS.indexOf(el)*131+f*17),last=f===TOWER.floors-1,bs=twBoss(f);
+  const pool=CARDS.filter(c=>c.el===el&&c.r<3),pk=rr=>{const L=pool.filter(c=>c.r===rr);return (L.length?L:pool)[Math.floor(r()*(L.length||pool.length))]};
+  const w=[Math.max(.05,.85-1.3*d),.15+.4*d,Math.max(0,.8*d-.05)];
+  const deck=[];for(let k=0;k<7;k++){const x=r()*(w[0]+w[1]+w[2]);deck.push(pk(x<w[0]?0:x<w[0]+w[1]?1:2))}
+  const leg=CARDS.find(c=>c.el===el&&c.r===3),X=EXC.find(c=>c.el===el);let boss=null;
+  if(bs){boss=last&&X?X:leg||pool.sort((a,b)=>b.hp-a.hp)[0];deck[1]=boss;if(last&&X&&leg)deck[4]=leg}
+  else if(f>=18&&leg&&r()<.5)deck[3]=leg;
+  const rule=bs?'boss':['none','first',el==='fire'||el==='poison'?'burn':'charged','none','first','charged','none','burn'][f%8];
+  const ss=3+Math.floor(f/3),gold=Math.round((100+20*f)/10)*10;
+  return{tw:1,el,f,i:f,name:bs?(last?'Kule Zirvesi · ':'')+boss.name:`${T_N[el]} Kulesi ${f+1}`,rule,deck,boss,mis:Math.max(.02,.4-.4*d),ss,gold,ks:bs?(last?3:1):0,last}}
+const T_N={fire:'Ateş',water:'Su',earth:'Toprak',air:'Hava',light:'Işık',shadow:'Gölge',metal:'Metal',poison:'Zehir'};
+const twDone=(st,el)=>Math.max(0,Math.min(TOWER.floors,Math.floor(+((st.tw||{})[el])||0)));
+const twLeft=(st,now)=>{const d=dayKey(now);return st.twd&&st.twd.day===d?Math.max(0,TOWER.daily-st.twd.n):TOWER.daily};
+
 function act(st,a,p,ctx){p=p||{};const rng=ctx.rng,now=ctx.now;normalize(st,ctx);
   switch(a){
   case 'pack':{const set=tutOn(st)?1:(p.set===2?2:1);
@@ -387,18 +452,26 @@ function act(st,a,p,ctx){p=p||{};const rng=ctx.rng,now=ctx.now;normalize(st,ctx)
     if(j==='b'){if(q.bonus||!q.l.every(m=>m.c))throw uerr('Önce üç görevi de tamamla.');q.bonus=1;st.free+=DQB.free;const sk=rndSup(rng);giveSup(st,sk);return{bonus:1,free:DQB.free,sup:sk}}
     const m=q.l[+j];if(!m)throw uerr('Görev bulunamadı.');const D=DQP[m.i];if(m.c)throw uerr('Bu görevin ödülünü zaten aldın.');if(m.p<D.n)throw uerr('Görev henüz tamamlanmadı.');
     m.c=1;st.gold+=D.g;st.dust+=D.d;return{g:D.g,d:D.d}}
-  case 'battle_start':{const mode=p.mode==='adv'?'adv':p.mode==='friend'?'friend':'arena';let adv=null;
+  case 'battle_start':{const mode=p.mode==='adv'?'adv':p.mode==='friend'?'friend':p.mode==='tower'?'tower':'arena';let adv=null,tw=null;
+    if(mode==='tower'){const el=String(p.el||''),f=Math.floor(+p.f);if(!ELS.includes(el)||!(f>=0&&f<TOWER.floors))throw uerr('Kule katı bulunamadı.');
+      if(f>twDone(st,el))throw uerr('Bu kat henüz açılmadı.');if(tutOn(st))throw uerr('Önce öğreticiyi bitir.');tw={el,f}}
     if(mode==='adv'){adv=Math.floor(+p.adv);const c=st.advC||0;
       const ok=adv>=0&&(adv<ADV_N?adv<=c:(adv>=100&&adv<100+ADV_CH.length&&c>=(adv-99)*ADV_P));if(!ok)throw uerr('Bu bölüm henüz açılmadı.')}
     if(mode==='friend'&&!ctx.friendOk)throw uerr('Sadece arkadaşlarının ya da klan üyelerinin destesiyle savaşabilirsin.');
     const fo=forfeit(st,now);
-    const id=Math.floor(rng()*2**52).toString(36);st.bt={id,mode,adv,t0:now,tut:mode==='arena'&&st.tut===6?1:0};if(mode==='friend'&&typeof p.fr==='string')st.bt.fr=p.fr.slice(0,16);
+    const id=Math.floor(rng()*2**52).toString(36);st.bt={id,mode,adv,t0:now,tut:mode==='arena'&&st.tut===6?1:0};if(tw)st.bt.tw=tw;if(mode==='friend'&&typeof p.fr==='string')st.bt.fr=p.fr.slice(0,16);
     return{id,forfeit:fo}}
   case 'battle_end':return battleEnd(st,p,ctx);
   case 'ach_claim':{const id=String(p.id||''),rw=ACH_RW[id];
     if(!rw||!(st.ach||[]).includes(id))throw uerr('Bu başarım henüz tamamlanmadı.');
     if((st.achC||[]).includes(id))throw uerr('Bu ödülü zaten aldın.');
     st.achC=[...(st.achC||[]),id];st.gold=(st.gold||0)+(rw.g||0);st.free=(st.free||0)+(rw.f||0);return{g:rw.g||0,f:rw.f||0}}
+  case 'login':return loginClaim(st,rng,now);
+  case 'lvup':{const c=BY[Math.floor(+p.id)];if(!lvable(c))throw uerr('Sadece son evrim kartlarının seviyesi yükselir.');
+    if(!(own(st,c.id)>0))throw uerr('Bu karta sahip değilsin.');const L=lvOf(st,c.id),C=lvCost(c,L);if(!C)throw uerr('Bu kart zaten en yüksek seviyede.');
+    if(((st.ss||{})[c.el]||0)<C.ss)throw uerr('Yeterli ruh taşın yok.');if(((st.ks||{})[c.el]||0)<C.ks)throw uerr('Yeterli kadim taşın yok.');
+    if((st.gold||0)<C.g)throw uerr('Yeterli altının yok.');
+    st.ss[c.el]-=C.ss;if(C.ks)st.ks[c.el]-=C.ks;st.gold-=C.g;st.lv=st.lv||{};st.lv[c.id]=L+1;return{id:c.id,lv:L+1}}
   case 'avatar':{const id=Math.floor(+p.id),c=BY[id];if(!c||!(own(st,id)>0))throw uerr('Sadece sahip olduğun bir kartı profil resmi yapabilirsin.');st.av=id;return{av:id}}
   }
   throw uerr('Bilinmeyen işlem.');
@@ -435,7 +508,8 @@ function donateGet(st,id){st.owned[id]=own(st,id)+1}
 function clanPay(st){if((st.gold||0)<CLAN.cost)throw uerr(`Klan kurmak için ${CLAN.cost} altın gerekli.`);st.gold-=CLAN.cost}
 
 // arkadaşların göreceği özet (sunucu hesaplar)
-function pubStats(st){return{tr:st.trophy||0,lg:lgOf(st.trophy||0),lvl:st.lvl||1,col:CARDS.filter(c=>own(st,c.id)>0).length,tot:N,w:st.wins||0,l:st.losses||0,av:avatarOf(st)}}
+function pubStats(st){return{tr:st.trophy||0,lg:lgOf(st.trophy||0),lvl:st.lvl||1,col:CARDS.filter(c=>own(st,c.id)>0).length,tot:N,w:st.wins||0,l:st.losses||0,av:avatarOf(st),lv:pubLv(st)}}
+function pubLv(st){const o={};for(const k in (st.lv||{})){const L=lvOf(st,k);if(L>0&&own(st,+k)>0)o[k]=L}return o}
 
 /* ---------- PROFİL: RESİM VE BAŞARIMLAR ---------- */
 // Profil resmi: seçilen kart (hâlâ sahipse), yoksa en nadir/en yüksek aşamalı kartı, hiç yoksa öğretici kartı.
@@ -462,11 +536,13 @@ const ACH=[
   {id:'clan',n:'Klan Kardeşliği',d:'Bir klana katıl',g:1,v:(s,x)=>x&&x.inClan?1:0},
   {id:'d10',n:'Yardımsever',d:'10 kart bağışla',g:10,v:s=>s.dnTot||0},
   {id:'d100',n:'Cömert Kalp',d:'100 kart bağışla',g:100,v:s=>s.dnTot||0},
+  {id:'tw1',n:'Kule Fatihi',d:'Bir kulenin zirvesine çık',g:1,v:s=>ELS.some(e=>twDone(s,e)>=TOWER.floors)?1:0},
+  {id:'lv10',n:'Usta Terbiyeci',d:'Bir kartı 10. seviyeye çıkar',g:1,v:s=>Object.keys(s.lv||{}).some(k=>lvOf(s,k)>=LV.max)?1:0},
   {id:'ss3',n:'Sezon Şampiyonu',d:'Haftalık sezonu ilk 3\'te bitir',g:1,v:s=>s.ssBest&&s.ssBest<=3?1:0}];
 // başarım ödülleri: g = altın, f = ücretsiz paket (ödül 'Ödülü al' ile bir kez alınır)
 const ACH_RW={w1:{g:100},w10:{g:300},w50:{f:2},w200:{f:5,g:1000},s5:{g:300},s10:{f:2},
   lg1:{g:200},lg2:{f:1},lg3:{f:2},lg4:{f:3},lg5:{f:5},lg6:{f:6,g:500},lg7:{f:8,g:1000},lg8:{f:10,g:2000},p10:{g:100},p50:{f:1},p200:{f:3},
-  c25:{f:1},c50:{f:3},c100:{f:5,g:1000},evo:{g:200},awk:{f:1},adv:{f:5,g:1000},clan:{g:200},d10:{g:200},d100:{f:2},ss3:{f:2}};
+  c25:{f:1},c50:{f:3},c100:{f:5,g:1000},evo:{g:200},awk:{f:1},adv:{f:5,g:1000},clan:{g:200},d10:{g:200},d100:{f:2},ss3:{f:2},tw1:{f:3,g:1000},lv10:{f:2,g:500}};
 function achList(st,x){const done=new Set(st.ach||[]),cl=new Set(st.achC||[]);return ACH.map(a=>{const v=Math.min(a.g,a.v(st,x)||0);
   return{id:a.id,n:a.n,d:a.d,g:a.g,v,done:done.has(a.id)||v>=a.g,lg:a.lg,rw:ACH_RW[a.id]||{},cl:cl.has(a.id)}})}
 // alınmamış ödülü olan tamamlanmış başarım sayısı (rozet için)
@@ -483,6 +559,7 @@ const MR={ELS,round5,round10,RAR,TYPE_HP,TYPE_RET,DMG,ATK,FXV,FX,atkDmg,PACK,XP,
   PRL,PRL_OFF,PRL_MUL,prlOf,givePrl,ECON_KEYS,CLIENT_KEYS,BATTLE_MIN_MS,BATTLE_PER_HOUR,own,tutOn,roll,drawCard,rollPack,copies,canEvo,canAwaken,giveSup,rndSup,addXp,
   giftTick,dayKey,dqList,dqInc,normalize,mergeClient,act,pubStats,avatarOf,ACH,ACH_RW,achList,achSync,achUnclaimed,
   SEASON,seasonOf,seasonEnd,seasonRewardFor,seasonGive,
+  LOGIN,loginCan,loginClaim,LV,lvable,lvOf,lvCost,lvCard,canLv,giveSS,giveKS,TOWER,twBoss,towerStage,twDone,twLeft,T_N,givePrlEl,pubLv,
   CLAN,REQ,reqable,reqCheck,reqOpen,dnLeft,donateCheck,donateGive,donateGet,clanPay};
 G.MR=MR;
 })(typeof globalThis!=='undefined'?globalThis:this);

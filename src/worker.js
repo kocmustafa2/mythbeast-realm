@@ -353,9 +353,9 @@ async function handleApi(req, env, path) {
       if (a === 'battle_end' && r && r.mode === 'arena') await sAdd(r.dt || 0, r.win ? 1 : 0, r.win ? 0 : 1);
       if (a === 'battle_start' && r && r.forfeit) await sAdd(r.forfeit.dt || 0, 0, 1);
       // maç geçmişi
-      if (a === 'battle_end' && r) await logMatch(user.id, r.mode, r.mode === 'arena' ? 'Bot · ' + MR.LEAGUES[r.lg0 || 0].n : r.mode === 'adv' ? MR.advStage(r.adv).name : (r.opp || '?'), r.win, r.dt || 0);
+      if (a === 'battle_end' && r) await logMatch(user.id, r.mode, r.mode === 'arena' ? 'Bot · ' + MR.LEAGUES[r.lg0 || 0].n : r.mode === 'adv' ? MR.advStage(r.adv).name : r.mode === 'tower' ? MR.towerStage(r.el, r.f).name : (r.opp || '?'), r.win, r.dt || 0);
       if (a === 'battle_start' && r && r.forfeit) await logMatch(user.id, 'arena', 'Terk edilen savaş', false, r.forfeit.dt || 0);
-      if (a === 'battle_end' || a === 'pack' || a === 'evo' || a === 'awaken' || a === 'craft' || a === 'chest' || a === 'avatar')
+      if (a === 'battle_end' || a === 'pack' || a === 'evo' || a === 'awaken' || a === 'craft' || a === 'chest' || a === 'avatar' || a === 'lvup')
         await db.prepare("INSERT INTO pub (user_id, stats, deck, updated) VALUES (?, ?, '[]', ?) ON CONFLICT(user_id) DO UPDATE SET stats = excluded.stats, updated = excluded.updated")
           .bind(user.id, JSON.stringify(MR.pubStats(st)), Date.now()).run();   // deste seçimine dokunmadan tabloyu güncelle
       return json({ r, save: st, rev, ach });
