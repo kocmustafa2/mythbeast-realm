@@ -2512,7 +2512,7 @@ function updShow(){if(!window.__upd||document.getElementById('updb'))return;if(B
   d.querySelector('#updx').onclick=()=>d.remove()}
 setTimeout(verCheck,6000);setInterval(verCheck,10*60e3);
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')verCheck()});addEventListener('online',()=>setTimeout(verCheck,2000));
-const ASSET_V=12;try{if('serviceWorker' in navigator&&location.protocol==='https:'||location.hostname==='localhost')navigator.serviceWorker.register('sw.js?v='+ASSET_V).catch(()=>{})}catch(e){}
+const ASSET_V=13;try{if('serviceWorker' in navigator&&location.protocol==='https:'||location.hostname==='localhost')navigator.serviceWorker.register('sw.js?v='+ASSET_V).catch(()=>{})}catch(e){}
 (function prefetch(){
   // önce kart resimleri (önce sahip olunanlar), sonra çerçeveler ve arka planlar
   const own=ALLC().filter(c=>owned(c.id)).map(c=>c.id),rest=ALLC().map(c=>c.id).filter(id=>!own.includes(id));
