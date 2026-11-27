@@ -1018,6 +1018,7 @@ body.inb main{padding:0 10px 16px}
 .twf .twn{width:26px;font:16px 'MRDisplay',sans-serif;color:#8f9bab;text-align:center}.twf .twl{flex:1;font-size:14px}.twf em{font-style:normal;color:#7eff9a}
 .twf img{width:40px;height:40px;border-radius:10px;object-fit:cover;box-shadow:0 0 0 2px var(--ac)}
 .twf.boss{background:color-mix(in srgb,var(--ac) 18%,#14101c);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ac) 60%,transparent)}.twf.boss .twl{font:15px 'MRDisplay',sans-serif;color:var(--ac)}
+.twf.big{min-height:58px;background:linear-gradient(90deg,#ff3d5a33,color-mix(in srgb,var(--ac) 28%,#14101c));box-shadow:inset 0 0 0 1.5px #ff5a6a}.twf.big .twl{color:#ffb0b8}.twf.big img{width:50px;height:50px;box-shadow:0 0 0 2px #ff5a6a,0 0 12px #ff3d5a88}
 .twf.top{min-height:60px;background:linear-gradient(90deg,#ffd25a26,color-mix(in srgb,var(--ac) 25%,#14101c))}.twf.top img{width:52px;height:52px}
 .twf.cur{box-shadow:inset 0 0 0 2px var(--ac),0 0 14px color-mix(in srgb,var(--ac) 60%,transparent)}.twf.cur em{color:var(--ac)}
 .twf.lock{opacity:.4}.twf.done .twn{color:#7eff9a}
@@ -1050,7 +1051,7 @@ body.inb main{padding:0 10px 16px}
 <div id="title"><div class="tbg"></div><div class="tlogo"><img class="tlimg" src="img/logo.webp" alt="Mythbeast Realm"><span class="t3">Seri 1 · Elementler</span></div>
 <button class="sndb tsnd" id="tsnd" aria-label="Ses"></button><div class="tbtm"><button class="tgo" id="tgo" aria-label="Oyna"><img src="img/btn_play.webp" alt="Oyna"></button><p class="tinfo" id="tinfo"></p></div></div>
 
-<script src="rules.js?v=9"></script>
+<script src="rules.js?v=10"></script>
 <script>
 {
 // Ortak kurallar (rules.js): kart verisi ve ekonomi. Oyun ve sunucu aynı dosyayı kullanır.
@@ -1159,7 +1160,7 @@ const en=(el,cls='')=>`<i class="en ${cls}" style="--ec:var(--ec-${el})">${icon(
 document.documentElement.style.cssText='--ec-metal:#8e9bb0;--ec-poison:#8fd10f;--ec-blood:#c40000;--ec-fire:#ff6a3d;--ec-water:#2f9be6;--ec-earth:#6f9e2e;--ec-air:#7e93b8;--ec-light:#e8b520;--ec-shadow:#6d4aa8';
 
 const ART={};
-const IMG=Object.fromEntries(Array.from({length:109},(_,i)=>[i+1,1]));PRL.forEach(c=>IMG[c.id]=1);
+const IMG=Object.fromEntries(Array.from({length:109},(_,i)=>[i+1,1]));CARDS.forEach(c=>IMG[c.id]=1);PRL.forEach(c=>IMG[c.id]=1);
 /* ---------- UYANMIŞ EX KARTLAR ---------- */
 /* ---------- EZELİ KARTLAR (şimdilik sadece oyunun sahibine açık, paketten/rakipten çıkmaz) ---------- */
 const EZOWN='u_gCZR5eBoOHaN6bC0V8kJwQ';
@@ -1299,7 +1300,7 @@ document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
   if(B&&!B.over&&b.dataset.tab!==(B.adv!=null||B.tw?'adv':'arena')){toast('Önce savaşı bitir');return}
   if(B&&B.over){B=null;document.body.classList.remove('inb')}tab=b.dataset.tab;render();scrollTo(0,0)});
 const TI=x=>String(x);
-const packArt=()=>`<div class="foil img"><img src="img/${packSet===2?'pack2':'pack'}.webp" alt="" draggable="false"><div class="ptl"><img class="plg" src="img/logo.webp" alt="Mythbeast Realm"><small>SERİ ${packSet} · 5 KART</small></div></div>`;
+const packArt=()=>`<div class="foil img"><img src="img/${packSet===3?'pack3':packSet===2?'pack2':'pack'}.webp" alt="" draggable="false"><div class="ptl"><img class="plg" src="img/logo.webp" alt="Mythbeast Realm"><small>SERİ ${packSet} · 5 KART</small></div></div>`;
 
 /* ---------- PAKETLER ---------- */
 
@@ -1317,12 +1318,12 @@ function rareStrip(){const R=(S.rare||[]).filter(x=>BY[x.id]);
 function renderPack(){
   if(tutOn())packSet=1;else packSet=S.pset||1;
   const can=S.free>0||S.gold>=PACK.cost,left=PACK.pity-S.pity;
-  $('#main').innerHTML=`<div class="psets">${[1,2].map(n=>`<button class="chip${packSet===n?' on':''}" data-ps="${n}"${tutOn()&&n===2?' disabled':''}>Seri ${n}${n===2?' · Yeni':''}</button>`).join('')}</div><h2>${packSet===2?'Seri 2 · Metal ve Zehir':'Seri 1 · Elementler'}</h2><p class="sub">Her pakette 5 kart. ${packSet===2?'Seri 2 paketinden sadece Metal ve Zehir kartları çıkar.':'Evrimli kartlar çok nadir çıkar, onları kopya toplayarak evrimleştir.'}</p>
+  $('#main').innerHTML=`<div class="psets">${[1,2,3].map(n=>`<button class="chip${packSet===n?' on':''}" data-ps="${n}"${tutOn()&&n>1?' disabled':''}>Seri ${n}${n===3?' · Yeni':''}</button>`).join('')}</div><h2>${packSet===3?'Seri 3 · Yeni Çizgiler':packSet===2?'Seri 2 · Metal ve Zehir':'Seri 1 · Elementler'}</h2><p class="sub">Her pakette 5 kart. ${packSet===3?'Seri 3 paketinden yeni çizgiler çıkar. Çok nadiren <b>✨ Parlak</b> kart da çıkabilir (asıl kaynak kuleler).':packSet===2?'Seri 2 paketinden sadece Metal ve Zehir kartları çıkar.':'Evrimli kartlar çok nadir çıkar, onları kopya toplayarak evrimleştir.'}</p>
   <div class="packzone"><div class="pk" id="pk">${packArt()}</div></div>
   <button class="btn" id="buy" ${can?'':'disabled'}>${S.free>0?`Ücretsiz paket aç (${S.free})`:`Paket aç · ${PACK.cost} altın`}</button>
   ${!can?'<p class="free">Altının bitti. Arenada savaşarak altın kazan.</p>':''}
   ${loginBox()}${dqBox()}${giftBox()}
-  <div class="fp pity${left<=5?' hot':''}"><img class="pmed" src="img/ic/legmed.webp" alt=""><div class="pti"><b>Efsanevi garantisi</b><small>${left===1?'Bir sonraki pakette kesin Efsanevi!':`En geç <em>${left}</em> paket içinde`}</small><div class="bar"><i style="width:${S.pity/(PACK.pity-1)*100}%"></i></div></div></div>
+  ${packSet===3?'':`<div class="fp pity${left<=5?' hot':''}"><img class="pmed" src="img/ic/legmed.webp" alt=""><div class="pti"><b>Efsanevi garantisi</b><small>${left===1?'Bir sonraki pakette kesin Efsanevi!':`En geç <em>${left}</em> paket içinde`}</small><div class="bar"><i style="width:${S.pity/(PACK.pity-1)*100}%"></i></div></div></div>`}
   ${rareStrip()}`;
   bindGift();bindDq();bindLogin();navDot();document.querySelectorAll('.rit').forEach(e=>e.onclick=()=>showCard(BY[e.dataset.id],true));
   document.querySelectorAll('[data-ps]').forEach(b=>b.onclick=()=>{S.pset=+b.dataset.ps;save();renderPack()});
@@ -1524,6 +1525,7 @@ function renderCol(){
   $('#main').innerHTML=`<h2>Koleksiyon</h2><p class="sub">${uniq()} / ${N} kart · ⚡ ${EXC.filter(x=>owned(x.id)).length}/${EXC.length} EX · <span class="shtxt">✦ ${CARDS.filter(c=>hasShiny(c.id)).length} / ${N} holo</span>. Eksik karta dokunup tozla üretebilirsin.</p>
   <div class="filters">${[['all','Tümü'],['miss','Eksikler'],['shiny','✦ Holo'],['sup','Destek'],...ELS.map(e=>[e,T[e].n])].map(([k,n])=>`<button class="chip${colF===k?' on':''}" data-f="${k}">${T[k]?icon(k):k==='sup'?'<img class="cico" src="img/sup/evo.webp" alt="">':''}${n}</button>`).join('')}</div>
   ${colF==='all'&&EZC.some(c=>owned(c.id))?`<section class="tgrp ezg"><div class="tgh"><b>☠ Ezeli</b><span>${EZC.filter(c=>owned(c.id)).length} / ${EZC.length}</span></div><div class="grid">${EZC.filter(c=>owned(c.id)).map(x=>cardHTML(x,{noTilt:1})).join('')}</div></section>`:''}${colF==='all'?`<section class="tgrp exg"><div class="tgh"><b>⚡ Uyanmış EX</b><span>${EXC.filter(x=>owned(x.id)).length} / ${EXC.length}</span></div><div class="grid">${EXC.map(x=>cardHTML(x,{noTilt:1,miss:!owned(x.id),extra:MR.lvOf(S,x.id)&&owned(x.id)?`<div class="lvbdg">Sv ${MR.lvOf(S,x.id)}</div>`:''})).join('')}</div></section>`:''}
+  ${colF==='all'&&PRL.some(c=>owned(c.id))?`<section class="tgrp prlg"><div class="tgh"><b>✨ Parlak</b><span>${PRL.filter(c=>owned(c.id)).length} / ${PRL.length}</span></div><div class="grid">${PRL.filter(c=>owned(c.id)).map(x=>cardHTML(x,{noTilt:1,extra:`${owned(x.id)>1?`<div class="cntb">×${owned(x.id)}</div>`:''}${MR.lvOf(S,x.id)?`<div class="lvbdg">Sv ${MR.lvOf(S,x.id)}</div>`:''}`})).join('')}</div></section>`:''}
   ${colF==='sup'||colF==='all'?`<section class="tgrp supg"><div class="tgh"><img class="cico" src="img/sup/evo.webp" alt=""><b>Destek kartları</b><span>${SUPK.reduce((t,k)=>t+supHave(k),0)} adet</span></div><div class="grid sgrid">${SUPK.map(k=>supCard(k,{n:supHave(k),desc:false})).join('')}</div></section>`:''}
   ${colF==='sup'?'':body||(colF==='shiny'?'<div class="empty">Henüz holo kartın yok. Paketlerdeki her kart %'+(SHINY.chance*100).toFixed(1).replace('.',',')+' ihtimalle holo çıkar.</div>':'<div class="empty">Eksik kart yok, seri tamam!</div>')}`;
   document.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{colF=b.dataset.f;renderCol();scrollTo(0,0)});
@@ -1535,7 +1537,7 @@ function awakenBox(c){const X=exOf(c);if(!X)return'';const ch=ADV_CH.findIndex(x
   if(owned(X.id))return `<div class="evo awk"><b>⚡ Uyanış</b><p class="evh">${X.name} EX senin.</p><button class="btn alt" id="awv">EX kartı gör</button></div>`;
   return `<div class="evo awk"><b>⚡ Uyanış: ${X.name} EX</b><ul>${ok(owned(c.id)>=1+EXCOST.copies,`${c.name} kopyası: ${Math.max(0,owned(c.id)-1)}/${EXCOST.copies}`)}${ok(S.dust>=EXCOST.dust,`Toz: ${S.dust}/${EXCOST.dust}`)}${ok((S.exB||{})[ch],`Macera: ${ADV_CH[ch][1]} uyanmış boss'u yen`)}</ul><button class="btn" id="awk" ${canAwaken(c)?'':'disabled'}>Uyandır</button></div>`}
 function showCard(c,allowCraft){
-  const ov=$('#ov'),have=owned(c.id),R=RAR[c.r],root=rootOf(c),chain=CARDS.filter(x=>x.stage>0&&rootOf(x).id===root.id).sort((p,q)=>p.stage-q.stage);
+  const ov=$('#ov'),have=owned(c.id),R=RAR[c.r],root=rootOf(c),chain=[...CARDS,...PRL].filter(x=>x.stage>0&&rootOf(x).id===root.id).sort((p,q)=>p.stage-q.stage);
   const extra=have>1?have-1:0;
   const evoRows=allowCraft&&chain.length?`<div class="evo"><b>Evrim</b><p class="evh">${root.name} kopyası: <b>${copies(root)}</b></p>${chain.map(t=>{const need=EVO_NEED[t.stage],pc=Math.min(100,copies(t)/need*100),lock=t.stage===2&&!owned(t.from);
     return `<div class="evr"><div class="evt"><span>${t.name}${owned(t.id)?' ✓':''}</span><small>${need} ${root.name}${lock?` · önce ${BY[t.from].name}`:''}</small><div class="evbar"><i style="width:${pc}%"></i></div></div><button class="btn evbtn" data-t="${t.id}" ${canEvo(t)?'':'disabled'}>Evrimleştir</button></div>`}).join('')}</div>`:'';
@@ -2421,7 +2423,7 @@ document.addEventListener('pointerdown',e=>{if(e.target.closest('.btn,.tgo,nav b
 
 // görselleri önceden indir: başlangıç ekranında beklerken arka planda, sırayla
 // dosyaları telefonda saklayan servis: içeriği değişen bir görsel/ses olursa ASSET_V artırılır
-const ASSET_V=9;try{if('serviceWorker' in navigator&&location.protocol==='https:'||location.hostname==='localhost')navigator.serviceWorker.register('sw.js?v='+ASSET_V).catch(()=>{})}catch(e){}
+const ASSET_V=10;try{if('serviceWorker' in navigator&&location.protocol==='https:'||location.hostname==='localhost')navigator.serviceWorker.register('sw.js?v='+ASSET_V).catch(()=>{})}catch(e){}
 (function prefetch(){
   // önce kart resimleri (önce sahip olunanlar), sonra çerçeveler ve arka planlar
   const own=ALLC().filter(c=>owned(c.id)).map(c=>c.id),rest=ALLC().map(c=>c.id).filter(id=>!own.includes(id));
@@ -3023,20 +3025,20 @@ let advView='adv',twSel='fire';
 const advSw=()=>`<div class="psets"><button class="chip${advView==='adv'?' on':''}" data-av="adv">Diyarlar</button><button class="chip${advView==='tw'?' on':''}" data-av="tw">Kuleler · Yeni</button></div>`;
 function bindAdvSw(){document.querySelectorAll('[data-av]').forEach(b=>b.onclick=()=>{advView=b.dataset.av;renderAdv();scrollTo(0,0)})}
 function renderTowers(){const el=twSel,done=MR.twDone(S,el),F=MR.TOWER.floors;
-  $('#main').innerHTML=`<h2>Macera</h2>${advSw()}<p class="sub">Her türün ${F} katlı bir kulesi var. Katları geçerek o türün <b>ruh taşlarını</b> topla. Boss katlarından <b>kadim taş</b> ve <b>Parlak kart</b> düşer. Taşlarla son evrim kartlarının seviyesini yükseltirsin.</p>
+  $('#main').innerHTML=`<h2>Macera</h2>${advSw()}<p class="sub">Her türün ${F} katlı bir kulesi var. Katları geçerek o türün <b>ruh taşlarını</b> topla. Her 5 katta bir Seri 3 <b>mini boss</b>, her 25 katta bir <b>güçlü boss</b> bekler; boss'lardan <b>kadim taş</b> ve <b>Parlak kart</b> düşer. Taşlarla son evrim kartlarının seviyesini yükseltirsin.</p>
   <div class="twtabs">${ELS.map(e=>`<button class="twt${e===el?' on':''}" data-te="${e}" style="--ac:${AUC[e]}">${icon(e)}<small>${MR.twDone(S,e)}/${F}</small></button>`).join('')}</div>
   <div class="fp twinfo" style="--ac:${AUC[el]}"><b>${MR.T_N[el]} Kulesi</b><div class="twres"><span>${gem(el)}<b>${ssN(el)}</b> ruh taşı</span><span>${gem(el,'ks')}<b>${ksN(el)}</b> kadim taş</span></div><small>Geçilmiş katlar tekrar oynanabilir · bugün kalan tekrar ödülü: ${MR.twLeft(S,Date.now())}/${MR.TOWER.daily}</small></div>
   <div class="tower" style="--ac:${AUC[el]};--twbg:url(img/tw/${el}.webp)">${[...Array(F)].map((_,k)=>{const f=F-1-k,bs=MR.twBoss(f),stt=f<done?'done':f===done?'cur':'lock',S0=bs?MR.towerStage(el,f):null;
-    return `<button class="twf ${stt}${bs?' boss':''}${f===F-1?' top':''}" data-tf="${f}"><span class="twn">${f+1}</span>${bs?`<img src="img/t/${S0.boss.id}.webp" alt="">`:''}<span class="twl">${bs?(f===F-1?'ZİRVE · ':'BOSS · ')+S0.boss.name:'Kat '+(f+1)}</span><em>${stt==='done'?'✓':stt==='lock'?'':'▶'}</em></button>`}).join('')}</div>`;
+    return `<button class="twf ${stt}${bs?' boss':''}${S0&&S0.big?' big':''}${f===F-1?' top':''}" data-tf="${f}"><span class="twn">${f+1}</span>${bs?`<img src="img/t/${S0.boss.id}.webp" alt="">`:''}<span class="twl">${bs?(f===F-1?'ZİRVE · ':S0.big?'GÜÇLÜ BOSS · ':'Mini boss · ')+S0.boss.name:'Kat '+(f+1)}</span><em>${stt==='done'?'✓':stt==='lock'?'':'▶'}</em></button>`}).join('')}</div>`;
   bindAdvSw();document.querySelectorAll('[data-te]').forEach(b=>b.onclick=()=>{twSel=b.dataset.te;renderTowers()});
   document.querySelectorAll('.twf').forEach(b=>b.onclick=()=>{const f=+b.dataset.tf;if(f>done){toast('Önce alttaki katı geç');return}towerInfo(el,f)});
   const cu=document.querySelector('.twf.cur');if(cu)setTimeout(()=>cu.scrollIntoView({block:'center',behavior:'smooth'}),60)}
-function towerInfo(el,f){const st=MR.towerStage(el,f),ov=$('#ov'),first=f>=MR.twDone(S,el),R=st.rule==='boss'?['BOSS','Boss dolu (güçlü saldırısı hazır) başlar']:ADV_RULE[st.rule],left=MR.twLeft(S,Date.now());ov.className='ov on';
-  ov.innerHTML=`<div class="fp advi" style="--ac:${AUC[el]}"><div class="sth"><b>${st.boss?(st.last?'ZİRVE · ':'BOSS · '):''}${MR.T_N[el]} Kulesi · Kat ${f+1}</b><button class="stx" id="tix">✕</button></div>
+function towerInfo(el,f){const st=MR.towerStage(el,f),ov=$('#ov'),first=f>=MR.twDone(S,el),R=st.big?['GÜÇLÜ BOSS','Boss dolu başlar, rakip hiç hata yapmaz, deste Efsanevi ve mini bosslarla dolu']:st.rule==='boss'?['MİNİ BOSS','Boss dolu (güçlü saldırısı hazır) başlar']:ADV_RULE[st.rule],left=MR.twLeft(S,Date.now());ov.className='ov on';
+  ov.innerHTML=`<div class="fp advi" style="--ac:${AUC[el]}"><div class="sth"><b>${st.boss?(st.last?'ZİRVE · ':st.big?'GÜÇLÜ BOSS · ':'MİNİ BOSS · '):''}${MR.T_N[el]} Kulesi · Kat ${f+1}</b><button class="stx" id="tix">✕</button></div>
    <div class="advr">${st.rule!=='none'?`<b>${R[0]}</b><span>${R[1]}</span>`:`<b>Normal savaş</b><span>Özel kural yok</span>`}</div>
    <small class="advs">Rakip destesi · kart değerleri seninkilerle aynı</small><div class="advd">${st.deck.map(c=>`<div class="advdc r${c.r}${st.boss&&c.id===st.boss.id?' bs':''}"><img src="img/t/${c.id}.webp" alt=""><span>${c.name}</span></div>`).join('')}</div>
    <small class="advs">${first?'İlk geçiş ödülü':left?`Tekrar ödülü · bugün ${left} kaldı`:'Bugünkü tekrar ödüllerin bitti (savaşabilirsin, ödül yok)'}</small>
-   <div class="advw">${first?`<span>${gem(el)}+${st.ss}</span><span><img src="img/ic/gold.webp" alt="">${st.gold}</span>${st.ks?`<span>${gem(el,'ks')}+${st.ks}</span><span class="prlw">✦ Parlak kart</span>`:''}`:left?`<span>${gem(el)}+${Math.ceil(st.ss/3)}</span><span><img src="img/ic/gold.webp" alt="">${Math.round(st.gold/4)}</span>${st.boss?`<span class="sm">kadim taş %${MR.TOWER.ksRep*100} · Parlak %${MR.TOWER.prlRep*100}</span>`:''}`:''}</div>
+   <div class="advw">${first?`<span>${gem(el)}+${st.ss}</span><span><img src="img/ic/gold.webp" alt="">${st.gold}</span>${st.ks?`<span>${gem(el,'ks')}+${st.ks}</span><span class="prlw">✦ Parlak kart</span>`:''}${st.pk?`<span><img src="img/ic/pack.webp" alt="">+${st.pk}</span>`:''}`:left?`<span>${gem(el)}+${Math.ceil(st.ss/3)}</span><span><img src="img/ic/gold.webp" alt="">${Math.round(st.gold/4)}</span>${st.boss?`<span class="sm">kadim taş %${MR.TOWER.ksRep*100} · Parlak %${MR.TOWER.prlRep*100}</span>`:''}`:''}</div>
    <button class="btn" id="tigo">Savaşa gir</button></div>`;
   $('#tix').onclick=()=>{ov.className='ov';ov.innerHTML=''};
   $('#tigo').onclick=()=>{if(!uniq()){toast('Önce bir paket aç');return}ov.className='ov';ov.innerHTML='';startBattle(undefined,undefined,{el,f})}}

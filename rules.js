@@ -138,6 +138,103 @@ const RAW=[
  [107,'Sporcuk','poison',0,0,0,0,2,'c',[[1,'Spor Püskürt'],[2,'Mantar Tozu','coin']],'Utangaçtır, korkunca etrafa spor saçar.'],
  [108,'Sporbulut','poison',1,1,107,10,2,'c',[[2,'Zehirli Spor'],[3,'Spor Bulutu','splash']],'Ormanın en derin yerinde dev mantarların arasında yaşar.'],
  [109,'Bataklık Hidrası','poison',3,0,0,0,0,'lt',[[3,'Üçlü Isırık'],[4,'Asit Gölü','burn']],'Üç başından biri hep uyanıktır.'],
+ // ===================== SERİ 3: YENİ ÇİZGİLER (Metal ve Zehir sonra) =====================
+ [110,'Korpençe Yavrusu','fire',0,0,0,0,0,'',[[1,'Pati Darbesi'],[2,'Kor Pençe','burn']],'Uykusunda bile pençelerinden kıvılcım çıkar.'],
+ [111,'Alev Kaplanı','fire',1,1,110,0,0,'',[[1,'Alevli Atılış'],[2,'Yakıcı Pençe','burn']],'Çizgileri öfkelendikçe daha parlak yanar.'],
+ [112,'Volkan Kaplanı','fire',2,2,111,10,0,'',[[1,'Lav Pençesi'],[2,'Volkanik Kükreme','splash']],'Kükrediğinde dağların içindeki lav kıpırdar.'],
+ [113,'Alevtilki','fire',0,0,0,-10,0,'',[[1,'Kuyruk Kıvılcımı'],[2,'Alev Sıçraması','coin']],'Kuyruğunu sallayınca etrafa sıcak kıvılcımlar saçar.'],
+ [114,'Kızıl Kuyruk','fire',1,1,113,-10,0,'',[[1,'Ateş Kuyruğu'],[2,'Kızıl Dans','burn']],'Ormanda bıraktığı iz geceleri hâlâ parlar.'],
+ [115,'Dokuzalev Tilkisi','fire',2,2,114,0,0,'',[[1,'Dokuz Alev'],[2,'Alev Kasırgası','splash']],'Dokuz kuyruğunun her biri ayrı bir alev taşır.'],
+ [116,'Kıvılkuş','fire',0,0,0,-10,0,'',[[1,'Gagala'],[2,'Kıvılcım Kanat']],'İlk uçuşunda arkasında küçük bir duman izi bırakır.'],
+ [117,'Alevkanat','fire',1,1,116,0,0,'',[[1,'Alev Dalışı'],[2,'Yanan Tüyler','burn']],'Kanat çırptığında havadaki nem buhar olur.'],
+ [118,'Güneşyele Kartal','fire',2,2,117,0,0,'',[[1,'Güneş Pençesi'],[2,'Kızıl Gökyüzü','splash']],'Yelesi gün batımının bütün renklerini taşır.'],
+ [119,'Kor Kertenkele','fire',0,0,0,0,0,'',[[1,'Sıcak Isırık'],[2,'Kor Tükürüğü','burn']],'Sırtındaki pullar kor gibi kızarır.'],
+ [120,'Lav Varanı','fire',1,1,119,10,0,'',[[1,'Lav Kuyruğu'],[2,'Erimiş Isırık','burn']],'Geçtiği taşları yumuşatıp arkasında iz bırakır.'],
+ [121,'Magma Basilisk','fire',2,2,120,20,0,'',[[1,'Magma Bakışı'],[2,'Lav Seli','recoil']],'Bakışı kayaları bile kızıl kora çevirir.'],
+ [122,'Isıl Yavru','fire',0,0,0,10,0,'',[[1,'Toslama'],[2,'Sıcak Boynuz']],'Boynuzları çıkmadan önce bile alnı sıcacıktır.'],
+ [123,'Kor Boğa','fire',1,1,122,20,0,'',[[1,'Kor Hücum'],[2,'Alev Toslaması','recoil']],'Burnundan çıkan duman köyleri uyarır.'],
+ [124,'Cehennem Bizonu','fire',2,2,123,20,0,'',[[1,'Cehennem Boynuzu'],[2,'Kızgın Sürü','splash']],'Toynaklarının vurduğu yer günlerce soğumaz.'],
+ [125,'Su Samurcuğu','water',0,0,0,0,0,'',[[1,'Su Sıçratma'],[2,'Oyunbaz Dalış','heal']],'Sırtüstü yüzerken karnında taş taşır.'],
+ [126,'Akıntı Samuru','water',1,1,125,0,0,'',[[1,'Akıntı Darbesi'],[2,'Girdap Dansı','heal']],'Nehrin en hızlı akıntısında bile rahatça yüzer.'],
+ [127,'Gelgit Samuru','water',2,2,126,10,0,'',[[1,'Gelgit Pençesi'],[2,'Dalga Çağrısı','splash']],'Ay doğduğunda denizi kıyıya çağırır.'],
+ [128,'Kurbağacık','water',0,0,0,-10,0,'',[[1,'Dil Atışı'],[2,'Su Baloncuğu','coin']],'Nilüferin üstünde bütün gün yağmur bekler.'],
+ [129,'Yağmur Kurbağası','water',1,1,128,0,0,'',[[1,'Yağmur Damlası'],[2,'Sıçrayan Dalga','heal']],'Vıraklamasıyla bulutları toplar.'],
+ [130,'Sağanak Kurbağası','water',2,2,129,10,0,'',[[1,'Sağanak'],[2,'Fırtına Vıraklaması','splash']],'Sırtındaki küre içinde bir fırtına taşır.'],
+ [131,'Mürekkep Yavrusu','water',0,0,0,-10,0,'',[[1,'Mürekkep'],[2,'Dokunaç Sarması','coin']],'Korkunca mor bir bulutun içinde kaybolur.'],
+ [132,'Derin Kalamar','water',1,1,131,0,0,'',[[1,'Derin Dokunaç'],[2,'Mürekkep Bulutu','burn']],'Işığın ulaşmadığı yerde kendi ışığını yakar.'],
+ [133,'Abis Krakeni','water',2,2,132,20,0,'',[[1,'Gemi Kıran'],[2,'Abis Girdabı','splash']],'Kolları batık gemilerin direklerini sarar.'],
+ [134,'Timsahçık','water',0,0,0,0,0,'',[[1,'Küçük Isırık'],[2,'Kuyruk Şaplağı']],'Henüz dişleri çıkıyor ama çok hevesli.'],
+ [135,'Nehir Timsahı','water',1,1,134,20,0,'',[[1,'Nehir Isırığı'],[2,'Ölüm Döngüsü','recoil']],'Nehrin dibinde saatlerce kımıldamadan bekler.'],
+ [136,'Gelgit Timsahı','water',2,2,135,20,0,'',[[1,'Gelgit Çenesi'],[2,'Dev Dalga','splash']],'Sırtındaki pullar gelgitle birlikte parlar.'],
+ [137,'Pırılbalık','water',0,0,0,-10,0,'',[[1,'Pul Parıltısı'],[2,'Kabarcık']],'Güneşli sularda gökkuşağı gibi parlar.'],
+ [138,'Dalgabalık','water',1,1,137,0,0,'',[[1,'Dalga Yüzgeci'],[2,'Su Kılıcı','coin']],'Yüzgeçleri dalgaları ikiye böler.'],
+ [139,'Okyanus Leviatanı','water',2,2,138,10,0,'',[[1,'Leviatan Yüzgeci'],[2,'Okyanus Gazabı','splash']],'Yüzeye çıktığında deniz bir anlığına susar.'],
+ [140,'Buzpengu','water',0,0,0,0,0,'',[[1,'Kayma'],[2,'Buz Topu']],'Buzun üstünde karnı üstünde kaymaya bayılır.'],
+ [141,'Kar Penguen','water',1,1,140,10,0,'',[[1,'Kar Fırtınası'],[2,'Buz Gagası','coin']],'Kanat çırptığında etrafı kar taneleri sarar.'],
+ [142,'Buzul İmparatoru','water',2,2,141,20,0,'',[[1,'Buzul Kanadı'],[2,'Donduran Hüküm','splash']],'Buzulların kralı, tacı hiç erimeyen buzdandır.'],
+ [143,'Kutup Yavrusu','water',0,0,0,10,0,'',[[1,'Pofuduk Pati'],[2,'Kar Yuvarlama','heal']],'Kar yığınlarına atlayıp saklambaç oynar.'],
+ [144,'Aurora Ayısı','water',1,1,143,20,0,'',[[1,'Buz Pençesi'],[2,'Aurora Işıltısı','heal']],'Kürkü kutup ışıklarını yansıtır.'],
+ [145,'Kuzey Işığı Ayısı','water',2,2,144,20,0,'',[[1,'Kuzey Pençesi'],[2,'Gökyüzü Perdesi','splash']],'Uyandığında gökyüzü yeşile ve mora boyanır.'],
+ [146,'Kayakaplumbağa','earth',0,0,0,20,0,'',[[1,'Kabuk Darbesi'],[2,'Filiz Kalkanı','heal']],'Kabuğunun üstünde küçük bir fidan büyütür.'],
+ [147,'Dağ Kaplumbağası','earth',1,1,146,20,0,'',[[1,'Kaya Kabuk'],[2,'Dağ Sarsıntısı','heal']],'Sırtındaki ağaçlarda kuşlar yuva yapar.'],
+ [148,'Kıta Kaplumbağası','earth',2,2,147,20,0,'',[[1,'Kıta Darbesi'],[2,'Yer Sarsıntısı','splash']],'Sırtında koca bir ormanla yavaşça yürür.'],
+ [149,'Kök Kirpi','earth',0,0,0,0,0,'',[[1,'Yaprak Diken'],[2,'Yuvarlanma','coin']],'Dikenlerinin arasından yapraklar fışkırır.'],
+ [150,'Diken Kirpi','earth',1,1,149,0,0,'',[[1,'Diken Yağmuru'],[2,'Kök Kalkanı','heal']],'Korkunca dikenleri ağaç dalları gibi uzar.'],
+ [151,'Ormantaşı Kirpisi','earth',2,2,150,10,0,'',[[1,'Taş Diken'],[2,'Orman Fırtınası','splash']],'Dikenleri kristalleşmiş ağaç kökleridir.'],
+ [152,'Kılkeçi','earth',0,0,0,0,0,'',[[1,'Toslama'],[2,'Boynuz Sıçrayışı']],'Kayalıklarda hiç düşmeden zıplar.'],
+ [153,'Kayakeçisi','earth',1,1,152,10,0,'',[[1,'Kaya Boynuz'],[2,'Uçurum Atlayışı','coin']],'Dik yamaçlarda yaşar, yosunla beslenir.'],
+ [154,'Zirve Koçu','earth',2,2,153,20,0,'',[[1,'Zirve Boynuzu'],[2,'Çığ Hücumu','recoil']],'Dağın zirvesinde yalnız başına nöbet tutar.'],
+ [155,'Taşpalamut','earth',0,0,0,10,0,'',[[1,'Burun Darbesi'],[2,'Toprak Eşme']],'Palamut ararken toprağı karış karış eşer.'],
+ [156,'Dağ Domuzu','earth',1,1,155,20,0,'',[[1,'Diş Hücumu'],[2,'Kaya Kırma','recoil']],'Yolundaki ağaçları devirerek ilerler.'],
+ [157,'Granit Yaban Domuzu','earth',2,2,156,20,0,'',[[1,'Granit Diş'],[2,'Heyelan','splash']],'Derisi granit kadar serttir.'],
+ [158,'Kumcuk Akrep','earth',0,0,0,0,0,'',[[1,'Kıskaç'],[2,'Kum Sokması','burn']],'Kumun altına gömülüp sadece gözlerini çıkarır.'],
+ [159,'Kumfırtına Akrebi','earth',1,1,158,0,0,'',[[1,'Kum Kıskacı'],[2,'Kum Fırtınası','splash']],'Kuyruğunu döndürünce küçük bir kum fırtınası kopar.'],
+ [160,'Çöl Akrebi','earth',2,2,159,10,0,'',[[1,'Çöl İğnesi'],[2,'Kavurucu Sokma','burn']],'Çölün en sıcak saatinde avlanır.'],
+ [161,'Toprakfare','earth',0,0,0,-10,0,'',[[1,'Kemirme'],[2,'Tünel Kazma','coin']],'Mağarada parlayan kristalleri biriktirir.'],
+ [162,'Kaya Sıçanı','earth',1,1,161,0,0,'',[[1,'Kristal Diş'],[2,'Taş Atışı']],'Dişleriyle kayaları bile oyabilir.'],
+ [163,'Dağ Sıçanı','earth',2,2,162,10,0,'',[[1,'Kristal Pençe'],[2,'Mağara Çöküşü','splash']],'Sırtında büyüyen kristaller mağarayı aydınlatır.'],
+ [164,'Esintikuş','air',0,0,0,-10,0,'',[[1,'Gagala'],[2,'Esinti','heal']],'Rüzgârın estiği yöne neşeyle uçar.'],
+ [165,'Rüzgâr Kırlangıcı','air',1,1,164,-10,0,'',[[1,'Hızlı Dalış'],[2,'Rüzgâr Kesiği','coin']],'Fırtınadan önce alçaktan uçar.'],
+ [166,'Kasırga Kırlangıcı','air',2,2,165,0,0,'',[[1,'Kasırga Kanat'],[2,'Bıçak Rüzgârı','splash']],'Kanatlarının arkasında kasırgalar doğar.'],
+ [167,'Yusufçuk','air',0,0,0,-10,0,'',[[1,'Kanat Vızıltısı'],[2,'Hızlı Dokunuş']],'Çiçeklerin arasında havada asılı kalır.'],
+ [168,'Rüzgâr Yusufçuğu','air',1,1,167,-10,0,'',[[1,'Kanat Kesiği'],[2,'Rüzgâr Girdabı','coin']],'Kanatları gün ışığında cam gibi parlar.'],
+ [169,'Gök Yusufçuk','air',2,2,168,0,0,'',[[1,'Gök Kanadı'],[2,'Işıltılı Fırtına','splash']],'Uçtuğu yerde gökyüzünde altın çizgiler kalır.'],
+ [170,'Uçurtma Balığı','air',0,0,0,0,0,'',[[1,'Süzülme'],[2,'Bulut Sıçrayışı','heal']],'Bulutların arasında denizdeymiş gibi yüzer.'],
+ [171,'Bulut Vatozu','air',1,1,170,0,0,'',[[1,'Bulut Kanadı'],[2,'Şimşek Kuyruk','coin']],'Kanatlarının altında küçük bulutlar taşır.'],
+ [172,'Gök Vatozu','air',2,2,171,10,0,'',[[1,'Gök Süzülüşü'],[2,'Gökyüzü Dalgası','splash']],'Gün batımında gökyüzünü bir uçtan bir uca geçer.'],
+ [173,'Kuğucuk','light',0,0,0,0,0,'',[[1,'Parıltı'],[2,'Işık Tüyü','heal']],'Başının üstünde küçük bir ışık halesi taşır.'],
+ [174,'Işık Kuğusu','light',1,1,173,0,0,'',[[1,'Işık Kanadı'],[2,'Kutsal Dalga','heal']],'Gölde yüzdüğünde su altın rengine döner.'],
+ [175,'Gökkuşağı Kuğusu','light',2,2,174,10,0,'',[[1,'Gökkuşağı Kanadı'],[2,'Renk Selası','splash']],'Kanatlarını açınca yedi renk birden doğar.'],
+ [176,'Yıldız Tayı','light',0,0,0,0,0,'',[[1,'Toynak'],[2,'Yıldız Tozu','heal']],'Yelesinde küçük yıldızlar parlar.'],
+ [177,'Işık Atı','light',1,1,176,10,0,'',[[1,'Işık Toynağı'],[2,'Parlak Hücum','coin']],'Gece koştuğunda arkasında ışıklı bir yol kalır.'],
+ [178,'Güneş Aygırı','light',2,2,177,20,0,'',[[1,'Güneş Toynağı'],[2,'Güneş Patlaması','splash']],'Kanatlarını açtığında şafak söker.'],
+ [179,'Altıntavşan','light',0,0,0,-10,0,'',[[1,'Zıplama'],[2,'Altın Kulak','coin']],'Buğday tarlalarında güneşle birlikte uyanır.'],
+ [180,'Gündoğumu Tavşanı','light',1,1,179,0,0,'',[[1,'Gündoğumu Tekmesi'],[2,'Şafak Işını','heal']],'Her sabah güneşi ilk o selamlar.'],
+ [181,'Güneş Tavşanı','light',2,2,180,10,0,'',[[1,'Güneş Sıçrayışı'],[2,'Altın Hale','splash']],'Kulaklarındaki ışık bütün vadiyi aydınlatır.'],
+ [182,'Işıkböceği','light',0,0,0,-10,0,'',[[1,'Işık Yanıp Sönme'],[2,'Parlak Toz']],'Yaprakların üstünde yavaşça ama mutlu ilerler.'],
+ [183,'Parıltı Kelebeği','light',1,1,182,-10,0,'',[[1,'Pul Işığı'],[2,'Göz Kamaştıran','coin']],'Kanatlarının tozu dokunduğu yeri parlatır.'],
+ [184,'Şafak Kelebeği','light',2,2,183,0,0,'',[[1,'Şafak Kanadı'],[2,'Işık Fırtınası','heal']],'Kanatlarını açtığında gece biter.'],
+ [185,'Kristal Kertenkele','light',0,0,0,0,0,'',[[1,'Kristal Isırık'],[2,'Prizma Işını','coin']],'Pulları ışığı yedi renge böler.'],
+ [186,'Prizma Kertenkele','light',1,1,185,10,0,'',[[1,'Prizma Pençesi'],[2,'Kırılan Işık','splash']],'Sırtındaki kristaller güneşte şarkı söyler.'],
+ [187,'Gökkuşağı Ejderi','light',2,2,186,10,0,'',[[1,'Renk Pençesi'],[2,'Gökkuşağı Nefesi','splash']],'Nefesi şelaleleri gökkuşağına çevirir.'],
+ [188,'Gölge Pumacık','shadow',0,0,0,0,0,'',[[1,'Sinsi Pati'],[2,'Gölge Atılışı','coin']],'Ay ışığında gözleri iki mor yıldız gibi parlar.'],
+ [189,'Gece Puması','shadow',1,1,188,0,0,'',[[1,'Gece Pençesi'],[2,'Karanlık Sıçrayış','burn']],'Harabelerin arasında sessizce avlanır.'],
+ [190,'Tutulma Puması','shadow',2,2,189,10,0,'',[[1,'Tutulma Pençesi'],[2,'Kâbus Kükremesi','splash']],'Kükrediğinde ay bir anlığına kararır.'],
+ [191,'Kâbus Tayı','shadow',0,0,0,0,0,'',[[1,'Ürkek Toynak'],[2,'Gölge Kişnemesi','coin']],'Kızıl ay doğunca harabelerde dolaşır.'],
+ [192,'Kâbus Atı','shadow',1,1,191,10,0,'',[[1,'Kâbus Toynağı'],[2,'Karanlık Dörtnal','burn']],'Toynak sesleri uyuyanların rüyasına girer.'],
+ [193,'Karabasan Aygırı','shadow',2,2,192,20,0,'',[[1,'Karabasan'],[2,'Kara Kanat Hücumu','recoil']],'Göğsünün üstüne oturduğu kişi sabaha kadar uyanamaz.'],
+ [194,'Yarasacık','shadow',0,0,0,-10,0,'',[[1,'Çığlık'],[2,'Gece Isırığı','coin']],'Mağaranın tavanında baş aşağı uyur.'],
+ [195,'Gece Yarasası','shadow',1,1,194,-10,0,'',[[1,'Gölge Kanat'],[2,'Kan Ayı','burn']],'Kızıl ay gecelerinde sürüsünü yönetir.'],
+ [196,'Tutulma Yarasası','shadow',2,2,195,0,0,'',[[1,'Tutulma Kanadı'],[2,'Karanlık Çığlık','splash']],'Kanatlarını açtığında güneş tutulur.'],
+ [197,'Örümcekçik','shadow',0,0,0,-10,0,'',[[1,'Ağ At'],[2,'Zehirli Diş','burn']],'Ağlarını mor çiçeklerin arasına örer.'],
+ [198,'Gölge Örümceği','shadow',1,1,197,0,0,'',[[1,'Gölge Ağı'],[2,'Pençe Bacak','splash']],'Ağları ay ışığında bile görünmez.'],
+ [199,'Karanlık Dokuyucu','shadow',2,2,198,10,0,'',[[1,'Karanlık Ağ'],[2,'Kâbus Dokuması','burn']],'Bütün ormanı tek bir ağla sarabilir.'],
+ [200,'Kuzguncuk','shadow',0,0,0,-10,0,'',[[1,'Gaga Darbesi'],[2,'Uğursuz Bakış','coin']],'Mezar taşlarının üstünde meraklı meraklı bekler.'],
+ [201,'Sis Kuzgunu','shadow',1,1,200,0,0,'',[[1,'Sis Kanadı'],[2,'Kara Tüyler','burn']],'Uçtuğu yerde sis yoğunlaşır.'],
+ [202,'Kara Fırtına Kuzgunu','shadow',2,2,201,10,0,'',[[1,'Fırtına Gagası'],[2,'Kara Fırtına','splash']],'Kanat çırptığında gökyüzü kararır ve şimşek çakar.'],
+ [203,'Sis Yılanı','shadow',0,0,0,-10,0,'',[[1,'Sinsi Isırık'],[2,'Sis Sarması','burn']],'Bataklık sisinin içinde görünmeden süzülür.'],
+ [204,'Gölge Engereği','shadow',1,1,203,0,0,'',[[1,'Gölge Dişi'],[2,'Karanlık Zehir','burn']],'Pulları mor alevler gibi titrer.'],
+ [205,'Boşluk Yılanı','shadow',2,2,204,10,0,'',[[1,'Boşluk Isırığı'],[2,'Hiçlik Girdabı','splash']],'Kıvrıldığı yerde ışık bile kaybolur.'],
 ];
 const E1=[1,2,2,3],E2=[2,3,4,4];   // Yaygın, Nadir, Destansı, Efsanevi
 const CARDS=RAW.map(([id,name,el,r,stage,from,hpMod,b,f,atks,flv])=>({id,name,el,r,stage,from,b,f,flv,
@@ -149,7 +246,8 @@ const BY=Object.fromEntries(CARDS.map(c=>[c.id,c]));
 const rootOf=c=>c.from?rootOf(BY[c.from]):c;
 const N=CARDS.length;
 const pad=n=>String(n).padStart(3,'0');
-const setOf=c=>c.id>=86&&c.id<=109?2:1;
+const setOf=c=>c.id>=110&&c.id<1000?3:c.id>=86&&c.id<=109?2:1;
+const SETS=[1,2,3];
 const setCards=n=>CARDS.filter(c=>setOf(c)===n);
 const cno=c=>{const i=setCards(setOf(c)).indexOf(c);return pad(i>=0?i+1:c.id)};
 const setN=c=>setCards(setOf(c)).length;   // kart numarası: seri içindeki sıra (yeni eklenenler sona)
@@ -170,7 +268,8 @@ const exOf=c=>EXC.find(x=>x.base===c.id);
 // PARLAK KARTLAR: yaratığın kendisi de parlar; normal kartla aynı sayılmaz, ayrı kart ve ayrı evrim çizgisidir.
 // Sadece ödüllerden gelir (paketten çıkmaz), normal sürümden %7 güçlüdür. Görsel: img/<id>.jpg ve img/t/<id>.webp (id = 10000 + normal kart no)
 const PRL_OFF=10000,PRL_MUL=1.07;
-const PRL_SRC=[];   // Parlak sürümü olan kartlar (evrimleriyle birlikte). Seri 3 görselleri geldikçe eklenecek.
+const PRL_SRC=CARDS.filter(c=>setOf(c)===3).map(c=>c.id);   // Parlak sürümü olan kartlar: Seri 3 (eski serilerin Parlak'ları sonra)
+const PRL_PACK=.02;   // Seri 3 paketinde en nadir kartın Parlak çıkma şansı (asıl kaynak kuleler)
 const PRL=PRL_SRC.map(id=>{const c=BY[id];return{...c,id:PRL_OFF+id,of:id,prl:1,from:c.from?PRL_OFF+c.from:0,
   hp:Math.round(c.hp*PRL_MUL),atks:c.atks.map(a=>({...a,dmg:Math.round(a.dmg*PRL_MUL)}))}});
 PRL.forEach(c=>BY[c.id]=c);
@@ -184,7 +283,7 @@ const EZC=[[83,'Ezelhan','blood','drain',['Kıyamet Pençesi'],['Tutulma Nefesi'
 EZC.forEach(c=>BY[c.id]=c);
 
 const POOL=[0,1,2,3].map(r=>CARDS.filter(c=>c.r===r));
-const POOLS={1:[0,1,2,3].map(r=>CARDS.filter(c=>c.r===r&&setOf(c)===1)),2:[0,1,2,3].map(r=>CARDS.filter(c=>c.r===r&&setOf(c)===2))};
+const POOLS=Object.fromEntries(SETS.map(n=>[n,[0,1,2,3].map(r=>CARDS.filter(c=>c.r===r&&setOf(c)===n))]));
 const EVO_NEED={1:10,2:20};               // evrim bedeli: temel karttan kaç kopya
 const STAGE_W=[1,0.08,0.02];               // paketten çıkma ağırlığı: Temel 1, Evrim 1 çok nadir, Evrim 2 aşırı nadir
 const cw=c=>c.r===3?1:STAGE_W[c.stage];
@@ -232,11 +331,11 @@ const ADV_RULE={none:['Normal savaş',''],hp:['Dayanıklı rakip','Rakip kartlar
 const ADV_P=10;                       // her diyardaki bölüm sayısı (son bölüm boss)
 const ADV_N=ADV_CH.length*ADV_P;
 function advStageX(i){const ch=i-100,[el,cn]=ADV_CH[ch],X=EXC[ch],r=srnd(5000+ch*31);
-  const pool=CARDS.filter(c=>c.el===el&&c.r>=1&&c.r<3);const deck=[];for(let k=0;k<7;k++)deck.push(pool[Math.floor(r()*pool.length)]);deck[1]=X;deck[4]=BY[X.base];
+  const pool=CARDS.filter(c=>c.el===el&&c.r>=1&&c.r<3&&setOf(c)<3);const deck=[];for(let k=0;k<7;k++)deck.push(pool[Math.floor(r()*pool.length)]);deck[1]=X;deck[4]=BY[X.base];
   return{i,ch,p:ADV_P,el,cn,name:`${X.name} EX`,rule:'boss',deck,boss:X,mis:.04,gold:1200,dust:120,pack:2,x:1}}
 function advStage(i){if(i>=100)return advStageX(i);const ch=Math.floor(i/ADV_P),p=i%ADV_P,[el,cn]=ADV_CH[ch],d=i/(ADV_N-1),r=srnd(1000+i*97),last=p===ADV_P-1;
   const rule=last?'boss':['none','hp','first',ch%2?'burn':'charged','none','charged','hp','first',ch%2?'charged':'burn'][p];
-  const pool=CARDS.filter(c=>c.el===el&&c.r<3),pk=rr=>{const L=pool.filter(c=>c.r===rr);return (L.length?L:pool)[Math.floor(r()*(L.length||pool.length))]};
+  const pool=CARDS.filter(c=>c.el===el&&c.r<3&&setOf(c)<3),pk=rr=>{const L=pool.filter(c=>c.r===rr);return (L.length?L:pool)[Math.floor(r()*(L.length||pool.length))]};
   const w=[Math.max(.1,.85-1.1*d),.15+.45*d,Math.max(0,.6*d-.05)];
   const deck=[];for(let k=0;k<7;k++){let x=r()*(w[0]+w[1]+w[2]),rr=x<w[0]?0:x<w[0]+w[1]?1:2;if(p===0&&ch===0)rr=0;deck.push(pk(rr))}
   let boss=null;if(last){boss=CARDS.find(c=>c.el===el&&c.r===3)||pool.sort((a,b)=>b.hp-a.hp)[0];deck[1]=boss}
@@ -267,11 +366,12 @@ function uerr(msg){const e=new Error(msg);e.user=true;return e}
 const own=(st,id)=>(st.owned&&st.owned[id])||0;
 const tutOn=st=>st.tut>0&&st.tut<8;
 function roll(odds,rng){let x=rng()*100;for(let i=0;i<4;i++){if((x-=odds[i])<0)return i}return 0}
-function drawCard(r,set,rng){const P=POOLS[set===2?2:1][r],tot=P.reduce((t,c)=>t+cw(c),0);let x=rng()*tot;for(const c of P){if((x-=cw(c))<0)return c}return P[P.length-1]}
+function drawCard(r,set,rng){const S0=POOLS[POOLS[set]?set:1];while(r>0&&!S0[r].length)r--;const P=S0[r],tot=P.reduce((t,c)=>t+cw(c),0);let x=rng()*tot;for(const c of P){if((x-=cw(c))<0)return c}return P[P.length-1]}
 function rollPack(pity,set,rng){
   // Nadir ve Destansı kartların hepsi evrim kartı: çoğu zaman yerine Yaygın (temel) kart gelir
   const out=PACK.slots.map(o=>{const c=drawCard(roll(o,rng),set,rng);return c.stage>0&&rng()>STAGE_W[c.stage]?drawCard(0,set,rng):c});
-  let hasL=out.some(c=>c.r===3);
+  let hasL=out.some(c=>c.r===3);const legOk=POOLS[POOLS[set]?set:1][3].length>0;
+  if(!legOk)return{out,pity};   // bu seride henüz Efsanevi yok: garanti sayacı değişmez
   if(!hasL&&pity+1>=PACK.pity){out[out.length-1]=drawCard(3,set,rng);hasL=true}
   return{out,pity:hasL?0:pity+1};
 }
@@ -335,7 +435,8 @@ function battleEnd(st,p,ctx){const bt=st.bt,now=ctx.now;
   if(bt.mode==='tower'&&bt.tw){const rng=ctx.rng,{el,f}=bt.tw,T0=towerStage(el,f),first=f>=twDone(st,el),R={mode:'tower',win,el,f,first:win&&first,ss:0,ks:0,g:0,pk:0,prl:0,rf,rep:0};
     if(!win){R.g=sc(10);st.gold+=R.g;return R}
     if(first){st.tw=st.tw||{};st.tw[el]=f+1;R.ss=sc(T0.ss);R.g=sc(T0.gold);R.ks=T0.ks?Math.max(1,sc(T0.ks)):0;
-      if(T0.boss&&rf>=.5){R.prl=givePrlEl(st,rng,el)||givePrl(st,rng);if(!R.prl){R.pk=1;st.free++}}}
+      if(T0.boss&&rf>=.5){R.prl=givePrlEl(st,rng,el)||givePrl(st,rng);if(!R.prl){R.pk=1;st.free++}}
+      if(T0.pk){const n=Math.floor(T0.pk*rf+.5);R.pk+=n;st.free+=n}}
     else{const d=dayKey(now),left=twLeft(st,now);R.left=left;if(left>0){st.twd={day:d,n:(st.twd&&st.twd.day===d?st.twd.n:0)+1};R.rep=1;R.left=left-1;
       R.ss=sc(Math.ceil(T0.ss/3));R.g=sc(Math.round(T0.gold/4));if(T0.boss&&rng()<TOWER.ksRep*rf)R.ks=1;if(T0.boss&&rng()<TOWER.prlRep*rf)R.prl=givePrlEl(st,rng,el)}}
     if(R.ss)giveSS(st,el,R.ss);if(R.ks)giveKS(st,el,R.ks);st.gold+=R.g;return R}
@@ -406,30 +507,39 @@ function canLv(st,c){if(!lvable(c)||!(own(st,c.id)>0))return false;const C=lvCos
    Bot kartları oyuncununkilerle aynı değerdedir: zorluk sadece deste kalitesi ve yapay zekâdan gelir.
    İlk geçiş: ruh taşı + altın; boss katı: kadim taş ve Parlak kart (o türde Parlak yoksa paket).
    Geçilmiş katlar tekrar oynanabilir: günde TOWER.daily tekrar ödüllü (taşın üçte biri, altının dörtte biri, boss'ta küçük Parlak şansı). */
-const TOWER={floors:30,boss:5,daily:10,prlRep:.08,ksRep:.25};
-const twBoss=f=>f%TOWER.boss===TOWER.boss-1;
-function towerStage(el,f){const d=f/(TOWER.floors-1),r=srnd(7000+ELS.indexOf(el)*131+f*17),last=f===TOWER.floors-1,bs=twBoss(f);
+const TOWER={floors:100,boss:5,big:25,daily:10,prlRep:.08,ksRep:.25};
+const twBoss=f=>f%TOWER.boss===TOWER.boss-1;          // her 5. kat: mini boss (o türün Seri 3 son evrimlerinden)
+const twBig=f=>f%TOWER.big===TOWER.big-1;             // her 25. kat: güçlü boss (Efsanevi / EX)
+const twMini=el=>{const L=CARDS.filter(c=>c.el===el&&setOf(c)===3&&c.stage===2);return L.length?L:CARDS.filter(c=>c.el===el&&c.stage===2)};
+function towerStage(el,f){const d=f/(TOWER.floors-1),r=srnd(7000+ELS.indexOf(el)*131+f*17),last=f===TOWER.floors-1,bs=twBoss(f),big=twBig(f),tier=Math.floor(f/TOWER.big);
   const pool=CARDS.filter(c=>c.el===el&&c.r<3),pk=rr=>{const L=pool.filter(c=>c.r===rr);return (L.length?L:pool)[Math.floor(r()*(L.length||pool.length))]};
-  const w=[Math.max(.05,.85-1.3*d),.15+.4*d,Math.max(0,.8*d-.05)];
+  const w=[Math.max(.03,.85-1.4*d),.15+.35*d,Math.max(0,.9*d-.05)];
   const deck=[];for(let k=0;k<7;k++){const x=r()*(w[0]+w[1]+w[2]);deck.push(pk(x<w[0]?0:x<w[0]+w[1]?1:2))}
-  const leg=CARDS.find(c=>c.el===el&&c.r===3),X=EXC.find(c=>c.el===el);let boss=null;
-  if(bs){boss=last&&X?X:leg||pool.sort((a,b)=>b.hp-a.hp)[0];deck[1]=boss;if(last&&X&&leg)deck[4]=leg}
-  else if(f>=18&&leg&&r()<.5)deck[3]=leg;
+  const leg=CARDS.find(c=>c.el===el&&c.r===3),X=EXC.filter(c=>c.el===el),mini=twMini(el);let boss=null,kind=null;
+  if(big){kind='big';boss=(tier>=1&&X.length?X[(tier-1)%X.length]:leg)||mini[0];
+    // güçlü boss: kart değerleri aynı, zorluk deste kalitesinden — yanında Efsanevi ve mini bosslar
+    const ext=[...(boss!==leg&&leg?[leg]:[]),...mini.slice(0,2+tier),...(tier>=3?X.filter(x=>x!==boss):[])];
+    deck[1]=boss;ext.forEach((c,k)=>{if(k+2<7)deck[(k+2)%7===1?6:(k+2)%7]=c});if(tier>=2)for(let k=0;k<7;k++)if(deck[k].r<2)deck[k]=pk(2)}
+  else if(bs){kind='mini';boss=mini[Math.floor(f/TOWER.boss)%mini.length];deck[1]=boss}
+  else if(f>=40&&leg&&r()<.35)deck[3]=leg;
+  {const seen=new Set();deck.forEach((c,k)=>{if(seen.has(c.id)){const alt=pool.filter(x=>x.r===c.r&&!seen.has(x.id)&&!deck.includes(x));if(alt.length)deck[k]=c=alt[Math.floor(r()*alt.length)]}seen.add(c.id)})}
   const rule=bs?'boss':['none','first',el==='fire'||el==='poison'?'burn':'charged','none','first','charged','none','burn'][f%8];
-  const ss=3+Math.floor(f/3),gold=Math.round((100+20*f)/10)*10;
-  return{tw:1,el,f,i:f,name:bs?(last?'Kule Zirvesi · ':'')+boss.name:`${T_N[el]} Kulesi ${f+1}`,rule,deck,boss,mis:Math.max(.02,.4-.4*d),ss,gold,ks:bs?(last?3:1):0,last}}
+  const ss=3+Math.floor(f/6),gold=Math.round((100+10*f)/10)*10;
+  const nm=big?(last?'Kule Zirvesi · ':'Güçlü Boss · ')+boss.name:bs?'Mini Boss · '+boss.name:`${T_N[el]} Kulesi ${f+1}`;
+  return{tw:1,el,f,i:f,name:nm,rule,deck,boss,kind,big,mis:big?0:Math.max(.02,.4-.4*d),ss:big?ss*2:ss,gold:big?gold*2:gold,ks:big?(last?6:3):bs?1:0,pk:big?(last?5:2):0,last}}
 const T_N={fire:'Ateş',water:'Su',earth:'Toprak',air:'Hava',light:'Işık',shadow:'Gölge',metal:'Metal',poison:'Zehir'};
 const twDone=(st,el)=>Math.max(0,Math.min(TOWER.floors,Math.floor(+((st.tw||{})[el])||0)));
 const twLeft=(st,now)=>{const d=dayKey(now);return st.twd&&st.twd.day===d?Math.max(0,TOWER.daily-st.twd.n):TOWER.daily};
 
 function act(st,a,p,ctx){p=p||{};const rng=ctx.rng,now=ctx.now;normalize(st,ctx);
   switch(a){
-  case 'pack':{const set=tutOn(st)?1:(p.set===2?2:1);
+  case 'pack':{const set=tutOn(st)?1:(SETS.includes(p.set)?p.set:1);
     if(st.free>0)st.free--;else if(st.gold>=PACK.cost)st.gold-=PACK.cost;else throw uerr('Yeterli altının yok.');
     const pityBefore=st.pity,r=rollPack(st.pity,set,rng);st.pity=r.pity;const out=tutRig(st,r.out);
+    if(set===3&&rng()<PRL_PACK){let k=0;out.forEach((c,j)=>{if(c.r>=out[k].r)k=j});const P0=prlOf(out[k]);if(P0)out[k]=P0}
     let xpGain=0;dqInc(st,'pack',null,1,now);
     const res=out.map(c=>{const isNew=!own(st,c.id);st.owned[c.id]=own(st,c.id)+1;xpGain+=XP.card[c.r]*(isNew?XP.newMult:1);noteRare(st,c,now);
-      const s=shinyRoll(st,c,rng);return{id:c.id,isNew,sh:s.sh,newSh:s.newSh}});
+      const s=set===3||c.prl?{sh:false,newSh:false}:shinyRoll(st,c,rng);return{id:c.id,isNew,sh:s.sh,newSh:s.newSh,prl:c.prl?1:0}});
     res.sort((x,y)=>BY[x.id].r-BY[y.id].r||(x.isNew-y.isNew));   // en nadir en sona
     const from={lvl:st.lvl,xp:st.xp},ups=addXp(st,xpGain);st.opened++;
     return{res,xp:{from,gain:xpGain,ups},pityHit:pityBefore+1>=PACK.pity}}
@@ -556,10 +666,10 @@ function achSync(st,x){const have=new Set(st.ach||[]),nw=[];
 const MR={ELS,round5,round10,RAR,TYPE_HP,TYPE_RET,DMG,ATK,FXV,FX,atkDmg,PACK,XP,ECON,RAW,E1,E2,CARDS,BY,rootOf,N,pad,setOf,setCards,cno,setN,
   EXA,EXCOST,EXD,EXC,exOf,EZA,EZDR,EZC,POOL,POOLS,EVO_NEED,STAGE_W,cw,SHINY,LEAGUES,lgOf,TROPHY,STREAK,strkB,CHEST,GIFT,DQP,DQB,srnd,SUPK,
   ADV_CH,ADV_RULE,ADV_N,ADV_P,advStage,advStageX,TUT,fresh,
-  PRL,PRL_OFF,PRL_MUL,prlOf,givePrl,ECON_KEYS,CLIENT_KEYS,BATTLE_MIN_MS,BATTLE_PER_HOUR,own,tutOn,roll,drawCard,rollPack,copies,canEvo,canAwaken,giveSup,rndSup,addXp,
+  PRL,PRL_OFF,PRL_MUL,PRL_PACK,SETS,prlOf,givePrl,ECON_KEYS,CLIENT_KEYS,BATTLE_MIN_MS,BATTLE_PER_HOUR,own,tutOn,roll,drawCard,rollPack,copies,canEvo,canAwaken,giveSup,rndSup,addXp,
   giftTick,dayKey,dqList,dqInc,normalize,mergeClient,act,pubStats,avatarOf,ACH,ACH_RW,achList,achSync,achUnclaimed,
   SEASON,seasonOf,seasonEnd,seasonRewardFor,seasonGive,
-  LOGIN,loginCan,loginClaim,LV,lvable,lvOf,lvCost,lvCard,canLv,giveSS,giveKS,TOWER,twBoss,towerStage,twDone,twLeft,T_N,givePrlEl,pubLv,
+  LOGIN,loginCan,loginClaim,LV,lvable,lvOf,lvCost,lvCard,canLv,giveSS,giveKS,TOWER,twBoss,twBig,twMini,towerStage,twDone,twLeft,T_N,givePrlEl,pubLv,
   CLAN,REQ,reqable,reqCheck,reqOpen,dnLeft,donateCheck,donateGive,donateGet,clanPay};
 G.MR=MR;
 })(typeof globalThis!=='undefined'?globalThis:this);
