@@ -250,7 +250,7 @@ const CLIENT_KEYS=['mv','sv','snd','deck','deck2','decks','dA','dM','shOff','pse
 const TUT_CLIENT_MAX=2;            // istemci öğreticiyi en fazla bu adıma kendisi ilerletebilir (hoş geldin → paket aç)
 const BATTLE_MIN_MS=30000;          // ödül için savaşın en kısa süresi
 const BATTLE_TUT_MIN_MS=8000;
-const BATTLE_PER_HOUR=30;           // saatte en fazla ödüllü savaş
+const BATTLE_PER_HOUR=60;           // saatte tam ödüllü savaş sayısı; sonrası ödül oranlı azalır (120'de sıfır), kupa/ilerleme devam eder
 const STAT_CAP={hit:40,weak:30,ko:20};
 const TZ_OFF=3*3600e3;              // günlük görevler Türkiye saatine göre yenilenir
 
@@ -320,16 +320,17 @@ function battleEnd(st,p,ctx){const bt=st.bt,now=ctx.now;
   dqInc(st,'battle',null,1,now);if(win)dqInc(st,'win',null,1,now);
   if(bt.mode==='friend')return{mode:'friend',win,opp:bt.fr||null};
   st.bl=(st.bl||[]).filter(t=>now-t<3600e3);
-  if(st.bl.length>=BATTLE_PER_HOUR)throw uerr('Bu saat için savaş ödülü sınırına ulaştın. Biraz sonra tekrar dene.');
-  st.bl.push(now);
-  if(bt.mode==='adv'){const st0=advStage(bt.adv),first=st0.x?!(st.exB||{})[st0.ch]:bt.adv>=(st.advC||0),R={mode:'adv',win,adv:bt.adv,first:win&&first,pk:0,du:0,sup:null};
-    R.g=win?(first?st0.gold:Math.round(st0.gold/4)):10;st.gold+=R.g;
-    if(R.first){st.dust+=st0.dust;R.du=st0.dust;if(st0.x){st.exB=st.exB||{};st.exB[st0.ch]=1}else st.advC=bt.adv+1;if(st0.pack){st.free+=st0.pack;R.pk=st0.pack}R.sup=st0.x||st0.p===ADV_P-1?'evo':st0.el;giveSup(st,R.sup)}
+  const nb=st.bl.length,rf=nb<BATTLE_PER_HOUR?1:Math.max(0,Math.round((1-(nb-BATTLE_PER_HOUR+1)/BATTLE_PER_HOUR)*100)/100);
+  st.bl.push(now);if(st.bl.length>3*BATTLE_PER_HOUR)st.bl=st.bl.slice(-3*BATTLE_PER_HOUR);
+  const sc=v=>Math.round(v*rf);
+  if(bt.mode==='adv'){const st0=advStage(bt.adv),first=st0.x?!(st.exB||{})[st0.ch]:bt.adv>=(st.advC||0),R={mode:'adv',win,adv:bt.adv,first:win&&first,pk:0,du:0,sup:null,rf};
+    R.g=sc(win?(first?st0.gold:Math.round(st0.gold/4)):10);st.gold+=R.g;
+    if(R.first){R.du=sc(st0.dust);st.dust+=R.du;if(st0.x){st.exB=st.exB||{};st.exB[st0.ch]=1}else st.advC=bt.adv+1;if(st0.pack){R.pk=Math.floor(st0.pack*rf+.5);st.free+=R.pk}if(rf>=.5){R.sup=st0.x||st0.p===ADV_P-1?'evo':st0.el;giveSup(st,R.sup)}}
     if(win)dqInc(st,'adv',null,1,now);return R}
-  const R={mode:'arena',win},lg0=lgOf(st.trophy||0),floor=LEAGUES[lg0].min;R.lg0=lg0;R.g=win?ECON.win+LEAGUES[lg0].gold:ECON.loss;st.gold+=R.g;
+  const R={mode:'arena',win,rf},lg0=lgOf(st.trophy||0),floor=LEAGUES[lg0].min;R.lg0=lg0;R.g=sc(win?ECON.win+LEAGUES[lg0].gold:ECON.loss);st.gold+=R.g;
   R.dt=win?TROPHY.win:Math.max(TROPHY.loss,floor-(st.trophy||0));R.sb=null;R.chest=0;R.lost=0;
-  if(win){st.streak=(st.streak||0)+1;if(st.streak>(st.bestStk||0))st.bestStk=st.streak;const sb=strkB(st.streak);if(sb.tr||sb.g){R.sb={n:st.streak,...sb};R.dt+=sb.tr;R.g+=sb.g;st.gold+=sb.g}
-    st.chest=(st.chest||0)+1;if(st.chest>=CHEST.need){st.chest-=CHEST.need;st.chests=(st.chests||0)+1;R.chest=1}}
+  if(win){st.streak=(st.streak||0)+1;if(st.streak>(st.bestStk||0))st.bestStk=st.streak;const sb=strkB(st.streak);if(sb.tr||sb.g){const sg=sc(sb.g);R.sb={n:st.streak,tr:sb.tr,g:sg};R.dt+=sb.tr;R.g+=sg;st.gold+=sg}
+    if(rf>=1||Math.random()<rf)st.chest=(st.chest||0)+1;if(st.chest>=CHEST.need){st.chest-=CHEST.need;st.chests=(st.chests||0)+1;R.chest=1}}
   else{R.lost=st.streak||0;st.streak=0}
   st.lstreak=win?0:(st.lstreak||0)+1;   // üst üste arena yenilgisi: 3 ve üstünde sıradaki rakip kolaylaşır
   st.trophy=Math.max(0,(st.trophy||0)+R.dt);if(win)st.wins++;else st.losses++;

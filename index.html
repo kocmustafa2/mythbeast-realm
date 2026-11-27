@@ -1018,7 +1018,7 @@ body.inb main{padding:0 10px 16px}
 <div id="title"><div class="tbg"></div><div class="tlogo"><img class="tlimg" src="img/logo.webp" alt="Mythbeast Realm"><span class="t3">Seri 1 · Elementler</span></div>
 <button class="sndb tsnd" id="tsnd" aria-label="Ses"></button><div class="tbtm"><button class="tgo" id="tgo" aria-label="Oyna"><img src="img/btn_play.webp" alt="Oyna"></button><p class="tinfo" id="tinfo"></p></div></div>
 
-<script src="rules.js?v=4"></script>
+<script src="rules.js?v=5"></script>
 <script>
 {
 // Ortak kurallar (rules.js): kart verisi ve ekonomi. Oyun ve sunucu aynı dosyayı kullanır.
@@ -1982,6 +1982,7 @@ async function endBattle(win){
   else if(B.adv!=null)Object.assign(B,{first:false,pk:0,du:0,g:0,sup:null},r||{},{win});
   else{const lg=lgOf(S.trophy||0);Object.assign(B,{lg0:lg,g:0,dt:0,sb:null,chest:0,lost:0,lg1:lg,reward:0,tutEnd:0},r||{},{win})}
   if(err){B.why=err;toast(err)}
+  else if(r&&r.rf!=null&&r.rf<1){B.why=r.rf>0?`Saatlik ${MR.BATTLE_PER_HOUR} savaş sınırını geçtin: ödüller %${Math.round(r.rf*100)}`:`Saatlik savaş sınırını çok aştın: bu savaştan ödül yok (kupa ve ilerleme sayıldı)`;toast(B.why)}
   try{const o=JSON.parse(dq0);((S.dq||{}).l||[]).forEach((m,k)=>{const D=DQP[m.i],b=o[k];if(m.p>=D.n&&!(b&&b.i===m.i&&b.p>=D.n))setTimeout(()=>toast('Görev tamamlandı: '+D.x(m.el)),700)})}catch(e){}
   navDot();renderTop();renderBattle();setTimeout(()=>{if(win){SFX.win();vConfetti()}else SFX.lose()},250);
 }
