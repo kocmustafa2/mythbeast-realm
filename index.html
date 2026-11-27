@@ -1022,6 +1022,10 @@ body.inb main{padding:0 10px 16px}
 .card.lvc{filter:drop-shadow(0 0 3px var(--lvg))}.dtlv{font-size:10px!important;padding:1px 4px!important;border-radius:6px!important}
 .snm .n.nl{display:flex;align-items:center;min-width:0}.snm .n.nl .nt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}.snm .lvn{flex:none;width:auto;height:auto;font-size:.7em}.fnm .lvn{flex:none}
 .aimg.pt{object-position:50% 12%}
+/* +10 çerçevesi kartın DIŞINA oturur (9 parça kesim): kartın adı, canı ve yazıları kapanmaz */
+.lv10f{position:absolute;left:-8%;right:-8%;top:-14.9%;bottom:-10.9%;z-index:12;pointer-events:none;border-style:solid;border-color:transparent;border-image:url(img/lv10frame.webp) 167 64 122 64 / 11.8% 6.9% 8.7% 6.9% stretch;transform:translateZ(3px);filter:drop-shadow(0 0 6px #ff9ad8aa)}.card.lt4,.card.lt4 .cs,.card.lt4 .tilt{overflow:visible}.grid>.card.lt4{content-visibility:visible;z-index:2}.detail .card.lt4{margin-top:clamp(30px,9vw,60px);margin-bottom:24px}.grid .card.lt4{margin-top:6px}/* savaşta +10: kartın kenarında akan gökkuşağı çerçeve (büyük çerçeve görseli savaş kartında isimleri kapatıyordu) */
+.bk10{position:absolute;inset:0;z-index:7;pointer-events:none;border-radius:inherit;padding:3px;background:conic-gradient(from var(--a10,0deg),#ff5f6d,#ffc371,#fff3a8,#7cff9a,#5fd4ff,#b47bff,#ff5f6d);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:a10 3s linear infinite;filter:drop-shadow(0 0 6px #ff9ad8)}
+@property --a10{syntax:'<angle>';inherits:false;initial-value:0deg}@keyframes a10{to{--a10:360deg}}
 .lvmx{font:400 11px Rubik,sans-serif;color:#aab6c2}.lvbox .lvrz{vertical-align:middle}
 .lgbox{display:flex;flex-direction:column;gap:8px}.lgg{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}
 .lgd{position:relative;aspect-ratio:1;border-radius:10px;background:#ffffff0d;box-shadow:inset 0 0 0 1px #ffffff14;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:2px}
@@ -1294,7 +1298,9 @@ const lvRz=L=>L>0?`<span class="lvrz lt${lvTier(L)}">+${L}</span>`:'';
 function cardHTML(c,o={}){const L=o.lv!=null?o.lv:(o.miss||o.noLv||!owned(c.id)?0:MR.lvOf(S,c.id));
   if(!(L>0)||!MR.lvable(c))return cardHTML0(c,o);
   const lc=MR.lvCard(c,L),h=cardHTML0(o.big||o.full?{...lc,_big:1}:lc,o),k=h.indexOf('>')+1;
-  return h.slice(0,k).replace('class="card ','class="card lvc lt'+lvTier(L)+' ')+h.slice(k)}
+  let out=h.slice(0,k).replace('class="card ','class="card lvc lt'+lvTier(L)+' ')+h.slice(k);
+  if(L>=MR.LV.max){const t='<div class="tilt">',j=out.indexOf(t);out=j>=0?out.slice(0,j+t.length)+'<i class="lv10f"></i>'+out.slice(j+t.length):out}   // kartla birlikte ölçeklensin ve eğilsin
+  return out}
 function cardHTML0(c,o={}){
   if(c.prl){const big=o.full||o.big;return shinyCard(c,{...o,_ps:big?`img/${c.id}.jpg`:`img/t/${c.id}.webp`})}   // Parlak: kendi tam resmi
   if(c.ex)return shinyCard(c,o);
@@ -1959,7 +1965,7 @@ function bk(f,s,i){
   let hint='';if(tgt){const A=B.me.board[B.sel],fx=curAtk(A).fx,h=calc(A,f,B.me.board,B.foe.board,atkOf(A));hint=`<div class="bkhint${h.k==='w'?' x':h.k?' w':''}">${h.k==='i'?'Bağışık':'−'+h.d+(fx==='coin'?'+':'')}</div>`}
   const a=curAtk(f),big=f.ch&&c.atks[1],SH=c.ex||(s==='me'&&shownShiny(c.id)),src=SH&&SHART.has(c.id)?`img/s/${c.id}.jpg`:`img/t/${c.id}.webp`;
   return `<div class="bk${big?' ch':c.atks[1]&&!f.justIn&&!f.didAtk?' half':''}${s==='me'&&B.sel===i?' sel':''}${my&&!selS?' bpk':''}${tgt?' tg':''}${supOk?' sup':''}${SH?' holo':''}${c.ex?' ex':''}${c.ez?' ez':''}" data-s="${s}" data-i="${i}" data-u="${f.uid}" style="--ec:${AUC[c.el]}">
-  <div class="bka" style="background-image:url(${src})${portArt(c)?`;background-position:50% ${focY(c)}%`:''}"></div><div class="bkn${c.lv?' bknl':''}"${nmS(c.name+(c.lv?'+10':'')+(c.ex?'EX ':''),9)}>${c.lv?`<span>${c.name}</span>${lvN(c)}`:c.name}</div><img class="bke" src="img/ic/${c.el}.webp" alt="">
+  <div class="bka" style="background-image:url(${src})${portArt(c)?`;background-position:50% ${focY(c)}%`:''}"></div>${c.lv>=10?'<i class="bk10"></i>':''}<div class="bkn${c.lv?' bknl':''}"${nmS(c.name+(c.lv?'+10':'')+(c.ex?'EX ':''),9)}>${c.lv?`<span>${c.name}</span>${lvN(c)}`:c.name}</div><img class="bke" src="img/ic/${c.el}.webp" alt="">
   ${c.ez?'':c.ex?'<span class="bkx">EX</span>':''}${f.evo?'<span class="bkev">EVRİM TAŞI</span>':''}${f.st?`<span class="bkst"><img src="img/ic/${f.st}.webp" alt="">+10</span>`:''}${f.burn?`<span class="bkb"><img src="img/ic/burn.webp" alt="">${f.burn}</span>`:''}${f.poiT>0?`<span class="bkv bkp"><img src="img/ic/poison.webp" alt="">${f.poi}</span>`:''}${f.bldT>0?`<span class="bkv bkl"><img src="img/ic/blood.webp" alt="">${f.bld}</span>`:''}${f.ampT>0?`<span class="bkv bka2">${icon('shadow')}×${f.amp}</span>`:''}${f.frz>0?'<span class="bkfz">❄ Donmuş</span>':''}${f.mute>0?'<span class="bkmu">Yetenek kapalı</span>':''}
   <div class="bkhp"><i class="${p<.35?'lo':''}" style="width:${p*100}%"></i><span>${f.hp} / ${mx(f)}</span></div>
   <div class="bkat${big?' big':''}"><span>${a.name}${a.fx?`<em>${FXS[a.fx]}</em>`:''}</span><b>${atkOf(f)}${a.fx==='coin'?'+':''}</b></div>${hint}</div>`}
