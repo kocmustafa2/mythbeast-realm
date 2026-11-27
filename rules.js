@@ -30,8 +30,9 @@ const FX={
 };
 const round10=x=>Math.max(10,Math.round(x/10)*10);
 const atkDmg=(r,i,fx)=>Math.max(10,round5(ATK[i][r]-(fx?FX[fx].cost:0)));
-const PACK={cost:100,pity:60,
+const PACK={cost:100,costs:{1:100,2:100,3:400},pity:60,
   slots:[[85,13,2,0],[85,13,2,0],[85,13,2,0],[0,82.4,17,0.6],[0,66.5,32,1.5]]};  // her slot: Yaygın/Nadir/Destansı/Efsanevi %
+const packCost=set=>(PACK.costs&&PACK.costs[set])||PACK.cost;   // Seri 3 paketi 400 altın
 const XP={card:[2,5,12,30],newMult:2,need:l=>50+(l-1)*25,reward:{free:1,gold:50}};  // seviye sistemi
 const ECON={startGold:700,freePacks:5,win:150,loss:20,teamMax:10};
 
@@ -534,7 +535,7 @@ const twLeft=(st,now)=>{const d=dayKey(now);return st.twd&&st.twd.day===d?Math.m
 function act(st,a,p,ctx){p=p||{};const rng=ctx.rng,now=ctx.now;normalize(st,ctx);
   switch(a){
   case 'pack':{const set=tutOn(st)?1:(SETS.includes(p.set)?p.set:1);
-    if(st.free>0)st.free--;else if(st.gold>=PACK.cost)st.gold-=PACK.cost;else throw uerr('Yeterli altının yok.');
+    const pc=packCost(set);if(st.free>0)st.free--;else if(st.gold>=pc)st.gold-=pc;else throw uerr('Yeterli altının yok.');
     const pityBefore=st.pity,r=rollPack(st.pity,set,rng);st.pity=r.pity;const out=tutRig(st,r.out);
     if(set===3&&rng()<PRL_PACK){let k=0;out.forEach((c,j)=>{if(c.r>=out[k].r)k=j});const P0=prlOf(out[k]);if(P0)out[k]=P0}
     let xpGain=0;dqInc(st,'pack',null,1,now);
@@ -663,7 +664,7 @@ function achSync(st,x){const have=new Set(st.ach||[]),nw=[];
   for(const a of ACH){if(have.has(a.id))continue;if(a.id==='clan'&&!x)continue;if((a.v(st,x)||0)>=a.g){have.add(a.id);nw.push(a.n)}}
   if(nw.length)st.ach=[...have];return nw}
 
-const MR={ELS,round5,round10,RAR,TYPE_HP,TYPE_RET,DMG,ATK,FXV,FX,atkDmg,PACK,XP,ECON,RAW,E1,E2,CARDS,BY,rootOf,N,pad,setOf,setCards,cno,setN,
+const MR={ELS,round5,round10,RAR,TYPE_HP,TYPE_RET,DMG,ATK,FXV,FX,atkDmg,PACK,packCost,XP,ECON,RAW,E1,E2,CARDS,BY,rootOf,N,pad,setOf,setCards,cno,setN,
   EXA,EXCOST,EXD,EXC,exOf,EZA,EZDR,EZC,POOL,POOLS,EVO_NEED,STAGE_W,cw,SHINY,LEAGUES,lgOf,TROPHY,STREAK,strkB,CHEST,GIFT,DQP,DQB,srnd,SUPK,
   ADV_CH,ADV_RULE,ADV_N,ADV_P,advStage,advStageX,TUT,fresh,
   PRL,PRL_OFF,PRL_MUL,PRL_PACK,SETS,prlOf,givePrl,ECON_KEYS,CLIENT_KEYS,BATTLE_MIN_MS,BATTLE_PER_HOUR,own,tutOn,roll,drawCard,rollPack,copies,canEvo,canAwaken,giveSup,rndSup,addXp,
