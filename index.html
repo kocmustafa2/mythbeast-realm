@@ -2730,8 +2730,8 @@ async function openAdmin(who){const ov=$('#ov');ov.className='ov on';const A=win
     post('/api/admin/gift',{msg:$('#admsg').value,p:{gold:v('adhg'),dust:v('adhd'),free:v('adhf'),cards}},'Hediye gönderildi').then(()=>{A.cards={}})};
   const own=m.cards||{};
   const list=()=>{const q=$('#adcq').value.trim().toLocaleLowerCase('tr');
-    const cs=CARDS.filter(c=>!q||c.name.toLocaleLowerCase('tr').includes(q)).slice(0,q?60:24);
-    $('#adcl').innerHTML=cs.map(c=>`<div class="adc r${c.r}"><img src="img/t/${c.id}.webp" alt="" loading="lazy"><div class="nm"><b>${escH(c.name)}</b><small>${RAR[c.r].n} · elinde ${own[c.id]||0}${A.cards[c.id]?` · seçili ${A.cards[c.id]>0?'+':''}${A.cards[c.id]}`:''}</small></div>
+    const cs=[...CARDS,...EXC,...PRL].filter(c=>!q||(c.name+(c.ex?' ex':'')+(c.prl?' parlak':'')).toLocaleLowerCase('tr').includes(q)).slice(0,q?60:24);   // EX ve Parlak kartlar da verilebilir
+    $('#adcl').innerHTML=cs.map(c=>`<div class="adc r${c.r}"><img src="img/t/${c.id}.webp" alt="" loading="lazy"><div class="nm"><b>${escH(c.name)}${c.ex?' EX':''}${c.prl?' ✨':''}</b><small>${c.ex?'EX':c.prl?'Parlak':RAR[c.r].n} · elinde ${own[c.id]||0}${A.cards[c.id]?` · seçili ${A.cards[c.id]>0?'+':''}${A.cards[c.id]}`:''}</small></div>
       <button class="frx" data-adm="${c.id}" aria-label="Azalt">−</button><button class="btn" data-adp="${c.id}" aria-label="Artır">+</button></div>`).join('');
     const ch=(id,dlt)=>{A.cards[id]=(A.cards[id]||0)+dlt;if(!A.cards[id])delete A.cards[id];const y=ov.scrollTop;openAdmin().then(()=>{$('#adcq').value=q;list();ov.scrollTop=y})};
     $('#adcl').querySelectorAll('[data-adp]').forEach(b=>b.onclick=()=>ch(b.dataset.adp,1));
