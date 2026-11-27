@@ -1258,11 +1258,18 @@ body.nui .frp{animation:popin .25s ease}
 .setp{max-height:calc(100dvh - 40px);overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}.setp>*{flex-shrink:0}
 .tgrp .tgh{cursor:pointer;user-select:none}.tgrp .tgh::after{content:'';flex:none;width:9px;height:9px;margin-left:4px;border-right:2.5px solid currentColor;border-bottom:2.5px solid currentColor;transform:rotate(45deg) translateY(-3px);transition:transform .2s;opacity:.8}
 .tgrp.cl .tgh::after{transform:rotate(-45deg)}.tgrp.cl>.grid{display:none}
-.awr{position:relative;display:flex;gap:11px;align-items:center;margin:12px 0 0;padding:11px 12px;border-radius:16px;overflow:hidden;background:linear-gradient(110deg,#2a1d55,#3d2a7a 45%,#2a1d55);background-size:220% 100%;animation:shimmer 6s linear infinite;border:1px solid #b08cff66}
-.awr.t-fire,.awr.t-water,.awr.t-earth,.awr.t-air,.awr.t-light,.awr.t-shadow,.awr.t-metal,.awr.t-poison{background:linear-gradient(110deg,color-mix(in srgb,var(--ec) 35%,#1a1535),color-mix(in srgb,var(--ec) 60%,#1a1535) 45%,color-mix(in srgb,var(--ec) 35%,#1a1535));background-size:220% 100%;border-color:color-mix(in srgb,var(--ec) 70%,transparent)}
-.awi{flex:none;width:44px;height:44px;display:grid;place-items:center;font-size:26px;border-radius:12px;background:#0004;animation:floaty 3s ease-in-out infinite}.awi img{width:34px;height:34px}
-.awr small{display:block;font:800 10.5px Rubik,sans-serif;letter-spacing:.6px;color:#ffd77a}.awr b{display:block;font:19px/1.15 'MRDisplay',sans-serif;margin:2px 0}.awr p{margin:0;font:500 12px/1.35 Rubik,sans-serif;color:#e6e0ff}
-.awgo{margin-top:8px;border:0;border-radius:12px;padding:7px 12px;font:800 13px Rubik,sans-serif;color:#2a1a06;background:linear-gradient(#ffe39a,#f2a632);box-shadow:0 3px 0 #9c6a1e}.awgo:active{transform:translateY(2px);box-shadow:0 1px 0 #9c6a1e}
+.awr{position:relative;margin:12px 0 0;padding:10px 12px 12px;border-radius:18px;overflow:hidden;--ac:#b08cff;
+  background:repeating-linear-gradient(135deg,#ffffff06 0 10px,transparent 10px 20px),radial-gradient(120% 140% at 0 0,color-mix(in srgb,var(--ac) 38%,transparent),transparent 60%),#15122b;
+  border:1.5px solid color-mix(in srgb,var(--ac) 70%,transparent);box-shadow:0 0 0 1px #0006 inset,0 8px 22px #0007,0 0 18px color-mix(in srgb,var(--ac) 25%,transparent)}
+.awt{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.awrib{font:900 11px Rubik,sans-serif;letter-spacing:1.2px;color:#16122e;background:linear-gradient(90deg,#ffe39a,#f2a632);padding:3px 10px 3px 8px;clip-path:polygon(0 0,100% 0,92% 50%,100% 100%,0 100%);border-radius:4px 0 0 4px}
+.awtm{font:800 11.5px Rubik,sans-serif;color:#fff;background:#0007;border:1px solid #ffffff26;border-radius:10px;padding:3px 8px}
+.awm{display:flex;gap:12px;align-items:center}
+.awi{position:relative;flex:none;width:58px;height:58px;display:grid;place-items:center}
+.awi i{position:absolute;inset:0;border-radius:50%;background:conic-gradient(var(--ac),#ffe39a,var(--ac),transparent 70%,var(--ac));animation:spin 4s linear infinite;-webkit-mask:radial-gradient(circle,transparent 24px,#000 25px);mask:radial-gradient(circle,transparent 24px,#000 25px)}
+.awi b{position:relative;width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font-size:24px;background:radial-gradient(#2a2250,#0d0b1e);box-shadow:0 0 14px color-mix(in srgb,var(--ac) 60%,transparent)}.awi img{width:32px;height:32px}
+.awm>div>b{display:block;font:20px/1.1 'MRDisplay',sans-serif;text-shadow:0 2px 8px color-mix(in srgb,var(--ac) 60%,transparent)}.awm p{margin:3px 0 0;font:500 12px/1.35 Rubik,sans-serif;color:#ddd6f5}
+.awgo{display:block;width:100%;margin-top:10px;border:0;border-radius:12px;padding:9px 12px;font:800 13px Rubik,sans-serif;color:#2a1a06;background:linear-gradient(#ffe39a,#f2a632);box-shadow:0 3px 0 #9c6a1e}.awgo:active{transform:translateY(2px);box-shadow:0 1px 0 #9c6a1e}
 </style>
 </head>
 <body>
@@ -1290,7 +1297,7 @@ body.nui .frp{animation:popin .25s ease}
 <div id="title"><div class="tbg"></div><div class="tlogo"><img class="tlimg" src="img/logo.webp" alt="Mythbeast Realm"><span class="t3">Seri 1 · Elementler</span></div>
 <button class="sndb tsnd" id="tsnd" aria-label="Ses"></button><div class="tbtm"><button class="tgo" id="tgo" aria-label="Oyna"><img src="img/btn_play.webp" alt="Oyna"></button><p class="tinfo" id="tinfo"></p></div></div>
 
-<script src="rules.js?v=22"></script>
+<script src="rules.js?v=23"></script>
 <script>
 {
 // Ortak kurallar (rules.js): kart verisi ve ekonomi. Oyun ve sunucu aynı dosyayı kullanır.
@@ -1960,9 +1967,11 @@ function supTile(k,o={}){return `<div class="dt sup${o.sel?' sel':''}${o.dis?' d
 const tileK=(k,o)=>isS(k)?supTile(k.slice(2),o):deckTile(BY[k],o);
 // YENİ ARAYÜZ (deneme): sadece oyunun sahibinde, Ayarlar'dan açılır
 const NUI=()=>true;   // yeni arayüz herkese açık (2026-11-28)
-function awCard(){const R=MR.arenaRule(),ms=R.ends-Date.now(),d=Math.floor(ms/AW_DAY_C),h=Math.floor(ms%AW_DAY_C/3600000);
+function awCard(){const R=MR.arenaRule(),ms=R.ends-Date.now(),d=Math.floor(ms/AW_DAY_C),h=Math.floor(ms%AW_DAY_C/3600000),m=Math.floor(ms%3600000/60000);
   const ic={tboost:R.el?`<img src="img/ic/${R.el}.webp" alt="">`:'⚔️',lowr:'🃏',hp:'🛡️',charge:'⚡',noleg:'🚫'}[R.k];
-  return `<div class="awr${R.el?' t-'+R.el:''}"><span class="awi">${ic}</span><div><small>HAFTANIN KURALI · ${d?d+' gün ':''}${h} sa kaldı</small><b>${R.n}</b><p>${R.d}</p>${uniq()?'<button class="awgo" id="awgo">Bu kuralla savaş ›</button>':''}</div></div>`}
+  return `<div class="awr"${R.el?` style="--ac:${AUC[R.el]}"`:''}><div class="awt"><span class="awrib">✦ ÖZEL KURAL</span><span class="awtm">⏳ ${d?d+'g ':''}${h}sa${d?'':' '+m+'dk'}</span></div>
+    <div class="awm"><span class="awi"><i></i><b>${ic}</b></span><div><b>${R.n}</b><p>${R.d}</p></div></div>
+    ${uniq()?'<button class="awgo" id="awgo">Bu kuralla savaş</button>':''}</div>`}
 const AW_DAY_C=86400000;
 function deckMini(){const ks=deckKeys('a'),p=deckPts(ks),cr=ks.filter(k=>!isS(k)),dd=ensDecks(),sh=cr.slice(0,4);
   return `<div class="dmini"><div class="dmh"><b>${escH(dd[S.dA].n)}</b><span>${ks.length}/${BAT.deck} kart · ${p}/${BAT.budget} puan</span><button class="dmb" id="dmedit">Düzenle ›</button></div>
@@ -2142,7 +2151,7 @@ const outOf=(X,s)=>X[s].lives<=0||(!X[s].board.some(Boolean)&&!X[s].hand.some(x=
 async function startBattle(adv,fr,tw,aw){if(window.__btStart)return;
   {const m=tw?'t':adv!=null?'m':'a',ks=deckKeys(m),nc=ks.filter(k=>!isS(k)).length,nm=ensDecks()[deckSlot(m)].n;
    if(nc<DECK_MIN_C){toast(nc?`${nm} destesinde en az ${DECK_MIN_C} yaratık olmalı`:`${nm} destesi boş. Önce desteni kur`);openDeckEditor(tw?()=>towerInfo(tw.el,tw.f):adv!=null?()=>advInfo(adv):null,deckSlot(m));return}
-   if(aw&&m==='a'&&!fr&&S.tut!==6){const AR=MR.arenaRule(),ok=ks.filter(k=>!isS(k)&&MR.awOk(AR.k,BY[k])).length;if(ok<DECK_MIN_C){toast(`Haftanın kuralı (${AR.n}): destende bu kurala uyan en az ${DECK_MIN_C} yaratık olmalı`);openDeckEditor(null,deckSlot(m));return}}}
+   if(aw&&m==='a'&&!fr&&S.tut!==6){const AR=MR.arenaRule(),ok=ks.filter(k=>!isS(k)&&MR.awOk(AR.k,BY[k])).length;if(ok<DECK_MIN_C){toast(`Özel kural (${AR.n}): destende bu kurala uyan en az ${DECK_MIN_C} yaratık olmalı`);openDeckEditor(null,deckSlot(m));return}}}
   if(pendGet()&&!(await flushPend())){toast('Önceki savaşın sonucu henüz kaydedilemedi. Bağlantı gelince tekrar dene.');return}
   window.__btStart=1;let bid,fo;
   // savaşı sunucu başlatır (kimlik + başlangıç zamanı); ödülleri bitişte sunucu hesaplar
@@ -2172,7 +2181,7 @@ async function startBattle(adv,fr,tw,aw){if(window.__btStart)return;
   drawStart(B.me);drawStart(B.foe);
   for(const sd of['me','foe'])for(let m;(m=bestFill(B,sd));)placeX(B,sd,m.j,m.i);}
   if(st){tab='adv';if(st.rule==='burn')B.me.board.forEach(f=>{if(f)f.burn=2})}
-  if(AR){B.log=`Haftanın kuralı: <b>${AR.n}</b>`;setTimeout(()=>{if(B)toast(`Haftanın kuralı: ${AR.n}. ${AR.d}`)},700)}
+  if(AR){B.log=`Özel kural: <b>${AR.n}</b>`;setTimeout(()=>{if(B)toast(`Özel kural: ${AR.n}. ${AR.d}`)},700)}
   document.body.classList.add('inb');renderBattle();scrollTo(0,0);
   setTimeout(()=>{if(!B)return;announceAuras('me');announceAuras('foe')},500);setTimeout(()=>{if(!B)return;[0,1,2].forEach(i=>{exEnter('me',i);exEnter('foe',i)})},1600);
   const go=()=>{if(!B)return;B.t0=Date.now();B.iv=setInterval(clockTick,250);
@@ -2645,7 +2654,7 @@ function renderRules(){
   <p><b>Arena rakipleri:</b> Bronz ve Gümüş ligde rakipler sadece Yaygın kart kullanır; lig yükseldikçe rakipler güçlenir. Üst üste 3 yenilgiden sonra bir sonraki rakip daha kolay olur.</p>
   <p><b>Otomatik oynama:</b> Sıra sendeyken 15 saniye hamle yapmazsan oyun senin yerine oynar. Savaştaki <b>Otomatik</b> düğmesiyle savaşın tamamını otomatik oynatabilirsin.</p>
   <p><b>Ödüller:</b> Arena galibiyeti ${ECON.win} altın (+lig bonusu) ve kupa verir. Dostluk maçları ödülsüzdür. Ödül için savaş en az 30 saniye sürmeli.</p></div>
-  <h3>Haftanın kuralı</h3><p>Arenada her hafta değişen, isteğe bağlı bir kural modu vardır (pazartesi 03:00'te yenilenir). Normal SAVAŞ düğmesi kuralsız oynar; Arena ekranındaki <b>Bu kuralla savaş</b> düğmesi o haftanın kuralıyla oynar: bir türün güçlendiği hafta, sadece Yaygın ve Nadir yaratıkların oynandığı hafta, canların %30 fazla olduğu hafta, herkesin dolu saldırıyla başladığı hafta ya da Efsanevi, Kadim ve Ezeli kartların oynanmadığı hafta. Kupa ve ödüller normal arenayla aynıdır. Macera, kule ve arkadaş maçları etkilenmez.</p><h3>Ligler</h3><div class="box scroll"><table><tr><th>Lig</th><th>Kupa</th><th>Ek altın</th><th>Rakip güçlenme</th><th>İlk ulaşma ödülü</th></tr>${LEAGUES.map(l=>`<tr><td>${l.n}</td><td>${l.min}+</td><td>+${l.gold}</td><td>%${Math.round(l.up*100)}</td><td>${l.reward?l.reward+' paket':'-'}</td></tr>`).join('')}</table><p>Galibiyet <code>+${TROPHY.win}</code>, mağlubiyet <code>${TROPHY.loss}</code> kupa. Bir lige ulaştıktan sonra o ligin tabanının altına düşülmez. Rakip güçlenme: rakibin her kartının bir üst nadirlikten gelme ihtimali.</p></div>
+  <h3>Özel kural</h3><p>Arenada 3 günde bir değişen, isteğe bağlı bir kural modu vardır (saat 03:00'te yenilenir). Normal SAVAŞ düğmesi kuralsız oynar; Arena ekranındaki <b>Bu kuralla savaş</b> düğmesi o dönemin kuralıyla oynar: bir türün %20 güçlendiği dönem, sadece Yaygın ve Nadir yaratıkların oynandığı dönem, canların %30 fazla olduğu dönem, herkesin dolu saldırıyla başladığı dönem ya da Efsanevi, Kadim ve Ezeli kartların oynanmadığı dönem. Kupa ve ödüller normal arenayla aynıdır. Macera, kule ve arkadaş maçları etkilenmez.</p><h3>Ligler</h3><div class="box scroll"><table><tr><th>Lig</th><th>Kupa</th><th>Ek altın</th><th>Rakip güçlenme</th><th>İlk ulaşma ödülü</th></tr>${LEAGUES.map(l=>`<tr><td>${l.n}</td><td>${l.min}+</td><td>+${l.gold}</td><td>%${Math.round(l.up*100)}</td><td>${l.reward?l.reward+' paket':'-'}</td></tr>`).join('')}</table><p>Galibiyet <code>+${TROPHY.win}</code>, mağlubiyet <code>${TROPHY.loss}</code> kupa. Bir lige ulaştıktan sonra o ligin tabanının altına düşülmez. Rakip güçlenme: rakibin her kartının bir üst nadirlikten gelme ihtimali.</p></div>
   <h3>4. Ekonomi</h3>
   <div class="box scroll"><table><tr><th></th>${RAR.map(r=>`<th>${r.n}</th>`).join('')}</tr><tr><td>Kopya → toz</td>${RAR.map(r=>`<td>${r.dust}</td>`).join('')}</tr><tr><td>Üretim bedeli</td>${RAR.map(r=>`<td>${r.craft}</td>`).join('')}</tr><tr><td>Setteki adet</td>${POOL.map(p=>`<td>${p.length}</td>`).join('')}</tr></table>
   <p>Paket fiyatları: Seri 1 <code>${MR.packCost(1)}</code>, Seri 2 <code>${MR.packCost(2)}</code>, Seri 3 <code>${MR.packCost(3)}</code> altın. Galibiyet <code>${ECON.win}</code>, mağlubiyet <code>${ECON.loss}</code> altın. Başlangıçta ${ECON.startGold} altın ve ${ECON.freePacks} ücretsiz paket verilir. Her <code>6 saatte</code> 1 hediye paketi birikir (en fazla ${GIFT.max}); Paketler ekranından alınır. Her 3 arena galibiyetinde bir zafer sandığı açılır. <b>Kadim kartlar:</b> her Efsanevi'nin bir Kadim hali vardır. Bölgenin macerasını bitirip Kadim boss'u yenince, Efsanevi'nin kart detayından 3 kopya ve 1500 tozla açılır. Kadim kartlar 7 puan tutar, özel yetenekleri vardır; yenilince sahibi 1 kart daha kaybeder. Her gün 3 <b>günlük görev</b> gelir (gece yarısı yenilenir); üçünü de bitirince +1 paket. <b>Macera</b> modunda 6 bölge ve 30 bölüm var; her bölgenin 5. bölümü boss'tur, ilk geçişte altın, toz ve boss'larda paket verir.</p></div>

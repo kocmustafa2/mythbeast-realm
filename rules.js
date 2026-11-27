@@ -561,15 +561,15 @@ function towerStage(el,f){const d=f/(TOWER.floors-1),r=srnd(7000+ELS.indexOf(el)
   return{tw:1,el,f,i:f,name:nm,rule,deck,boss,kind,big,mis:big?0:Math.max(.02,.4-.4*d),ss:big?ss*2:ss,gold:big?gold*2:gold,ks:big?(last?6:3):bs?1:0,pk:big?(last?5:2):0,last}}
 const T_N={fire:'Ateş',water:'Su',earth:'Toprak',air:'Hava',light:'Işık',shadow:'Gölge',metal:'Metal',poison:'Zehir'};
 
-// HAFTALIK ARENA KURALI: her pazartesi (TSİ 03:00) değişir; sadece arena maçlarında geçerli
-const AWR=[{k:'tboost',n:'{T} Haftası',d:'{T} türü yaratıklar %20 daha fazla hasar verir.'},
+// ARENA ÖZEL KURALI: 3 günde bir (TSİ 03:00) değişir; isteğe bağlı, sadece arena
+const AWR=[{k:'tboost',n:'{T} Gücü',d:'{T} türü yaratıklar %20 daha fazla hasar verir.'},
  {k:'lowr',n:'Sade Güç',d:'Sadece Yaygın ve Nadir yaratıklar sahaya çıkar. Destendeki diğer yaratıklar bu hafta arenada oynanmaz.'},
- {k:'hp',n:'Devler Haftası',d:'Bütün yaratıkların canı %30 fazla. Maçlar daha uzun sürer.'},
- {k:'charge',n:'Hücum Haftası',d:'Sahaya çıkan her yaratık dolu saldırıyla başlar.'},
- {k:'noleg',n:'Efsanesiz Hafta',d:'Efsanevi, Kadim ve Ezeli kartlar arenada sahaya çıkmaz.'}];
-const AW_DAY=86400000,awWeek=t=>Math.floor((t/AW_DAY+3)/7);
+ {k:'hp',n:'Devler Çağı',d:'Bütün yaratıkların canı %30 fazla. Maçlar daha uzun sürer.'},
+ {k:'charge',n:'Hücum Vakti',d:'Sahaya çıkan her yaratık dolu saldırıyla başlar.'},
+ {k:'noleg',n:'Efsanesiz Arena',d:'Efsanevi, Kadim ve Ezeli kartlar arenada sahaya çıkmaz.'}];
+const AW_DAY=86400000,AW_LEN=3,awWeek=t=>Math.floor(t/AW_DAY/AW_LEN);   // 3 günde bir, TSİ 03:00'te değişir
 const arenaRule=(t=Date.now())=>{const w=awWeek(t),r=AWR[w%AWR.length],el=r.k==='tboost'?ELS[Math.floor(w/AWR.length)%ELS.length]:null,f=s=>s.split('{T}').join(el?T_N[el]:'');
-  return{k:r.k,el,n:f(r.n),d:f(r.d),ends:((w+1)*7-3)*AW_DAY}};
+  return{k:r.k,el,n:f(r.n),d:f(r.d),ends:(w+1)*AW_LEN*AW_DAY}};
 const awOk=(k,c)=>!c||!(k==='lowr'&&(c.r>1||c.ex||c.ez||c.prl&&BY[c.of]&&BY[c.of].r>1))&&!(k==='noleg'&&(c.r>=3||c.ex||c.ez));
 const twDone=(st,el)=>Math.max(0,Math.min(TOWER.floors,Math.floor(+((st.tw||{})[el])||0)));
 const twLeft=(st,now)=>{const d=dayKey(now);return st.twd&&st.twd.day===d?Math.max(0,TOWER.daily-st.twd.n):TOWER.daily};
