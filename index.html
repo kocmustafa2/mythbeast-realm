@@ -1116,8 +1116,8 @@ body.nui:not([data-tab=pack]):not([data-tab=col]) .prog{display:none}
 body.nui nav>div{align-items:flex-end}
 body.nui nav button[data-tab=pack]{order:1}body.nui nav button[data-tab=col]{order:2}body.nui nav button[data-tab=arena]{order:3}body.nui nav button[data-tab=adv]{order:4}body.nui nav button[data-tab=clan],body.nui nav button[data-tab=rules]{order:5}
 body.nui nav button[data-tab=arena]{background:none!important;overflow:visible}
-body.nui nav button[data-tab=arena] .ni{width:44px;height:44px;padding:9px;box-sizing:content-box;border-radius:50%;background:radial-gradient(#ff8a3c,#c3340c);border:3px solid #ffcf6a;box-shadow:0 6px 18px #ff6a1a88;margin-top:-30px;filter:none;transform:none}
-body.nui nav button[data-tab=arena].on .ni{box-shadow:0 0 0 3px #fff6,0 6px 22px #ff6a1aaa}
+body.nui nav button[data-tab=arena] .ni{width:50px;height:50px;margin-top:-24px;filter:drop-shadow(0 0 10px #ffcf6a99) drop-shadow(0 4px 6px #000a);transform:none;animation:floaty 3s ease-in-out infinite}body.nui nav button[data-tab=arena]::before{content:'';position:absolute;left:50%;top:-4px;width:72px;height:28px;transform:translateX(-50%);background:radial-gradient(#ffcf6a55,transparent 70%);pointer-events:none}
+body.nui nav button[data-tab=arena].on .ni{filter:drop-shadow(0 0 14px #ffcf6a) drop-shadow(0 4px 6px #000a)}
 body.nui .fightb{display:block;margin:14px 0;padding:16px 10px;font:30px/1 'MRDisplay',sans-serif;letter-spacing:1px;border-radius:20px;background:linear-gradient(#ff9a3c,#e2401c);box-shadow:0 6px 0 #8c2208,0 0 30px #ff6a1a55}
 body.nui .fightb small{display:block;font:600 12px Rubik,sans-serif;letter-spacing:0;margin-top:5px;opacity:.92}
 .dmini{background:#ffffff0d;border:1px solid #ffffff1c;border-radius:16px;padding:10px;margin-bottom:12px}
@@ -1221,6 +1221,40 @@ body.nui .frc{transition:transform .15s;position:relative;overflow:hidden}body.n
 body.nui #frbtn .fri{animation:floaty 2.8s ease-in-out infinite}
 body.nui .frbd{animation:glowd 1.4s infinite}
 body.nui .frp{animation:popin .25s ease}
+
+/* yeni arayüz: profil */
+.pfhero{position:relative;display:flex;gap:14px;align-items:center;padding:16px 14px;border-radius:20px;overflow:hidden;margin-bottom:10px;background:linear-gradient(135deg,color-mix(in srgb,var(--lc) 45%,#1a1535),#16122e 70%);border:1px solid color-mix(in srgb,var(--lc) 60%,transparent);animation:popin .3s ease}
+.pfglow{position:absolute;inset:0;background:radial-gradient(60% 80% at 15% 50%,color-mix(in srgb,var(--lc) 40%,transparent),transparent);animation:glowp2 4s ease-in-out infinite;pointer-events:none}
+@keyframes glowp2{50%{opacity:.4}}
+.pfava{position:relative;width:86px;height:86px;flex:none}
+.pfava i{position:absolute;inset:-5px;border-radius:50%;background:conic-gradient(from 0deg,var(--lc),#ffe39a,var(--lc),#fff6,var(--lc));animation:spin 6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.pfava img{position:relative;width:86px;height:86px;border-radius:50%;object-fit:cover;object-position:50% 20%;border:3px solid #16122e}
+.pfava b{position:absolute;right:-4px;bottom:-2px;min-width:26px;height:24px;padding:0 5px;border-radius:12px;background:linear-gradient(#7a3cff,#4b1fc0);border:2px solid #fff;font:13px/20px 'MRDisplay',sans-serif;text-align:center}
+.pfava em{position:absolute;left:-2px;bottom:0;width:24px;height:24px;border-radius:50%;background:#000b;border:1.5px solid #fff8;font:12px/21px system-ui;font-style:normal;text-align:center}
+.pfava.me{cursor:pointer}
+.pfhn{position:relative;flex:1;min-width:0}.pfhn>b{display:block;font:24px/1.05 'MRDisplay',sans-serif;overflow:hidden;text-overflow:ellipsis}.pfhn>small{display:block;font:600 12px Rubik,sans-serif;color:#e6e0ff;margin-top:3px}
+.pflg{display:inline-flex;align-items:center;gap:5px;margin-top:6px;background:#0005;border-radius:12px;padding:3px 9px 3px 3px;font:700 12px Rubik,sans-serif}.pflg img{width:24px;height:24px}.pflg em{font-style:normal;color:#ffd36a}
+.pfhn .pfbest{color:#bdb5dc;font-weight:500;font-size:11px}
+.pkrs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:10px 0}
+.pkr{text-align:center;background:#ffffff0b;border:1px solid #ffffff17;border-radius:14px;padding:8px 2px}
+.pkr i{display:grid;place-items:center;width:46px;height:46px;margin:0 auto 4px;border-radius:50%;background:conic-gradient(var(--c) calc(var(--p)*1%),#ffffff1a 0);animation:popin .5s ease both}
+.pkr i:after{content:attr(data-t);display:grid;place-items:center;width:36px;height:36px;border-radius:50%;background:#16122e;font:12px 'MRDisplay',sans-serif;font-style:normal}
+.pkr small{font:600 11px Rubik,sans-serif;color:var(--mute)}
+.pfmini{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.pfmini div{text-align:center;background:#ffffff0b;border-radius:12px;padding:7px 2px}.pfmini b{display:block;font:16px 'MRDisplay',sans-serif}.pfmini b small{font-size:10px;color:var(--mute);margin:0 2px}.pfmini span{font:600 10.5px Rubik,sans-serif;color:var(--mute)}
+.pfform{display:flex;gap:4px;margin-bottom:8px}
+.pfform i{flex:1;max-width:30px;height:26px;border-radius:8px;display:grid;place-items:center;font:12px 'MRDisplay',sans-serif;font-style:normal;animation:popin .3s ease both}
+.pfform i.w{background:#3fd18f33;color:#7dffb5;border:1px solid #3fd18f88}.pfform i.l{background:#ff4d5e26;color:#ff8a95;border:1px solid #ff4d5e66}
+.pfach{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.pfa1{background:#ffffff0b;border:1px solid #ffffff17;border-radius:14px;padding:9px;display:flex;flex-direction:column;gap:2px;animation:popin .3s ease both}
+.pfa1.ok{background:linear-gradient(135deg,#ffcf6a22,#ffffff08);border-color:#ffcf6a77}
+.pfa1 .md1{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;margin-bottom:3px;background:conic-gradient(#ffcf6a calc(var(--p)*1%),#ffffff1a 0);font:10px 'MRDisplay',sans-serif;position:relative}
+.pfa1 .md1:before{content:'';position:absolute;inset:4px;border-radius:50%;background:#16122e;z-index:0}
+.pfa1 .md1{isolation:isolate}.pfa1 .md1 u{position:relative;z-index:1;text-decoration:none}.pfa1 .md1{color:#fff}.pfa1.ok .md1{font-size:18px}
+.pfa1 b{font:700 12.5px Rubik,sans-serif}.pfa1 small{font:500 11px Rubik,sans-serif;color:var(--mute)}
+.pfa1 .pfcl{margin-top:4px;padding:6px;font-size:12px}
+.pfhero,.pkrs,.pfmini,.pfform,.pfach,.pfbtn,.pfa1{flex-shrink:0}
 </style>
 </head>
 <body>
@@ -2705,7 +2739,7 @@ document.addEventListener('pointerdown',e=>{if(e.target.closest('.btn,.tgo,nav b
 // dosyaları telefonda saklayan servis: içeriği değişen bir görsel/ses olursa ASSET_V artırılır
 // SÜRÜM KONTROLÜ: yeni sürüm yayınlanınca APP_V ve version.txt birlikte artırılır.
 // İnternet varken oyun arada bir version.txt'ye bakar; farklıysa üstte 'Yeni sürüm hazır · Yenile' çıkar (savaş sırasında beklenir).
-const APP_V='2026.11.27-16';
+const APP_V='2026.11.28-1';
 function verCheck(){if(window.claude||!navigator.onLine)return;
   fetch('version.txt?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{t=(t||'').trim();if(/^[\w.-]{3,40}$/.test(t)&&t!==APP_V){window.__upd=t;updShow()}}).catch(()=>{})}
 function updShow(){if(!window.__upd||document.getElementById('updb'))return;if(B&&!B.over){window.__updLater=1;return}
@@ -2735,6 +2769,25 @@ function achToast(list){if(!list||!list.length)return;list.forEach((n,i)=>setTim
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-prof]');if(!t||!t.dataset.prof||window.claude)return;
   e.preventDefault();e.stopPropagation();openProfile(t.dataset.prof)},true);
 const MODE_N={arena:'Arena',adv:'Macera',friend:'Dostluk'},MODE_I={arena:'⚔️',adv:'🗺️',friend:'🤝'};
+// yeni arayüz: profil
+function nuiProf(j,st,lg,rate,done,R){const L=LEAGUES[lg],ring=(p,c,t,l)=>`<div class="pkr"><i style="--p:${Math.max(0,Math.min(100,p))};--c:${c}" data-t="${t}"></i><small>${l}</small></div>`;
+  const btns=R.self?`<button class="btn alt" id="pfav">Profil resmini değiştir</button>`:`${R.friend||R.clanmate?`<button class="btn" id="pffight">Savaş</button>`:''}${j.view?'<button class="btn alt" id="pfdeck">Destesi</button><button class="btn alt" id="pfcards">Kartları</button>':''}${R.friend?'':R.pending?'<button class="btn alt" disabled>İstek bekliyor</button>':'<button class="btn alt" id="pfadd">Arkadaş ekle</button>'}`;
+  const ms=j.matches,form=ms.slice(0,10);
+  return `<div class="pfhero" style="--lc:${L.col}"><div class="pfglow"></div>
+    <div class="pfava${R.self?' me':''}"><i></i><img src="img/t/${j.av}.webp" alt=""><b>${st.lvl}</b>${R.self?'<em>✎</em>':''}</div>
+    <div class="pfhn"><b>${escH(j.name)}</b>${j.clan?`<small>🛡️ ${escH(j.clan)}</small>`:'<small>Klansız</small>'}
+      <div class="pflg"><img src="img/lg/${lg}.webp" alt=""><span>${L.n} Ligi</span><em>🏆 ${st.tr}</em></div>
+      <small class="pfbest">En iyi: ${LEAGUES[Math.min(st.bestLg,LEAGUES.length-1)].n}${st.ssBest?` · Sezon ${st.ssBest}.`:''}</small></div></div>
+  <div class="pfbtn">${btns}</div>
+  <div class="pkrs">${ring(rate,'#3fd18f','%'+rate,'Kazanma')}${ring(st.col/st.tot*100,'#ffcf6a',st.col,'Koleksiyon')}${ring(st.advC/st.advN*100,'#7ad8ff',st.advC,'Macera')}${ring(done/j.ach.length*100,'#ff7ad9',done,'Başarım')}</div>
+  <div class="pfmini"><div><b>${st.w}<small>G</small> ${st.l}<small>M</small></b><span>Arena</span></div><div><b>${st.bestStk}</b><span>En uzun seri</span></div><div><b>${st.opened}</b><span>Açılan paket</span></div><div><b>${st.dnTot}</b><span>Bağış</span></div></div>
+  <p class="frh">Son maçlar</p>
+  ${ms.length?`<div class="pfform">${form.map(m=>`<i class="${m.win?'w':'l'}" title="${escH(m.opp||'')}">${m.win?'G':'M'}</i>`).join('')}</div>
+  <div class="frl">${ms.slice(0,5).map(m=>`<div class="pfm"><span class="md">${MODE_I[m.mode]||'⚔️'}</span><span class="op">${escH(m.opp||'')}</span><span class="${m.win?'w':'l'}">${m.win?'Galibiyet':'Yenilgi'}</span>${m.mode==='arena'&&m.dt?`<small>${m.dt>0?'+':''}${m.dt} 🏆</small>`:''}<small>${agoTxt(m.t)}</small></div>`).join('')}</div>`:'<p class="frem">Henüz maç yok.</p>'}
+  <p class="frh">Başarımlar · ${done}/${j.ach.length}</p>
+  <div class="pfach">${j.ach.map(a=>{const rw=[a.rw.f?`${a.rw.f} paket`:'',a.rw.g?`${a.rw.g} altın`:''].filter(Boolean).join(' + '),p=Math.round(Math.min(1,a.v/a.g)*100);
+    return `<div class="pfa1${a.done?' ok':''}"><span class="md1" style="--p:${a.done?100:p}"><u>${a.done?'🏅':p+'%'}</u></span><b>${escH(a.n)}</b><small>${escH(a.d)}</small>
+      ${rw?(a.done&&R.self?(a.cl?`<small class="pfrw cl">✓ ${rw}</small>`:`<button class="btn pfcl" data-acl="${a.id}">🎁 ${rw}</button>`):`<small class="pfrw">🎁 ${rw}</small>`):''}</div>`}).join('')}</div>`}
 async function openProfile(name){if(window.claude)return;const ov=$('#ov');const back=window.__pfBack=ov.classList.contains('on')?ov.innerHTML:null;ov.className='ov on';
   const close=()=>{ov.className='ov';ov.innerHTML='';if(!B)render()};
   const shell=body=>{ov.innerHTML=`<div class="fp setp frp"><div class="sth"><b>Profil</b><button class="stx" id="pfclose" aria-label="Kapat">✕</button></div>${body}</div>`;$('#pfclose').onclick=close};
@@ -2743,7 +2796,7 @@ async function openProfile(name){if(window.claude)return;const ov=$('#ov');const
   let j;try{j=await api('/api/profile'+(name?'?u='+encodeURIComponent(name):''))}catch(e){shell(`<p class="sioerr">${escH(e.message)}</p>`);return}
   const st=j.stats,lg=Math.min(st.lg,LEAGUES.length-1),rate=st.w+st.l?Math.round(st.w/(st.w+st.l)*100):0,done=j.ach.filter(a=>a.done).length;
   const R=j.rel;
-  shell(`<div class="pfh"><div class="pfav"><img class="pfi" src="img/t/${j.av}.webp" alt=""><img class="avlg" src="img/lg/${lg}.webp" alt=""></div>
+  if(NUI())shell(nuiProf(j,st,lg,rate,done,R));else shell(`<div class="pfh"><div class="pfav"><img class="pfi" src="img/t/${j.av}.webp" alt=""><img class="avlg" src="img/lg/${lg}.webp" alt=""></div>
       <div class="pfn"><b>${escH(j.name)}</b><small>${j.clan?'🛡️ '+escH(j.clan)+' · ':''}Seviye ${st.lvl}</small><small>${LEAGUES[lg].n} Ligi · 🏆 ${st.tr} · En iyi: ${LEAGUES[Math.min(st.bestLg,LEAGUES.length-1)].n}</small></div></div>
     <div class="pfbtn">${R.self?`<button class="btn alt" id="pfav">Profil resmini değiştir</button>`:`${R.friend||R.clanmate?`<button class="btn" id="pffight">Savaş</button>`:''}${j.view?'<button class="btn alt" id="pfdeck">Destesi</button><button class="btn alt" id="pfcards">Kartları</button>':''}${R.friend?'':R.pending?'<button class="btn alt" disabled>İstek bekliyor</button>':'<button class="btn alt" id="pfadd">Arkadaş ekle</button>'}`}</div>
     <p class="frh">İstatistikler</p>
@@ -2756,7 +2809,7 @@ async function openProfile(name){if(window.claude)return;const ov=$('#ov');const
     <div class="pfa">${j.ach.map(a=>{const rw=[a.rw.f?`${a.rw.f} paket`:'',a.rw.g?`${a.rw.g} altın`:''].filter(Boolean).join(' + ');
       return `<div class="${a.done?'ok':''}"><b>${a.done?'🏅 ':''}${escH(a.n)}</b><small>${escH(a.d)}</small>${a.done?'':`<i><u style="width:${Math.round(a.v/a.g*100)}%"></u></i><small>${a.v}/${a.g}</small>`}
         ${rw?(a.done&&j.rel.self?(a.cl?`<small class="pfrw cl">✓ Alındı · ${rw}</small>`:`<button class="btn pfcl" data-acl="${a.id}">🎁 ${rw}</button>`):`<small class="pfrw">🎁 ${rw}</small>`):''}</div>`}).join('')}</div>`);
-  const pa=$('#pfav');if(pa)pa.onclick=()=>openAvatarPick(j.av);
+  const pa=$('#pfav');if(pa)pa.onclick=()=>openAvatarPick(j.av);{const pv=$('.pfava.me');if(pv)pv.onclick=()=>openAvatarPick(j.av)}
   ov.querySelectorAll('[data-acl]').forEach(b=>b.onclick=async()=>{b.disabled=true;
     try{const r=await act('ach_claim',{id:b.dataset.acl});renderTop();toast('Ödül alındı: '+[r.f?r.f+' paket':'',r.g?r.g+' altın':''].filter(Boolean).join(' + '));openProfile()}
     catch(e){toast(e.message);b.disabled=false}});
