@@ -1022,8 +1022,18 @@ body.inb main{padding:0 10px 16px}
 .card.lvc{filter:drop-shadow(0 0 3px var(--lvg))}.dtlv{font-size:10px!important;padding:1px 4px!important;border-radius:6px!important}
 .snm .n.nl{display:flex;align-items:center;min-width:0}.snm .n.nl .nt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}.snm .lvn{flex:none;width:auto;height:auto;font-size:.7em}.fnm .lvn{flex:none}
 .aimg.pt{object-position:50% 12%}
-/* +10 çerçevesi kartın DIŞINA oturur (9 parça kesim): kartın adı, canı ve yazıları kapanmaz */
-.lv10f{position:absolute;left:-8%;right:-8%;top:-14.9%;bottom:-10.9%;z-index:12;pointer-events:none;border-style:solid;border-color:transparent;border-image:url(img/lv10frame.webp) 167 64 122 64 / 11.8% 6.9% 8.7% 6.9% stretch;transform:translateZ(3px);filter:drop-shadow(0 0 6px #ff9ad8aa)}.card.lt4,.card.lt4 .cs,.card.lt4 .tilt{overflow:visible}.grid>.card.lt4{content-visibility:visible;z-index:2}.detail .card.lt4{margin-top:clamp(30px,9vw,60px);margin-bottom:24px}.grid .card.lt4{margin-top:6px}/* savaşta +10: kartın kenarında akan gökkuşağı çerçeve (büyük çerçeve görseli savaş kartında isimleri kapatıyordu) */
+/* +10 süsü: kartın kendi çerçevesi kalır; üstüne ince akan prizma kenar, tepede küçük kristal taç (kullanıcının çerçevesinden), köşelerde parlayan yıldızlar, ara ara ışık süzülmesi */
+.lv10f{position:absolute;inset:0;z-index:12;pointer-events:none;transform:translateZ(3px);border-radius:inherit}
+.l10r{position:absolute;inset:-2px;border-radius:5%/3.6%;padding:3px;background:conic-gradient(from var(--a10,0deg),#ff5f6d,#ffc371,#fff3a8,#7cff9a,#5fd4ff,#b47bff,#ff5f6d);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:a10 4s linear infinite;filter:drop-shadow(0 0 5px #ff9ad8)}
+.l10c{position:absolute;left:50%;top:-10.5%;width:30%;translate:-50% 0;filter:drop-shadow(0 2px 4px #000a) drop-shadow(0 0 6px #fff6)}
+.l10s{position:absolute;width:11%;aspect-ratio:1;background:radial-gradient(circle,#fff 0 12%,#ffd6f5 22%,transparent 60%);clip-path:polygon(50% 0,60% 40%,100% 50%,60% 60%,50% 100%,40% 60%,0 50%,40% 40%);filter:drop-shadow(0 0 4px #ff9ad8);animation:l10tw 2.4s ease-in-out infinite}
+.l10s.s1{left:-3%;top:-2%}.l10s.s2{right:-3%;top:-2%;animation-delay:.6s}.l10s.s3{left:-3%;bottom:-2%;animation-delay:1.2s}.l10s.s4{right:-3%;bottom:-2%;animation-delay:1.8s}
+@keyframes l10tw{0%,100%{transform:scale(.7) rotate(0);opacity:.75}50%{transform:scale(1.15) rotate(45deg);opacity:1}}
+.l10w{position:absolute;inset:0;border-radius:inherit;overflow:hidden;background:linear-gradient(115deg,transparent 40%,#ffffff55 50%,transparent 60%) no-repeat;background-size:250% 100%;animation:l10sw 5s ease-in-out infinite;mix-blend-mode:screen}
+@keyframes l10sw{0%,70%{background-position:150% 0}100%{background-position:-60% 0}}
+.bk:has(.bk10f){overflow:visible}.bk:has(.bk10f) .bka{border-radius:11px 11px 0 0}.bk10f{border-radius:11px}.bk10f .l10w{border-radius:11px}
+.bk10f .l10c{width:30%;top:-15%}.bk10f .l10s{width:13%}.bk10f .l10r{inset:-2px;border-radius:12px;padding:2.5px}
+@media (prefers-reduced-motion:reduce){.l10r,.l10s,.l10w{animation:none}}.card.lt4,.card.lt4 .cs,.card.lt4 .tilt{overflow:visible}.grid>.card.lt4{content-visibility:visible}.detail .card.lt4{margin-top:clamp(16px,5vw,34px)}.grid .card.lt4{margin-top:10px}/* savaşta +10: kartın kenarında akan gökkuşağı çerçeve (büyük çerçeve görseli savaş kartında isimleri kapatıyordu) */
 .bk10{position:absolute;inset:0;z-index:7;pointer-events:none;border-radius:inherit;padding:3px;background:conic-gradient(from var(--a10,0deg),#ff5f6d,#ffc371,#fff3a8,#7cff9a,#5fd4ff,#b47bff,#ff5f6d);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:a10 3s linear infinite;filter:drop-shadow(0 0 6px #ff9ad8)}
 @property --a10{syntax:'<angle>';inherits:false;initial-value:0deg}@keyframes a10{to{--a10:360deg}}
 .lvmx{font:400 11px Rubik,sans-serif;color:#aab6c2}.lvbox .lvrz{vertical-align:middle}
@@ -1290,6 +1300,7 @@ const nmS=(n,lim)=>{const k=nmK(n,lim);return k<1?` style="--nk:${k.toFixed(2)};
 // dikey resimlerde yaratığın başının yeri (resmin üstünden yüzde): kırpılan küçük alanlarda bu nokta görünür
 const FOC={206:16,207:14,208:18,209:14,210:20,211:22,212:16,213:10,214:14,215:15,216:14,217:20,218:22,219:14,220:16,221:16};
 const focY=c=>c&&FOC[c.id]!=null?FOC[c.id]:12;
+const LV10='<i class="lv10f"><b class="l10r"></b><img class="l10c" src="img/lv10cr.webp" alt=""><i class="l10s s1"></i><i class="l10s s2"></i><i class="l10s s3"></i><i class="l10s s4"></i><b class="l10w"></b></i>';   // +10 süsü: akan prizma kenar, taç, köşe yıldızları, ışık süzülmesi
 const lvTier=L=>L>=10?4:L>=7?3:L>=4?2:1;
 const lvN=c=>c.lv?`<span class="lvn lt${lvTier(c.lv)}">+${c.lv}</span>`:'';
 const lvHp=c=>c.lv&&c._big&&BY[c.id]?`${c.hp}<i class="lvd">+${c.hp-BY[c.id].hp}</i>`:c.hp;
@@ -1299,7 +1310,7 @@ function cardHTML(c,o={}){const L=o.lv!=null?o.lv:(o.miss||o.noLv||!owned(c.id)?
   if(!(L>0)||!MR.lvable(c))return cardHTML0(c,o);
   const lc=MR.lvCard(c,L),h=cardHTML0(o.big||o.full?{...lc,_big:1}:lc,o),k=h.indexOf('>')+1;
   let out=h.slice(0,k).replace('class="card ','class="card lvc lt'+lvTier(L)+' ')+h.slice(k);
-  if(L>=MR.LV.max){const t='<div class="tilt">',j=out.indexOf(t);out=j>=0?out.slice(0,j+t.length)+'<i class="lv10f"></i>'+out.slice(j+t.length):out}   // kartla birlikte ölçeklensin ve eğilsin
+  if(L>=MR.LV.max){const t='<div class="tilt">',j=out.indexOf(t);out=j>=0?out.slice(0,j+t.length)+LV10+out.slice(j+t.length):out}   // kartla birlikte ölçeklensin ve eğilsin
   return out}
 function cardHTML0(c,o={}){
   if(c.prl){const big=o.full||o.big;return shinyCard(c,{...o,_ps:big?`img/${c.id}.jpg`:`img/t/${c.id}.webp`})}   // Parlak: kendi tam resmi
@@ -1965,7 +1976,7 @@ function bk(f,s,i){
   let hint='';if(tgt){const A=B.me.board[B.sel],fx=curAtk(A).fx,h=calc(A,f,B.me.board,B.foe.board,atkOf(A));hint=`<div class="bkhint${h.k==='w'?' x':h.k?' w':''}">${h.k==='i'?'Bağışık':'−'+h.d+(fx==='coin'?'+':'')}</div>`}
   const a=curAtk(f),big=f.ch&&c.atks[1],SH=c.ex||(s==='me'&&shownShiny(c.id)),src=SH&&SHART.has(c.id)?`img/s/${c.id}.jpg`:`img/t/${c.id}.webp`;
   return `<div class="bk${big?' ch':c.atks[1]&&!f.justIn&&!f.didAtk?' half':''}${s==='me'&&B.sel===i?' sel':''}${my&&!selS?' bpk':''}${tgt?' tg':''}${supOk?' sup':''}${SH?' holo':''}${c.ex?' ex':''}${c.ez?' ez':''}" data-s="${s}" data-i="${i}" data-u="${f.uid}" style="--ec:${AUC[c.el]}">
-  <div class="bka" style="background-image:url(${src})${portArt(c)?`;background-position:50% ${focY(c)}%`:''}"></div>${c.lv>=10?'<i class="bk10"></i>':''}<div class="bkn${c.lv?' bknl':''}"${nmS(c.name+(c.lv?'+10':'')+(c.ex?'EX ':''),9)}>${c.lv?`<span>${c.name}</span>${lvN(c)}`:c.name}</div><img class="bke" src="img/ic/${c.el}.webp" alt="">
+  <div class="bka" style="background-image:url(${src})${portArt(c)?`;background-position:50% ${focY(c)}%`:''}"></div>${c.lv>=10?LV10.replace('lv10f','lv10f bk10f'):''}<div class="bkn${c.lv?' bknl':''}"${nmS(c.name+(c.lv?'+10':'')+(c.ex?'EX ':''),9)}>${c.lv?`<span>${c.name}</span>${lvN(c)}`:c.name}</div><img class="bke" src="img/ic/${c.el}.webp" alt="">
   ${c.ez?'':c.ex?'<span class="bkx">EX</span>':''}${f.evo?'<span class="bkev">EVRİM TAŞI</span>':''}${f.st?`<span class="bkst"><img src="img/ic/${f.st}.webp" alt="">+10</span>`:''}${f.burn?`<span class="bkb"><img src="img/ic/burn.webp" alt="">${f.burn}</span>`:''}${f.poiT>0?`<span class="bkv bkp"><img src="img/ic/poison.webp" alt="">${f.poi}</span>`:''}${f.bldT>0?`<span class="bkv bkl"><img src="img/ic/blood.webp" alt="">${f.bld}</span>`:''}${f.ampT>0?`<span class="bkv bka2">${icon('shadow')}×${f.amp}</span>`:''}${f.frz>0?'<span class="bkfz">❄ Donmuş</span>':''}${f.mute>0?'<span class="bkmu">Yetenek kapalı</span>':''}
   <div class="bkhp"><i class="${p<.35?'lo':''}" style="width:${p*100}%"></i><span>${f.hp} / ${mx(f)}</span></div>
   <div class="bkat${big?' big':''}"><span>${a.name}${a.fx?`<em>${FXS[a.fx]}</em>`:''}</span><b>${atkOf(f)}${a.fx==='coin'?'+':''}</b></div>${hint}</div>`}
