@@ -4,7 +4,7 @@ const MR = globalThis.MR;
 // /api/* istekleri buraya gelir, diğer her şey statik oyun dosyalarıdır (ASSETS).
 // Veritabanı: Cloudflare D1 (binding: DB). Tablolar ilk istekte kendiliğinden kurulur.
 
-const EZ_IDS = new Set(['83', '84', '85']);           // sadece oyunun sahibine açık kartlar
+const EZ_IDS = new Set(['83', '84', '85', '222', '223', '224']);           // sadece oyunun sahibine açık kartlar
 const PBKDF2_ITER = 20000;                            // ücretsiz planın işlemci sınırına uygun
 const SESSION_DAYS = 180;
 const MAX_SAVE = 512 * 1024;                          // bir kaydın en büyük boyutu (bayt)

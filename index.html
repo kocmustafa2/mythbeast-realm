@@ -1285,7 +1285,7 @@ body.nui .frp{animation:popin .25s ease}
 <div id="title"><div class="tbg"></div><div class="tlogo"><img class="tlimg" src="img/logo.webp" alt="Mythbeast Realm"><span class="t3">Seri 1 · Elementler</span></div>
 <button class="sndb tsnd" id="tsnd" aria-label="Ses"></button><div class="tbtm"><button class="tgo" id="tgo" aria-label="Oyna"><img src="img/btn_play.webp" alt="Oyna"></button><p class="tinfo" id="tinfo"></p></div></div>
 
-<script src="rules.js?v=20"></script>
+<script src="rules.js?v=21"></script>
 <script>
 {
 // Ortak kurallar (rules.js): kart verisi ve ekonomi. Oyun ve sunucu aynı dosyayı kullanır.
@@ -1394,7 +1394,7 @@ const en=(el,cls='')=>`<i class="en ${cls}" style="--ec:var(--ec-${el})">${icon(
 document.documentElement.style.cssText='--ec-metal:#8e9bb0;--ec-poison:#8fd10f;--ec-blood:#c40000;--ec-fire:#ff6a3d;--ec-water:#2f9be6;--ec-earth:#6f9e2e;--ec-air:#7e93b8;--ec-light:#e8b520;--ec-shadow:#6d4aa8';
 
 const ART={};
-const IMG=Object.fromEntries(Array.from({length:109},(_,i)=>[i+1,1]));CARDS.forEach(c=>IMG[c.id]=1);EXC.forEach(c=>IMG[c.id]=1);PRL.forEach(c=>IMG[c.id]=1);
+const IMG=Object.fromEntries(Array.from({length:109},(_,i)=>[i+1,1]));CARDS.forEach(c=>IMG[c.id]=1);EXC.forEach(c=>IMG[c.id]=1);PRL.forEach(c=>IMG[c.id]=1);EZC.forEach(c=>IMG[c.id]=1);
 /* ---------- UYANMIŞ EX KARTLAR ---------- */
 /* ---------- EZELİ KARTLAR (şimdilik sadece oyunun sahibine açık, paketten/rakipten çıkmaz) ---------- */
 const EZOWN='u_gCZR5eBoOHaN6bC0V8kJwQ';
@@ -1474,7 +1474,7 @@ function frameCard(c,o,F){
 FRAMES.metal=FRAMES.metal||FRAMES.air;FRAMES.poison=FRAMES.poison||FRAMES.earth;
 function frameFor(c){const FR=FRAMES[c.el];if(!FR||c.r>=3)return null;return c.r===2?FR.susl:c.r===0?(FR.basit||FR.sade):(FR.sade||FR.basit)}
 // parlak kart: tam resimli tasarım (resim bütün kartı kaplar, yazılar cam panellerde)
-const SHART=new Set([218,219,220,221,206,207,208,209,210,211,212,213,214,215,216,217,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,83,84,85,1,2,3,4,5,6,8,9,10,11,12,13,15,16,17,18,19,20,22,23,24,25,26,27,29,30,31,32,34,35,36,37,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82]);
+const SHART=new Set([222,223,224,218,219,220,221,206,207,208,209,210,211,212,213,214,215,216,217,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,83,84,85,1,2,3,4,5,6,8,9,10,11,12,13,15,16,17,18,19,20,22,23,24,25,26,27,29,30,31,32,34,35,36,37,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82]);
 function shinyCard(c,o){
   const big=o.full||o.big,src=big?`img/${c.id}.jpg`:`img/t/${c.id}.webp`;
   if(SHART.has(c.id)){const ps=big?`img/s/${c.id}.jpg`:`img/st/${c.id}.webp`;o={...o,_ps:ps}}
@@ -1954,7 +1954,7 @@ function deckTile(c,o={}){return `<div class="dt r${c.r} dty${o.sel?' sel':''}${
 function supTile(k,o={}){return `<div class="dt sup${o.sel?' sel':''}${o.dis?' dis':''}" data-k="s:${k}"${o.idx!=null?` data-x="${o.idx}"`:''}><div class="dta" style="background:url(${supArt(k)}) center/cover"></div><b>${SUPN[k]}</b>${o.n?`<span class="dtn">${o.n}</span>`:''}</div>`}
 const tileK=(k,o)=>isS(k)?supTile(k.slice(2),o):deckTile(BY[k],o);
 // YENİ ARAYÜZ (deneme): sadece oyunun sahibinde, Ayarlar'dan açılır
-const NUI=()=>{try{return !window.claude&&!!accGet().owner&&localStorage.getItem('mr.nui')==='1'}catch(e){return false}};
+const NUI=()=>true;   // yeni arayüz herkese açık (2026-11-28)
 function deckMini(){const ks=deckKeys('a'),p=deckPts(ks),cr=ks.filter(k=>!isS(k)),dd=ensDecks(),sh=cr.slice(0,4);
   return `<div class="dmini"><div class="dmh"><b>${escH(dd[S.dA].n)}</b><span>${ks.length}/${BAT.deck} kart · ${p}/${BAT.budget} puan</span><button class="dmb" id="dmedit">Düzenle ›</button></div>
   <div class="dmr">${sh.map(k=>{const c=BY[k];return c?`<img src="img/t/${c.id}.webp" alt="" class="r${c.r}${c.ex?' ex':''}">`:''}).join('')}${ks.length>sh.length?`<i>+${ks.length-sh.length}</i>`:''}${!ks.length?'<i class="em">Deste boş · Düzenle</i>':''}</div>
@@ -2079,6 +2079,8 @@ function coreHit(X,s,ai,ti){
   if(D.hp<=0&&D.c.exa==='stand'&&!D.stood){D.hp=D.c.ez?100:Math.round(mx(D)/2);D.stood=1;ev.stood=1;D.ko2=0}
   if(at.fx==='burn'&&D.hp>0&&r.k!=='i'){D.burn=2;ev.burned=1}
   if(A.c.exa==='devour'&&D.hp>0&&!D.c.ez){D.mute=2;ev.mute=1}
+  if(A.c.exa==='leech'&&r.d>0){const g=Math.max(0,Math.min(Math.round(r.d/2/5)*5,mx(A)-A.hp));A.hp+=g;ev.leech=g;if(D.hp<=0){A.max=mx(A)+50;A.hp+=50;ev.leech+=50;ev.leechUp=1}}   // Ezeli Kanemici
+  if(A.c.exa==='mill'&&at.name===A.c.atks[1].name&&X[o].hand&&X[o].hand.length){const j=Math.floor(Math.random()*X[o].hand.length);X[o].deck.push(X[o].hand.splice(j,1)[0]);ev.mill=1}   // Zamanyiyen: Son Saat
   if(at.fx==='splash')X[o].board.forEach((f,i)=>{if(f&&i!==ti&&rel(A.c.el,f.c.el)!=='i'){f.hp=Math.max(0,f.hp-FXV.splash);ev.side.push(i)}});
   if(at.fx==='heal'){A.hp=Math.min(mx(A),A.hp+FXV.heal);ev.heal=1}
   if(at.fx==='recoil'){A.hp=Math.max(0,A.hp-FXV.recoil);ev.recoil=1}
@@ -2359,6 +2361,8 @@ function exEnter(s,i){if(!B)return;const f=B[s].board[i];if(!f||!f.c.ex||f.enter
   setTimeout(()=>{if(!B)return;if(f.c.exa==='blast'){ringFx(el,f.c.el,(f.c.ez?'EZELİ: ':'KADİM: ')+f.c.name);B[o].board.forEach((t,k)=>{if(!t)return;const dd=f.c.ez?40:50;t.hp=Math.max(1,t.hp-dd);const te=elOf(o,k);bnum(te,'−'+dd,'w')});SFX.hit(f.c.el,'w')}
    if(f.c.exa==='heal'){ringFx(el,'light','KADİM: '+f.c.name);B[s].board.forEach((t,k)=>{if(!t)return;const hh=f.c.ez?50:70;t.hp=Math.min(mx(t),t.hp+hh);clearBad(t);ringFx(elOf(s,k),'water','+'+hh+' can',150)});SFX.heal()}
    if(f.c.exa==='stand')ringFx(el,'shadow','KADİM: '+f.c.name);
+   if(f.c.exa==='mill'){const P=B[o],n=Math.min(2,P.deck.length);P.deck.splice(0,n);if(n)setTimeout(()=>{if(B)toast(`Zamanyiyen ${s==='me'?'rakibin':'senin'} destenden ${n} kartı yuttu`)},500)}   // Ezeli Zamanyiyen
+   if(f.c.exa==='hush'){B[o].board.forEach((t,k)=>{if(!t||t.c.ez)return;t.mute=2;ringFx(elOf(o,k),'shadow','Susturuldu',200)})}   // Ezeli Ölüm Süvarisi
    if(f.c.ez){ringFx(el,'shadow','EZELİ: '+f.c.name);SFX.hit('shadow','w')}
    setTimeout(()=>{if(B&&!B.over&&!B.busy)renderBattle()},900)},300)}
 async function sweep(){
@@ -2464,6 +2468,7 @@ async function strike(s,ai,ti){
   renderBattle();const ne=elOf(o,ti),na=elOf(s,ai);
   if(s==='me'){dq('hit',A.c.el);if(k==='w')dq('weak')}SFX.hit(A.c.el,k);if(ev.stood)setTimeout(()=>{ringFx(ne,'light','Ayağa kalktı! 50 can');SFX.heal()},500);bshake(k==='w'?1.4:.7);bnum(ne,k==='i'?'Bağışık':'−'+ev.d,k==='w'?'x':k?'w':'');if(ne&&ev.d)ne.classList.add('hit');
   if(ev.coin!==undefined)setTimeout(()=>bnum(na,ev.coin?'Tura! +'+FXV.coin:'Yazı','x'),150);
+  if(ev.leech)setTimeout(()=>{ringFx(na,'water','+'+ev.leech+' can'+(ev.leechUp?' · kalıcı +50':''));SFX.heal()},450);if(ev.mill)setTimeout(()=>ringFx(ne,'shadow','Bir kart desteye döndü'),450);
   if(ev.burned)setTimeout(()=>{SFX.burn();bnum(elOf(o,ti),'Yandı!','')},350);
   if(ev.amp)setTimeout(()=>ringFx(elOf(o,ti),'shadow','Kötü etkiler ×'+ev.amp),500);
   if(ev.poi)setTimeout(()=>ringFx(elOf(o,ti),'poison','Zehirlendi '+ev.poi),450);
@@ -2747,7 +2752,7 @@ document.addEventListener('pointerdown',e=>{if(e.target.closest('.btn,.tgo,nav b
 // dosyaları telefonda saklayan servis: içeriği değişen bir görsel/ses olursa ASSET_V artırılır
 // SÜRÜM KONTROLÜ: yeni sürüm yayınlanınca APP_V ve version.txt birlikte artırılır.
 // İnternet varken oyun arada bir version.txt'ye bakar; farklıysa üstte 'Yeni sürüm hazır · Yenile' çıkar (savaş sırasında beklenir).
-const APP_V='2026.11.28-3';
+const APP_V='2026.11.28-4';
 function verCheck(){if(window.claude||!navigator.onLine)return;
   fetch('version.txt?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{t=(t||'').trim();if(/^[\w.-]{3,40}$/.test(t)&&t!==APP_V){window.__upd=t;updShow()}}).catch(()=>{})}
 function updShow(){if(!window.__upd||document.getElementById('updb'))return;if(B&&!B.over){window.__updLater=1;return}
@@ -3393,7 +3398,7 @@ function openSettings(){const ov=$('#ov');ov.className='ov on';
     ${row('stsv','Efektler','<span class="sic">✦</span>',svol())}
     ${window.claude?'':(()=>{const a=accGet();return `<div class="stsv"><b>Hesap</b>${a.user?`<p class="sionote">Giriş yapıldı: <b>${escH(a.user)}</b>. İlerlemen buluta kaydediliyor, başka cihazdan da devam edebilirsin.</p><button class="btn alt" id="strec">🔑 ${window.__hasRec===false?'Kurtarma kodu oluştur':'Yeni kurtarma kodu'}</button><button class="btn alt" id="stpw">Şifre değiştir</button><button class="btn alt" id="stout">Çıkış yap</button>`:`<p class="sionote">Giriş yaparsan ilerlemen buluta kaydedilir; telefon değişse bile kaybolmaz.</p><button class="btn" id="stacc">Giriş yap / Kayıt ol</button>`}</div>`})()}
     ${!window.claude&&accGet().owner?'<button class="btn alt" id="stadm">🛠️ Yönetici paneli</button>':''}
-    ${!window.claude&&accGet().owner?`<div class="strow tg"><div class="stl"><span class="sic">🧪</span><b>Yeni arayüz (deneme)</b></div><button class="tgl ${NUI()?'on':''}" id="stnui"><i></i></button></div>`:''}
+
     <div class="stsv"><b>Kayıt</b><div class="stsv2"><button class="btn alt" id="stexp">Dışa aktar</button></div></div>
     <button class="btn alt" id="strules">📖 Kurallar ve oran tablosu</button>
     <div class="stinfo">Mythbeast Realm · Seri 1<br><small>Müzik ve ses efektleri: kendi parçaların ve OpenGameArt (CC0)</small></div>

@@ -298,11 +298,17 @@ const prlOf=c=>BY[PRL_OFF+c.id]||null;
 const EZA={devour:'Tür Yutucu: rakip sahadaki her farklı tür için +%10 güç; vurduğu kartın tür yeteneği 2 tur çalışmaz',
   harvest:'Ruh Hasadı: sahadayken yenilen her kart ona +40 can, yanındakilere +20 can verir; yenilince bir kez son düşen kartını yarı canla geri getirir',
   void:'Boşluk Bakışı: her tur rakibin bir kartını dondurur (o tur saldıramaz); rakibin oynadığı ilk destek kartı boşa gider',
-  drain:'Sahadayken her tur rakibin bütün kartlarından 50 can çeker ve kendini iyileştirir'};const EZDR=50;
+  drain:'Sahadayken her tur rakibin bütün kartlarından 50 can çeker ve kendini iyileştirir',
+  mill:'Zamanı Yut: sahaya inince rakibin destesinin en üstündeki 2 kartı yok eder; dolu saldırısı rakibin elinden rastgele 1 kartı desteye geri gönderir',
+  leech:'Kan Bağı: vurduğu hasarın yarısı kadar iyileşir; bir kartı yenince en yüksek canı kalıcı olarak +50 artar',
+  hush:'Hükümsüz: sahaya inince rakip sahadaki bütün kartların tür yeteneği 2 tur çalışmaz'};const EZDR=50;
 const EZC=[[83,'Ezelhan','blood','devour',['Kıyamet Pençesi'],['Tutulma Nefesi','burn'],'Dünyanın başlangıcından önce vardı; altı türü yuttu ve gökyüzünü kararttı.',0,'whts'],
  [84,'Ölüağaç','blood','harvest',['Kemik Dal'],['Çürüyen Orman','splash'],'Bastığı yerde orman küle döner; boynuzlarındaki fenerler kayıp ruhları taşır.',1,'l'],
- [85,'Boşgöz','blood','void',['Boşluk Bakışı'],['Göğün Yarığı','splash'],'Gökyüzündeki yarığın ardından dünyayı izleyen tek göz.',0,'c']].map(([id,name,el,exa,a1,a2,flv,b,f])=>({id,name,el,exa,flv,ex:1,ez:1,r:3,stage:0,from:0,b,f,ret:2,hp:500,
-  atks:[{e:E1[3],name:a1[0],dmg:250},{e:E2[3],name:a2[0],fx:a2[1],dmg:400}]}));
+ [85,'Boşgöz','blood','void',['Boşluk Bakışı'],['Göğün Yarığı','splash'],'Gökyüzündeki yarığın ardından dünyayı izleyen tek göz.',0,'c'],
+ [222,'Zamanyiyen','blood','mill',['Kum Dişi'],['Son Saat',''],'Kendi kuyruğunu yutar; her lokmada dünyanın bir saati daha kaybolur.',0,'c'],
+ [223,'Kanemici','blood','leech',['Kan Emme'],['Kızıl Girdap','burn'],'Göğsündeki girdap, düşen her savaşçının kanını içine çeker.',0,'c'],
+ [224,'Ölüm Süvarisi','blood','hush',['Kara Mızrak'],['Dört Atlının Hücumu','splash'],'Kanlı ay doğduğunda gelir; geçtiği yerde hiçbir güç ayakta kalmaz.',0,'c']].map(([id,name,el,exa,a1,a2,flv,b,f])=>({id,name,el,exa,flv,ex:1,ez:1,r:3,stage:0,from:0,b,f,ret:2,hp:500,
+  atks:[{e:E1[3],name:a1[0],dmg:250},{e:E2[3],name:a2[0],...(a2[1]?{fx:a2[1]}:{}),dmg:400}]}));
 EZC.forEach(c=>BY[c.id]=c);
 
 const POOL=[0,1,2,3].map(r=>CARDS.filter(c=>c.r===r));
