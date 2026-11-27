@@ -1089,6 +1089,14 @@ body.inb main{padding:0 10px 16px}
 .hd .hpv{order:-1;align-self:center}.hd .l{align-items:center;text-align:center}.hd{align-items:center}
 .fhd .fhp{order:-1}.fhd .fnm{justify-content:center}
 .scard:not(.ezc) .shp{order:-1}.scard:not(.ezc) .snm{align-items:center;text-align:center}.scard:not(.ezc) .shd{padding:0 12px 0 8px}
+
+/* dördüncü tur: zayıflık/direnç saldırıların üstüne, alt satır ortada, saldırı panelinde soluk tür filigranı */
+.t-fire{--eli:url(img/ic/fire.webp)}.t-water{--eli:url(img/ic/water.webp)}.t-earth{--eli:url(img/ic/earth.webp)}.t-air{--eli:url(img/ic/air.webp)}.t-light{--eli:url(img/ic/light.webp)}.t-shadow{--eli:url(img/ic/shadow.webp)}.t-metal{--eli:url(img/ic/metal.webp)}.t-poison{--eli:url(img/ic/poison.webp)}
+.fpn .fwr,.spn .swr{order:-1}.spn .srb,.spn .sexa{order:-2}.fpn,.spn{display:flex;flex-direction:column}
+.set,.fbt,.sbt{justify-content:center!important;gap:.7em}
+.atks{position:relative}
+.atks::after,.fpn::after,.scard:not(.ezc) .spn::after{content:'';position:absolute;right:4%;top:50%;width:46%;aspect-ratio:1;transform:translateY(-50%);background:var(--eli) center/contain no-repeat;opacity:.13;pointer-events:none;z-index:-1}
+.fpn,.spn,.atks{isolation:isolate}
 </style>
 </head>
 <body>
