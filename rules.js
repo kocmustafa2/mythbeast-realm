@@ -236,6 +236,13 @@ const RAW=[
  [203,'Sis Yılanı','shadow',0,0,0,-10,0,'',[[1,'Sinsi Isırık'],[2,'Sis Sarması','burn']],'Bataklık sisinin içinde görünmeden süzülür.'],
  [204,'Gölge Engereği','shadow',1,1,203,0,0,'',[[1,'Gölge Dişi'],[2,'Karanlık Zehir','burn']],'Pulları mor alevler gibi titrer.'],
  [205,'Boşluk Yılanı','shadow',2,2,204,10,0,'',[[1,'Boşluk Isırığı'],[2,'Hiçlik Girdabı','splash']],'Kıvrıldığı yerde ışık bile kaybolur.'],
+ // Seri 3 Efsanevileri
+ [206,'Kor Grifon','fire',3,0,0,0,1,'',[[2,'Alev Pençesi'],[4,'Kor Fırtınası','burn']],'Kanatlarını açtığında volkanlar uyanır.'],
+ [207,'Fenerli Abis Ejderi','water',3,0,0,10,1,'',[[3,'Fener Işığı'],[4,'Abis Dalgası','splash']],'Karanlık derinlikte tek ışık onun fenerinden gelir.'],
+ [208,'Granit Goril','earth',3,0,0,10,2,'',[[3,'Kaya Yumruğu','splash'],[4,'Granit Çığ']],'Göğsüne vurduğunda dağlar yankılanır.'],
+ [209,'Kasırga Tüylüyılanı','air',3,0,0,0,1,'',[[2,'Tüy Fırtınası'],[4,'Kasırga Kıvrımı','coin']],'Kıvrıldığı yerde gökyüzü dönmeye başlar.'],
+ [210,'Işık Balinası','light',3,0,0,0,1,'',[[3,'Yıldız Şarkısı'],[4,'Göksel Dalga','heal']],'Şarkısı duyulduğunda bulutlar altına boyanır.'],
+ [211,'Kâbus Kimerası','shadow',3,0,0,0,1,'',[[2,'Üçlü Isırık'],[4,'Kâbus Kükremesi','coin']],'Üç başı aynı anda uyumaz.'],
 ];
 const E1=[1,2,2,3],E2=[2,3,4,4];   // Yaygın, Nadir, Destansı, Efsanevi
 const CARDS=RAW.map(([id,name,el,r,stage,from,hpMod,b,f,atks,flv])=>({id,name,el,r,stage,from,b,f,flv,
@@ -260,7 +267,14 @@ const EXD=[[65,7,'Buz Ankası','water','blast',['Buz Tüyü'],['Donduran Fırtı
  [67,21,'Kristal Dev','shadow','stand',['Kristal Yumruk'],['Ametist Çığ','burn'],'Dağın kalbindeki kristaller onu uyandırdı.'],
  [68,28,'Fırtına Ejderi','air','blast',['Şimşek Pençe'],['Gök Gürültüsü','splash'],'Kanat çırptığında gök yarılır.'],
  [69,33,'Gül Geyiği','light','heal',['Çiçek Işığı'],['Gül Aurorası','heal'],'Geçtiği yerde karın üstünde çiçekler açar.'],
- [70,38,'Kızıl Ay Kurdu','fire','stand',['Kor Diş'],['Kızıl Tutulma','burn'],'Kızıl ay doğduğunda uluması dağları titretir.']];
+ [70,38,'Kızıl Ay Kurdu','fire','stand',['Kor Diş'],['Kızıl Tutulma','burn'],'Kızıl ay doğduğunda uluması dağları titretir.'],
+ // Seri 3 EX
+ [212,206,'Güneş Grifonu','light','blast',['Işık Pençesi'],['Güneş Patlaması','splash'],'Uyandığında alevleri saf ışığa dönüştü.'],
+ [213,207,'Gölge Fener Ejderi','shadow','stand',['Gölge Feneri'],['Hiçlik Dalgası','burn'],'Feneri artık ışık değil karanlık saçar.'],
+ [214,208,'Buzul Goril','water','heal',['Buz Yumruğu'],['Buzul Şifası','heal'],'Buzulların kalbinde binlerce yıl uyudu.'],
+ [215,209,'Alev Tüylüyılanı','fire','blast',['Alev Tüyü'],['Ateş Kasırgası','splash'],'Tüyleri tutuştuğunda kasırga ateşe döndü.'],
+ [216,210,'Ada Balinası','earth','heal',['Orman Şarkısı'],['Yaşam Pınarı','heal'],'Sırtındaki orman yüzyıllar boyunca büyüdü.'],
+ [217,211,'Fırtına Kimerası','air','stand',['Şimşek Isırığı'],['Fırtına Kükremesi','splash'],'Üç başı aynı anda şimşek çaktırır.']];
 const EXC=EXD.map(([id,base,name,el,exa,a1,a2,flv])=>{const B0=BY[base];return{id,base,name,el,exa,flv,ex:1,r:3,stage:0,from:0,b:B0.b,f:B0.f,ret:B0.ret,hp:400,
   atks:[{e:E1[3],name:a1[0],fx:a1[1],dmg:Math.max(10,round5(105-(a1[1]?FX[a1[1]].cost:0)))},{e:E2[3],name:a2[0],fx:a2[1],dmg:Math.max(10,round5(190-(a2[1]?FX[a2[1]].cost:0)))}]}});
 EXC.forEach(c=>BY[c.id]=c);
@@ -269,7 +283,7 @@ const exOf=c=>EXC.find(x=>x.base===c.id);
 // PARLAK KARTLAR: yaratığın kendisi de parlar; normal kartla aynı sayılmaz, ayrı kart ve ayrı evrim çizgisidir.
 // Sadece ödüllerden gelir (paketten çıkmaz), normal sürümden %7 güçlüdür. Görsel: img/<id>.jpg ve img/t/<id>.webp (id = 10000 + normal kart no)
 const PRL_OFF=10000,PRL_MUL=1.07;
-const PRL_SRC=CARDS.filter(c=>setOf(c)===3).map(c=>c.id);   // Parlak sürümü olan kartlar: Seri 3 (eski serilerin Parlak'ları sonra)
+const PRL_SRC=CARDS.filter(c=>setOf(c)===3&&c.r<3).map(c=>c.id);   // Efsanevilerin Parlak görselleri henüz yok   // Parlak sürümü olan kartlar: Seri 3 (eski serilerin Parlak'ları sonra)
 const PRL_PACK=.02;   // Seri 3 paketinde en nadir kartın Parlak çıkma şansı (asıl kaynak kuleler)
 const PRL=PRL_SRC.map(id=>{const c=BY[id];return{...c,id:PRL_OFF+id,of:id,prl:1,from:c.from?PRL_OFF+c.from:0,
   hp:Math.round(c.hp*PRL_MUL),atks:c.atks.map(a=>({...a,dmg:Math.round(a.dmg*PRL_MUL)}))}});
