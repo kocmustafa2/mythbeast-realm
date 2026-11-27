@@ -1074,7 +1074,7 @@ body.inb main{padding:0 10px 16px}
 .wr,.fwr,.swr{border-top:0!important;justify-content:flex-start!important;gap:.5em}
 .wr span,.fwr span{background:#0000001a;border-radius:1em;padding:.15em .55em}
 .swr span{background:#ffffff1a;border-radius:10px;padding:1px 6px}
-.exb{font-size:17px!important;padding:3px 9px 4px!important;letter-spacing:.5px;top:60px;background:linear-gradient(135deg,#0f7a5a,#3fd18f)!important;text-shadow:0 2px 0 #053a28!important}
+.exb{font-size:24px!important;padding:4px 12px 5px 8px!important;letter-spacing:1px;top:58px;background:linear-gradient(135deg,#0f7a5a,#3fd18f)!important;text-shadow:0 2px 0 #053a28!important}
 
 /* ikinci tur: saldırı satırları kutucuk, hasar rozeti, yetenek satırı kurdele */
 .ak,.fak{background:#ffffff59;border-left:.16em solid var(--ec,#c0281c);border-radius:.25em;padding:.03em .12em .03em .2em}.ak+.ak,.fak+.fak{margin-top:.08em}
@@ -1099,6 +1099,10 @@ body.inb main{padding:0 10px 16px}
 .fpn,.spn,.atks{isolation:isolate}
 .kdi{width:1.25em;height:1.25em;vertical-align:-.28em;margin-right:.18em;filter:drop-shadow(0 1px 1px #0007)}.exb .kdi{width:1.35em;height:1.35em;vertical-align:-.3em}
 .advx small .kdi{width:14px!important;height:14px!important;flex:none;border-radius:0!important;margin:0 3px 0 0!important;box-shadow:none!important;border:0!important;object-fit:contain;vertical-align:-2px;display:inline-block}
+.pkp .grid.pkg{display:grid;grid-template-columns:repeat(3,1fr);gap:10px 6px;margin:8px 0}.pkp .pkg .card{--w:100%}
+.pkn{position:absolute;right:4px;bottom:4px;z-index:20;font:900 13px/1 'MRDisplay',sans-serif;background:#000b;color:#fff;border-radius:8px;padding:3px 6px;font-style:normal}
+.pkf{display:flex;gap:6px;overflow-x:auto;padding:2px 0 6px;flex:none;min-height:40px}.pkf button{flex:none;display:flex;align-items:center;gap:4px;border:1px solid #ffffff2a;background:#ffffff10;color:#fff;border-radius:16px;padding:5px 10px;font:700 13px Rubik,sans-serif}.pkf button.on{background:#fff;color:#1a1530}.pkf button .ei,.pkf button img{width:20px;height:20px}
+.pksp{display:flex;flex-wrap:wrap;gap:6px}.pksp span{display:flex;align-items:center;gap:5px;background:#ffffff12;border-radius:10px;padding:4px 8px 4px 4px;font:600 12px Rubik,sans-serif}.pksp img{width:30px;height:30px;border-radius:6px;object-fit:cover}
 </style>
 </head>
 <body>
@@ -2600,7 +2604,7 @@ async function openProfile(name){if(window.claude)return;const ov=$('#ov');const
   const R=j.rel;
   shell(`<div class="pfh"><div class="pfav"><img class="pfi" src="img/t/${j.av}.webp" alt=""><img class="avlg" src="img/lg/${lg}.webp" alt=""></div>
       <div class="pfn"><b>${escH(j.name)}</b><small>${j.clan?'🛡️ '+escH(j.clan)+' · ':''}Seviye ${st.lvl}</small><small>${LEAGUES[lg].n} Ligi · 🏆 ${st.tr} · En iyi: ${LEAGUES[Math.min(st.bestLg,LEAGUES.length-1)].n}</small></div></div>
-    <div class="pfbtn">${R.self?`<button class="btn alt" id="pfav">Profil resmini değiştir</button>`:`${R.friend||R.clanmate?`<button class="btn" id="pffight">Savaş</button>`:''}${R.friend?'':R.pending?'<button class="btn alt" disabled>İstek bekliyor</button>':'<button class="btn alt" id="pfadd">Arkadaş ekle</button>'}`}</div>
+    <div class="pfbtn">${R.self?`<button class="btn alt" id="pfav">Profil resmini değiştir</button>`:`${R.friend||R.clanmate?`<button class="btn" id="pffight">Savaş</button>`:''}${j.view?'<button class="btn alt" id="pfdeck">Destesi</button><button class="btn alt" id="pfcards">Kartları</button>':''}${R.friend?'':R.pending?'<button class="btn alt" disabled>İstek bekliyor</button>':'<button class="btn alt" id="pfadd">Arkadaş ekle</button>'}`}</div>
     <p class="frh">İstatistikler</p>
     <div class="pfst"><div><b>${st.w}/${st.l}</b><small>Arena G/M</small></div><div><b>%${rate}</b><small>Kazanma</small></div><div><b>${st.bestStk}</b><small>En uzun seri</small></div>
       <div><b>${st.opened}</b><small>Açılan paket</small></div><div><b>${st.col}/${st.tot}</b><small>Koleksiyon</small></div><div><b>${st.advC}/${st.advN}</b><small>Macera</small></div>
@@ -2616,7 +2620,28 @@ async function openProfile(name){if(window.claude)return;const ov=$('#ov');const
     try{const r=await act('ach_claim',{id:b.dataset.acl});renderTop();toast('Ödül alındı: '+[r.f?r.f+' paket':'',r.g?r.g+' altın':''].filter(Boolean).join(' + '));openProfile()}
     catch(e){toast(e.message);b.disabled=false}});
   const pf=$('#pffight');if(pf)pf.onclick=()=>friendBattle(j.name,pf);
+  const pk=$('#pfdeck');if(pk)pk.onclick=()=>peekCards(j,'deck');const pc=$('#pfcards');if(pc)pc.onclick=()=>peekCards(j,'cards');
   const pd=$('#pfadd');if(pd)pd.onclick=async()=>{pd.disabled=true;try{const r=await api('/api/friends/request',{m:'POST',b:{u:j.name}});toast(r.accepted?r.name+' artık arkadaşın':'Arkadaşlık isteği gönderildi');openProfile(j.name)}catch(e){toast(e.message);pd.disabled=false}}}
+// arkadaşın / klan üyesinin arena destesi ve kartları (sadece görüntüleme)
+function peekCards(j,mode,flt){const ov=$('#ov'),V=j.view,lvOfC=id=>V.lv[id]||0;
+  const C=id=>BY[id]||BY[+id];
+  let body='';
+  if(mode==='deck'){const cr=V.deck.filter(k=>typeof k==='number').map(C).filter(Boolean),sp=V.deck.filter(k=>typeof k==='string').map(k=>k.slice(2));
+    body=cr.length?`<p class="sionote">Arena destesi · ${cr.length} yaratık${sp.length?` · ${sp.length} destek`:''}</p><div class="grid pkg">${cr.map(c=>cardHTML(c,{noTilt:1,lv:lvOfC(c.id)})).join('')}</div>
+      ${sp.length?`<p class="frh">Destek kartları</p><div class="pksp">${sp.map(k=>`<span><img src="${supArt(k)}" alt="">${SUPN[k]||k}</span>`).join('')}</div>`:''}`
+      :`<p class="frem">${escH(j.name)} henüz arena destesi kaydetmemiş.</p>`}
+  else{const all=Object.keys(V.own).map(k=>[C(k),V.own[k]]).filter(x=>x[0]);
+    const F=flt||'all',ok=c=>F==='all'||(F==='ex'?c.ex&&!c.ez:F==='ez'?c.ez:F==='prl'?c.prl:(!c.ex&&!c.prl&&c.el===F));
+    const L=all.filter(([c])=>ok(c)).sort((a,b)=>(b[0].ez?6:b[0].ex?5:b[0].prl?4:b[0].r)-(a[0].ez?6:a[0].ex?5:a[0].prl?4:a[0].r)||a[0].id-b[0].id);
+    const els=[...new Set(all.filter(([c])=>!c.ex&&!c.prl).map(([c])=>c.el))];
+    body=`<p class="sionote">${all.filter(([c])=>!c.ex&&!c.prl&&!c.ez).length} / ${N} kart · ${all.filter(([c])=>c.ex&&!c.ez).length} Kadim · ${all.filter(([c])=>c.prl).length} Parlak</p>
+      <div class="pkf"><button data-pf="all" class="${F==='all'?'on':''}">Tümü</button>${all.some(([c])=>c.ez)?`<button data-pf="ez" class="${F==='ez'?'on':''}">☠ Ezeli</button>`:''}${all.some(([c])=>c.ex&&!c.ez)?`<button data-pf="ex" class="${F==='ex'?'on':''}">${KDI}Kadim</button>`:''}${all.some(([c])=>c.prl)?`<button data-pf="prl" class="${F==='prl'?'on':''}">✨ Parlak</button>`:''}${els.map(e=>`<button data-pf="${e}" class="${F===e?'on':''}">${icon(e)}</button>`).join('')}</div>
+      <div class="grid pkg">${L.map(([c,n])=>cardHTML(c,{noTilt:1,lv:lvOfC(c.id),extra:n>1?`<i class="pkn">×${n}</i>`:''})).join('')||'<p class="frem">Kart yok.</p>'}</div>`}
+  ov.className='ov on';
+  ov.innerHTML=`<div class="fp setp frp pkp"><div class="sth"><b>${escH(j.name)} · ${mode==='deck'?'Destesi':'Kartları'}</b><button class="stx" id="pkx" aria-label="Kapat">✕</button></div>${body}<button class="btn alt" id="pkb">Profile dön</button></div>`;
+  $('#pkx').onclick=()=>{ov.className='ov';ov.innerHTML='';if(!B)render()};$('#pkb').onclick=()=>openProfile(j.name);
+  ov.querySelectorAll('[data-pf]').forEach(b=>b.onclick=()=>peekCards(j,'cards',b.dataset.pf));
+  ov.querySelectorAll('.pkg .card').forEach(el=>el.onclick=()=>{const c=C(el.dataset.id);if(c)toast(c.name+(lvOfC(c.id)?' +'+lvOfC(c.id):''))})}
 // profil resmi seçimi: sahip olunan yaratıklar (en nadirden)
 function openAvatarPick(cur){const ov=$('#ov');ov.className='ov on';
   const list=ALLC().filter(c=>owned(c.id)).sort((a,b)=>b.r-a.r||(b.stage||0)-(a.stage||0)||a.id-b.id);

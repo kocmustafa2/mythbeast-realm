@@ -718,7 +718,14 @@ async function handleApi(req, env, path) {
       rel.friend = !!fr && fr.status === 'ok'; rel.pending = !!fr && fr.status === 'pending';
       const mine = await myClan(db, user.id); rel.clanmate = !!mine && !!mc && mine.clan_id === mc.clan_id;
     }
-    return json({ name: o.name, av: MR.avatarOf(st), clan: mc ? mc.name : null, rel,
+    // arkadaş / klan üyesi / kendisi: kartları ve arena destesi görülebilir
+    let view = null;
+    if (rel.self || rel.friend || rel.clanmate) {
+      const own = {}; for (const k in (st.owned || {})) if ((st.owned[k] | 0) > 0) own[k] = st.owned[k] | 0;
+      const p = await db.prepare('SELECT deck FROM pub WHERE user_id = ?').bind(o.id).first();
+      view = { own, lv: MR.pubLv(st), deck: p ? JSON.parse(p.deck) : [] };
+    }
+    return json({ name: o.name, av: MR.avatarOf(st), clan: mc ? mc.name : null, rel, view,
       stats: { tr: st.trophy || 0, lg: MR.lgOf(st.trophy || 0), bestLg: st.bestLg || 0, lvl: st.lvl || 1, w: st.wins || 0, l: st.losses || 0,
         bestStk: st.bestStk || 0, opened: st.opened || 0, col: N, tot: MR.N, advC: Math.min(MR.ADV_N, st.advC || 0), advN: MR.ADV_N, dnTot: st.dnTot || 0, ssBest: st.ssBest || 0 },
       ach: MR.achList(st, x), matches });
