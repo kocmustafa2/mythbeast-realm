@@ -946,6 +946,8 @@ body.inb main{padding:0 10px 16px}
 .bfly{position:fixed;z-index:60;pointer-events:none}.bfly>*{width:100%!important;height:100%!important}
 .ewhy{font:600 12.5px/1.3 Rubik,sans-serif;color:#d6e2ea}
 .drow.d15{grid-template-columns:repeat(5,minmax(0,1fr))}
+/* deste kartlarında tür: çerçeve tür renginde, altta tür şeridi, büyük tür simgesi, isim altında tür adı */
+.dt.dty{border-color:var(--ec);box-shadow:inset 0 -5px 0 var(--ec)}.dt.dty.sel{box-shadow:0 0 0 2px var(--gold),inset 0 -5px 0 var(--ec)}.dt.dty .dte{width:22px!important;height:22px!important;top:3px;right:3px;padding:2px;border-radius:50%;background:#000b;box-shadow:0 0 0 1.5px var(--ec);display:grid;place-items:center}.dt.dty .dte .eic{width:100%;height:100%}.drow .dt.dty .dte{width:20px!important;height:20px!important}.dt .dtt{display:block;font:700 8.5px/1.1 Rubik,sans-serif;font-style:normal;color:var(--ec);text-shadow:0 1px 2px #000}.dgrid .dt.dty b{padding-bottom:6px}.dgrid .dt.dty .dte{top:24px;left:3px;right:auto}
 /* deste düzenleyici: bütün panel kayar, kartlar listesi kesilmez; düğmeler altta sabit */
 .dedit{overflow-y:auto!important;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;max-height:calc(100dvh - 24px)!important;padding-bottom:0}.dedit>.dgrid{flex:none!important;overflow:visible;min-height:auto}.dedit>.dbtns{position:sticky;bottom:0;background:var(--panel);padding:8px 0 12px;margin-top:4px;z-index:3;box-shadow:0 -8px 12px var(--panel)}
 .dt.sup{--rc:#b07bff}.dt.sup .dta{display:grid;place-items:center;height:100%;background:radial-gradient(circle,#3a2a5a,#0d1214)}.dt .dsi{width:60%;height:auto}
@@ -1679,7 +1681,7 @@ function deckSummary(ids){
   const threat=ELS.map(a=>({a,n:ids.filter(id=>rel(a,BY[id].el)==='w').length})).filter(x=>x.n>=6).sort((p,q)=>q.n-p.n).slice(0,2);
   return `<div class="dsum"><span>${ELS.filter(e=>cnt[e]).map(e=>`${icon(e)}<b>${cnt[e]}</b>`).join('')||'<i>Boş</i>'}</span>${threat.length?`<small>Dikkat: ${threat.map(t=>`${icon(t.a)} ${t.n} kartına ×${WEAK} vurur`).join(' · ')}</small>`:ids.length?'<small class="ok">Tür dağılımı dengeli</small>':''}</div>`;
 }
-function deckTile(c,o={}){return `<div class="dt r${c.r}${o.sel?' sel':''}${o.dis?' dis':''}" data-k="${c.id}"${o.idx!=null?` data-x="${o.idx}"`:''}><div class="dta">${art(c)}</div><span class="dtp">${ptsOf(c)}</span><span class="dte">${icon(c.el)}</span><b>${c.name}</b>${o.n?`<span class="dtn">${o.n}</span>`:''}</div>`}
+function deckTile(c,o={}){return `<div class="dt r${c.r} dty${o.sel?' sel':''}${o.dis?' dis':''}" data-k="${c.id}" style="--ec:${AUC[c.el]||'#888'}"${o.idx!=null?` data-x="${o.idx}"`:''}><div class="dta">${art(c)}</div><span class="dtp">${ptsOf(c)}</span><span class="dte">${icon(c.el)}</span><b>${c.name}<i class="dtt">${T[c.el]?T[c.el].n:''}${c.prl?' · ✨':''}</i></b>${o.n?`<span class="dtn">${o.n}</span>`:''}</div>`}
 function supTile(k,o={}){return `<div class="dt sup${o.sel?' sel':''}${o.dis?' dis':''}" data-k="s:${k}"${o.idx!=null?` data-x="${o.idx}"`:''}><div class="dta" style="background:url(${supArt(k)}) center/cover"></div><b>${SUPN[k]}</b>${o.n?`<span class="dtn">${o.n}</span>`:''}</div>`}
 const tileK=(k,o)=>isS(k)?supTile(k.slice(2),o):deckTile(BY[k],o);
 function deckView(){const ks=deckKeys('a'),p=deckPts(ks),nc=ks.filter(k=>!isS(k)).length,dd=ensDecks();
