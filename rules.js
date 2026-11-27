@@ -225,7 +225,7 @@ const DQB={free:1};
 
 function srnd(seed){let a=seed>>>0;return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
 
-const SUPK=['fire','water','earth','air','light','shadow','metal','poison','evo','will'];   // will = İrade: rakip bir tur oynayamaz
+const SUPK=['fire','water','earth','air','light','shadow','metal','poison','evo','will','feda','bedel'];   // will = İrade: rakip bir tur oynayamaz
 
 const ADV_CH=[['fire','Kor Dağları'],['water','Mercan Denizi'],['earth','Kadim Orman'],['air','Bulut Zirvesi'],['light','Işık Tapınağı'],['shadow','Gece Diyarı']];
 const ADV_RULE={none:['Normal savaş',''],hp:['Dayanıklı rakip','Rakip kartları %20 fazla canla başlar'],first:['Pusu','Rakip ilk saldırır'],charged:['Hazırlıklı rakip','Rakip kartları dolu başlar'],burn:['Kızgın zemin','Senin kartların yanık başlar'],boss:['BOSS','Boss %50 fazla canla ve dolu başlar']};
@@ -280,7 +280,7 @@ function canEvo(st,t){return !!t&&t.stage>0&&!t.ex&&copies(st,t)>=EVO_NEED[t.sta
 function canAwaken(st,c){const X=c&&exOf(c),ch=c?ADV_CH.findIndex(x=>x[0]===c.el):-1;
   return !!(X&&!own(st,X.id)&&own(st,c.id)>=1+EXCOST.copies&&(st.dust||0)>=EXCOST.dust&&(st.exB||{})[ch])}
 function giveSup(st,k,n=1){st.sup=st.sup||{};st.sup[k]=(st.sup[k]||0)+n}
-const rndSup=rng=>{const r=rng();return r<.06?'will':r<.24?'evo':ELS[Math.floor(rng()*ELS.length)]};   // İrade nadir: %6
+const rndSup=rng=>{const r=rng();return r<.06?'will':r<.11?'feda':r<.18?'bedel':r<.34?'evo':ELS[Math.floor(rng()*ELS.length)]};   // İrade %6, Feda %5, Bedel %7, Evrim %16
 function addXp(st,n){let ups=0;st.xp+=n;while(st.xp>=XP.need(st.lvl)){st.xp-=XP.need(st.lvl);st.lvl++;ups++;st.free+=XP.reward.free;st.gold+=XP.reward.gold}return ups}
 function noteRare(st,c,now){if(c.r<2)return;st.rare=[{id:c.id,t:now},...(st.rare||[])].slice(0,3)}
 function shinyRoll(st,c,rng){const sh=rng()<SHINY.chance,newSh=sh&&!((st.shiny||{})[c.id]>0);if(sh){st.shiny=st.shiny||{};st.shiny[c.id]=(st.shiny[c.id]||0)+1}return{sh,newSh}}
