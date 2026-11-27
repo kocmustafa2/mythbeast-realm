@@ -2082,8 +2082,10 @@ async function endBattle(win){
   const Bk=B,dq0=JSON.stringify(((S.dq||{}).l)||[]);B.log='Sonuç kaydediliyor...';renderBattle();
   // ödüller sunucuda hesaplanır: kupa, altın, seri, sandık, lig, macera, görevler
   let r=null,err=null;const rid=newRid();
-  try{r=await act('battle_end',{id:Bk.bid,win:!!win,stats:Bk.stats},{rid})}
-  catch(e){err=e.message;if(e.status===0||e.status>=500){pendSet({id:Bk.bid,win:!!win,stats:Bk.stats,rid,t:Date.now()});err='Bağlantı yok: sonuç bu cihazda bekletiliyor, bağlantı gelince otomatik kaydedilecek.'}}
+  // sonuç gönderilmeden ÖNCE cihaza yazılır: Safari uygulamayı istek sırasında kapatırsa bir sonraki açılışta aynı rid ile tekrar gönderilir (sunucu ikinci kez uygulamaz)
+  pendSet({id:Bk.bid,win:!!win,stats:Bk.stats,rid,t:Date.now()});
+  try{r=await act('battle_end',{id:Bk.bid,win:!!win,stats:Bk.stats},{rid});pendSet(null)}
+  catch(e){err=e.message;if(!(e.status===0||e.status>=500))pendSet(null);else{err='Bağlantı yok: sonuç bu cihazda bekletiliyor, bağlantı gelince otomatik kaydedilecek.'}}
   if(B!==Bk)return;
   B.busy=false;B.over=true;B.win=win;
   if(B.fr){if(!err)api('/api/duel',{m:'POST',b:{u:B.fr.name,win:!!win}}).catch(()=>{})}
@@ -2926,7 +2928,10 @@ function netBar(on){let d=$('#netbar');if(on){if(!d){d=document.createElement('d
 async function api1(path,o,a){const h={'content-type':'application/json'};if(a.tok)h.authorization='Bearer '+a.tok;
   if(window.__testNow)h['x-test-now']=String(window.__testNow);
   const ac=typeof AbortController==='function'?new AbortController():null,tm=ac&&setTimeout(()=>ac.abort(),o.timeout||20000);
-  try{return await fetch(path,{method:o.m||'GET',headers:h,body:o.b?JSON.stringify(o.b):undefined,cache:'no-store',signal:ac?ac.signal:undefined})}
+  const body=o.b?JSON.stringify(o.b):undefined;
+  // keepalive: sayfa kapanırken/arka plana geçerken (Safari/iPhone) istek yarıda kesilmesin; tarayıcı sınırı 64 KB
+  const ka=!!o.keepalive&&(!body||body.length<60000);
+  try{return await fetch(path,{method:o.m||'GET',headers:h,body,cache:'no-store',keepalive:ka,signal:ka?undefined:(ac?ac.signal:undefined)})}
   catch(e){throw Object.assign(new Error('İnternet bağlantısı yok.'),{status:0})}finally{if(tm)clearTimeout(tm)}}
 async function api(path,o={}){const a=accGet();
   const canRetry=o.retry||!o.m||o.m==='GET';let r,lastErr;
@@ -2947,7 +2952,7 @@ function stripEz(d,owner){if(!d||!d.owned||typeof d.owned!=='object')return d;
 function cloudQ(){if(!cloudOn())return;clearTimeout(window.__cqT);window.__cqT=setTimeout(()=>cloudPush(),1500)}
 async function cloudPush(now){if(!cloudOn())return;
   if(window.__cqBusy){if(!now)cloudQ();return}window.__cqBusy=1;clearTimeout(window.__cqT);
-  try{const r=await api('/api/save',{m:'PUT',b:{data:S,rev:accGet().rev||0,deck:deckKeys('a')}});accRev(r.rev)}
+  try{const r=await api('/api/save',{m:'PUT',b:{data:S,rev:accGet().rev||0,deck:deckKeys('a')},keepalive:!!now});accRev(r.rev)}
   catch(e){if(e.status===409&&e.data&&e.data.save)cloudConflict(e.data.save);else if(e.status!==401&&!now)window.__cqT=setTimeout(()=>cloudPush(),20000)}
   finally{window.__cqBusy=0}}
 function accRev(rev){const a=accGet();if(a.tok&&Number.isInteger(rev)){a.rev=rev;accSet(a)}}
@@ -2973,8 +2978,12 @@ async function flushPend(){const pe=pendGet();if(!pe||window.__pfBusy||!cloudOn(
   catch(e){if(e.status===0||e.status>=500)return false;pendSet(null);return true}   // sunucu reddettiyse (ör. süresi geçmiş) bekletmenin anlamı yok
   finally{window.__pfBusy=0}}
 // Aynı hesap başka cihazda daha yeni kaydedilmiş: sunucudaki kayıt geçerli olur, bu cihazdaki .bak olarak yedeklenir.
-function cloudConflict(sv){takeSave(sv.data);accRev(sv.rev);
-  toast('Hesabın başka bir cihazda oynandı, en güncel kayıt yüklendi');if(!B)render();else renderTop()}
+// Ekonomi (kartlar, altın...) zaten sunucuda: her zaman sunucudaki alınır. Deste/ayar gibi alanlarda hangisi daha yeniyse o kalır;
+// böylece Safari'de arka plana geçerken yarım kalan bir kayıt yüzünden bu cihazdaki deste değişiklikleri kaybolmaz.
+function cloudConflict(sv){const d=sv.data||{};
+  if((d.t||0)>(S.t||0)){takeSave(d);accRev(sv.rev);toast('Hesabın başka bir cihazda oynandı, en güncel kayıt yüklendi')}
+  else{applySrv(d);accRev(sv.rev);setTimeout(()=>cloudPush(),300)}
+  if(!B)render();else renderTop()}
 // Sekmeye/uygulamaya dönünce başka cihazdaki yeni ilerlemeyi çek (savaş sırasında değil).
 async function cloudPull(){if(!cloudOn()||(B&&!B.over))return;
   // ekonomi sunucuya ait: yeni sürümde (ör. gelen bağış ya da başka cihaz) ekonomi alanları sessizce alınır
@@ -2993,6 +3002,7 @@ function afterAuth(j,login){const a=accGet(),sv=j.save,r=sv&&sv.data;
 async function cloudInit(){if(window.claude)return;
   // giriş sonradan yapılsa da çalışsın diye dinleyici her zaman kurulur; içeride oturum kontrol edilir
   addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')cloudPush(true);else{flushPend();cloudPull();frBadge()}});
+  addEventListener('pagehide',()=>cloudPush(true));   // Safari: sekme kapanırken visibilitychange her zaman gelmez
   addEventListener('online',()=>{flushPend();cloudPull()});addEventListener('pageshow',e=>{if(e.persisted){flushPend();cloudPull()}});
   // çevrimiçi sinyali: oyun ekranda açıkken dakikada bir (bildirim sayılarını da tazeler)
   setInterval(()=>{if(cloudOn()&&document.visibilityState==='visible')frBadge()},60000);
