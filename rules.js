@@ -355,7 +355,7 @@ const ADV_P=10;                       // her diyardaki bölüm sayısı (son bö
 const ADV_N=ADV_CH.length*ADV_P;
 const ADV_D=59;   // zorluk eğrisi ilk 6 diyara göre sabit (eski bölümler değişmesin); Demir Kale ve Zehir Bataklığı en zor seviyede
 // her diyarın uyanmış boss'u: ilk 6 diyar Seri 1 EX'leri, Demir Kale Demir Wyvern, Zehir Bataklığı Veba Mantikoru
-const advEX=ch=>ch<6?EXC[ch]:BY[[221,220][ch-6]];
+const advEX=ch=>ch<6?EXC[ch]:BY[[220,221][ch-6]];   // diyarın boss'u, o diyarın efsanevisinin uyanmış hali (Demir Kale→Çelik Mantikor'un EX'i)
 function advStageX(i){const ch=i-100,[el,cn]=ADV_CH[ch],X=advEX(ch),r=srnd(5000+ch*31);
   const pool=CARDS.filter(c=>c.el===el&&c.r>=1&&c.r<3&&setOf(c)<3);const deck=[];for(let k=0;k<7;k++)deck.push(pool[Math.floor(r()*pool.length)]);deck[1]=X;deck[4]=BY[X.base];
   return{i,ch,p:ADV_P,el,cn,name:`${X.name} EX`,rule:'boss',deck,boss:X,mis:.04,gold:1200,dust:120,pack:2,x:1}}
