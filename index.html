@@ -1258,6 +1258,10 @@ body.nui .frp{animation:popin .25s ease}
 .setp{max-height:calc(100dvh - 40px);overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}.setp>*{flex-shrink:0}
 .tgrp .tgh{cursor:pointer;user-select:none}.tgrp .tgh::after{content:'';flex:none;width:9px;height:9px;margin-left:4px;border-right:2.5px solid currentColor;border-bottom:2.5px solid currentColor;transform:rotate(45deg) translateY(-3px);transition:transform .2s;opacity:.8}
 .tgrp.cl .tgh::after{transform:rotate(-45deg)}.tgrp.cl>.grid{display:none}
+.awr{position:relative;display:flex;gap:11px;align-items:center;margin:12px 0 0;padding:11px 12px;border-radius:16px;overflow:hidden;background:linear-gradient(110deg,#2a1d55,#3d2a7a 45%,#2a1d55);background-size:220% 100%;animation:shimmer 6s linear infinite;border:1px solid #b08cff66}
+.awr.t-fire,.awr.t-water,.awr.t-earth,.awr.t-air,.awr.t-light,.awr.t-shadow,.awr.t-metal,.awr.t-poison{background:linear-gradient(110deg,color-mix(in srgb,var(--ec) 35%,#1a1535),color-mix(in srgb,var(--ec) 60%,#1a1535) 45%,color-mix(in srgb,var(--ec) 35%,#1a1535));background-size:220% 100%;border-color:color-mix(in srgb,var(--ec) 70%,transparent)}
+.awi{flex:none;width:44px;height:44px;display:grid;place-items:center;font-size:26px;border-radius:12px;background:#0004;animation:floaty 3s ease-in-out infinite}.awi img{width:34px;height:34px}
+.awr small{display:block;font:800 10.5px Rubik,sans-serif;letter-spacing:.6px;color:#ffd77a}.awr b{display:block;font:19px/1.15 'MRDisplay',sans-serif;margin:2px 0}.awr p{margin:0;font:500 12px/1.35 Rubik,sans-serif;color:#e6e0ff}
 </style>
 </head>
 <body>
@@ -1285,7 +1289,7 @@ body.nui .frp{animation:popin .25s ease}
 <div id="title"><div class="tbg"></div><div class="tlogo"><img class="tlimg" src="img/logo.webp" alt="Mythbeast Realm"><span class="t3">Seri 1 · Elementler</span></div>
 <button class="sndb tsnd" id="tsnd" aria-label="Ses"></button><div class="tbtm"><button class="tgo" id="tgo" aria-label="Oyna"><img src="img/btn_play.webp" alt="Oyna"></button><p class="tinfo" id="tinfo"></p></div></div>
 
-<script src="rules.js?v=21"></script>
+<script src="rules.js?v=22"></script>
 <script>
 {
 // Ortak kurallar (rules.js): kart verisi ve ekonomi. Oyun ve sunucu aynı dosyayı kullanır.
@@ -1955,6 +1959,10 @@ function supTile(k,o={}){return `<div class="dt sup${o.sel?' sel':''}${o.dis?' d
 const tileK=(k,o)=>isS(k)?supTile(k.slice(2),o):deckTile(BY[k],o);
 // YENİ ARAYÜZ (deneme): sadece oyunun sahibinde, Ayarlar'dan açılır
 const NUI=()=>true;   // yeni arayüz herkese açık (2026-11-28)
+function awCard(){const R=MR.arenaRule(),ms=R.ends-Date.now(),d=Math.floor(ms/AW_DAY_C),h=Math.floor(ms%AW_DAY_C/3600000);
+  const ic={tboost:R.el?`<img src="img/ic/${R.el}.webp" alt="">`:'⚔️',lowr:'🃏',hp:'🛡️',charge:'⚡',noleg:'🚫'}[R.k];
+  return `<div class="awr${R.el?' t-'+R.el:''}"><span class="awi">${ic}</span><div><small>HAFTANIN KURALI · ${d?d+' gün ':''}${h} sa kaldı</small><b>${R.n}</b><p>${R.d}</p></div></div>`}
+const AW_DAY_C=86400000;
 function deckMini(){const ks=deckKeys('a'),p=deckPts(ks),cr=ks.filter(k=>!isS(k)),dd=ensDecks(),sh=cr.slice(0,4);
   return `<div class="dmini"><div class="dmh"><b>${escH(dd[S.dA].n)}</b><span>${ks.length}/${BAT.deck} kart · ${p}/${BAT.budget} puan</span><button class="dmb" id="dmedit">Düzenle ›</button></div>
   <div class="dmr">${sh.map(k=>{const c=BY[k];return c?`<img src="img/t/${c.id}.webp" alt="" class="r${c.r}${c.ex?' ex':''}">`:''}).join('')}${ks.length>sh.length?`<i>+${ks.length-sh.length}</i>`:''}${!ks.length?'<i class="em">Deste boş · Düzenle</i>':''}</div>
@@ -2073,6 +2081,7 @@ function coreTurn(X,s){
 function coreHit(X,s,ai,ti){
   const o=s==='me'?'foe':'me',A=X[s].board[ai],D=X[o].board[ti],at=curAtk(A),ev={side:[]};
   let base=atkOf(A);if(at.fx==='coin'){ev.coin=Math.random()<.5;if(ev.coin)base+=FXV.coin}
+  if(X.awr==='tboost'&&A.c.el===X.awEl)base=Math.round(base*1.2);   // haftalık kural
   if(A.c.exa==='devour'){const nt=new Set(X[o].board.filter(f=>f&&f.hp>0).map(f=>f.c.el)).size;if(nt){base=Math.round(base*(1+.1*nt));ev.dev=nt}}   // Ezelhan: Tür Yutucu
   const r=calc(A,D,X[s].board,X[o].board,base);ev.k=r.k;ev.d=r.d;ev.sh=r.sh;
   const full=D.hp>=mx(D);D.hp=Math.max(0,D.hp-r.d);if(A.feda&&full&&D.hp<=0)D.ko2=1;A.ch=false;A.didAtk=true;
@@ -2104,7 +2113,7 @@ function renderArena(){
   if(B)return renderBattle();
   const n=uniq();
   const fightB=n?`<button class="btn fightb" id="fight">${NUI()?`SAVAŞ<small>Galibiyet +${TROPHY.win} kupa · ${ECON.win+LEAGUES[lgOf(S.trophy||0)].gold} altın</small>`:'Savaşa gir'}</button>`:`<div class="empty">Arena için en az 1 kartın olmalı. Önce bir paket aç.</div>`;
-  $('#main').innerHTML=`<h2>Arena</h2>${NUI()?`${leagueCard()}${fightB}${deckMini()}${arenaStrip()}${seasonCard()}${friendsCard()}`:`${leagueCard()}${seasonCard()}${friendsCard()}${arenaStrip()}${deckView()}${fightB}`}<p class="sub">Galibiyet <b>+${TROPHY.win}</b> kupa ve ${ECON.win+LEAGUES[lgOf(S.trophy||0)].gold} altın, mağlubiyet ${TROPHY.loss} kupa ve ${ECON.loss} altın. Lig tabanının altına düşmezsin. Üst üste galibiyetler ek kupa ve altın verir. Her 3 galibiyette bir zafer sandığı kazanırsın. (${S.wins} G · ${S.losses} M)</p>
+  $('#main').innerHTML=`<h2>Arena</h2>${NUI()?`${leagueCard()}${awCard()}${fightB}${deckMini()}${arenaStrip()}${seasonCard()}${friendsCard()}`:`${leagueCard()}${awCard()}${seasonCard()}${friendsCard()}${arenaStrip()}${deckView()}${fightB}`}<p class="sub">Galibiyet <b>+${TROPHY.win}</b> kupa ve ${ECON.win+LEAGUES[lgOf(S.trophy||0)].gold} altın, mağlubiyet ${TROPHY.loss} kupa ve ${ECON.loss} altın. Lig tabanının altına düşmezsin. Üst üste galibiyetler ek kupa ve altın verir. Her 3 galibiyette bir zafer sandığı kazanırsın. (${S.wins} G · ${S.losses} M)</p>
   <div class="box"><p><b>Deste 15 kart:</b> yaratıklar ve destek kartları karışık durur. Elinde en fazla 5 kart olur. Bir kartı oynadığında (yaratık koyunca ya da destek kullanınca) yerine desteden yenisi gelir.</p><p><b>Sahada 3 yaratık</b> savaşır. Boş yere elinden yaratık koyabilirsin. Her tur en fazla 1 destek kartı oynar, sonra bir yaratığınla saldırırsın; saldırı turu bitirir.</p><p><b>Destek kartları:</b> Tür taşı aynı türden yaratığa +30 can ve +10 hasar verir. Evrim Taşı temel yaratığı yenilene kadar evrimleştirir; evrimli hali koleksiyonunda olmalı.</p><p><b>6 can:</b> yenilen her yaratık 1 can götürür (Kadim 2 can). Canı biten kaybeder. <b>Toplam süre 3 dakika:</b> süre bitince canı fazla olan, eşitse daha çok hasar veren kazanır.</p><p>Bir tur saldırmayan yaratık <b>dolar</b> ve sonraki vuruşunda güçlü ikinci saldırısını kullanır. Her türün kendi yeteneği vardır (Toprak dayanıklı, Su yanına can, Ateş sıçrama, Zehir ve Metal süreli hasar, Gölge kötü etkileri artırır, Işık arındırır, Hava ikinci vuruş) ve evrimle güçlenir.</p></div>
   ${typeChart()}
   `;
@@ -2116,7 +2125,7 @@ const mkF=c=>mk(c);
 function foeMod(f){if(!B||!B.st)return f;const st=B.st;if(st.rule==='charged'||(st.rule==='boss'&&st.boss&&f.c.id===st.boss.id))f.ch=!!f.c.atks[1];return f}
 // elden sahaya: en güçlü yaratık boş yere
 function bestFill(X,s){const i=X[s].board.findIndex(f=>!f);if(i<0)return null;let j=-1,bv=-1;X[s].hand.forEach((x,k)=>{if(x.t==='c'&&power(x.c)>bv){bv=power(x.c);j=k}});return j<0?null:{j,i}}
-function placeX(X,s,j,i){const f=mk(X[s].hand[j].c);X[s].hand.splice(j,1);X[s].board[i]=s==='foe'?foeMod(f):f;drawX(X,s);return f}
+function placeX(X,s,j,i){const f=mk(X[s].hand[j].c);if(X.awr==='charge')f.ch=true;X[s].hand.splice(j,1);X[s].board[i]=s==='foe'?foeMod(f):f;drawX(X,s);return f}
 // sahada yaratık yok ve elde yaratık kalmadıysa: bir destek kartı desteye döner, yerine desteden yaratık gelir
 function rescue(X,s){const P=X[s];if(P.board.some(Boolean)||P.hand.some(x=>x.t==='c'))return false;const k=P.deck.findIndex(x=>x.t==='c');if(k<0)return false;const c=P.deck.splice(k,1)[0];const j=P.hand.findIndex(x=>x.t==='s');if(j>=0)P.deck.push(P.hand.splice(j,1,c)[0]);else P.hand.push(c);return true}
 function drawX(X,s){const P=X[s];if(P.deck.length&&P.hand.length<BAT.handMax){P.hand.push(P.deck.shift());return true}return false}
@@ -2131,7 +2140,8 @@ function doSup(X,s,j,i,r){const P=X[s],x=P.hand[j],f=P.board[i];P.hand.splice(j,
 const outOf=(X,s)=>X[s].lives<=0||(!X[s].board.some(Boolean)&&!X[s].hand.some(x=>x.t==='c')&&!X[s].deck.some(x=>x.t==='c'));
 async function startBattle(adv,fr,tw){if(window.__btStart)return;
   {const m=tw?'t':adv!=null?'m':'a',ks=deckKeys(m),nc=ks.filter(k=>!isS(k)).length,nm=ensDecks()[deckSlot(m)].n;
-   if(nc<DECK_MIN_C){toast(nc?`${nm} destesinde en az ${DECK_MIN_C} yaratık olmalı`:`${nm} destesi boş. Önce desteni kur`);openDeckEditor(tw?()=>towerInfo(tw.el,tw.f):adv!=null?()=>advInfo(adv):null,deckSlot(m));return}}
+   if(nc<DECK_MIN_C){toast(nc?`${nm} destesinde en az ${DECK_MIN_C} yaratık olmalı`:`${nm} destesi boş. Önce desteni kur`);openDeckEditor(tw?()=>towerInfo(tw.el,tw.f):adv!=null?()=>advInfo(adv):null,deckSlot(m));return}
+   if(m==='a'&&!fr&&S.tut!==6){const AR=MR.arenaRule(),ok=ks.filter(k=>!isS(k)&&MR.awOk(AR.k,BY[k])).length;if(ok<DECK_MIN_C){toast(`Haftanın kuralı (${AR.n}): destende bu kurala uyan en az ${DECK_MIN_C} yaratık olmalı`);openDeckEditor(null,deckSlot(m));return}}}
   if(pendGet()&&!(await flushPend())){toast('Önceki savaşın sonucu henüz kaydedilemedi. Bağlantı gelince tekrar dene.');return}
   window.__btStart=1;let bid,fo;
   // savaşı sunucu başlatır (kimlik + başlangıç zamanı); ödülleri bitişte sunucu hesaplar
@@ -2139,10 +2149,14 @@ async function startBattle(adv,fr,tw){if(window.__btStart)return;
   catch(e){toast(e.message);return}finally{window.__btStart=0}
   if(fo)setTimeout(()=>toast(`Yarım kalan arena savaşı yenilgi sayıldı (${fo.dt} kupa)`),400);
   fx2Load();musBt=Date.now();if(B&&B.iv)clearInterval(B.iv);
-  deckMode=tw?'t':adv!=null?'m':'a';const st=adv!=null?advStage(adv):tw?MR.towerStage(tw.el,tw.f):null,md=myDeck();let fd;
+  deckMode=tw?'t':adv!=null?'m':'a';const st=adv!=null?advStage(adv):tw?MR.towerStage(tw.el,tw.f):null;let md=myDeck(),fd;
   if(st){const hm=st.rule==='hp'&&!st.tw?1.2:1,cr=[...st.deck,...st.deck.filter(c=>c!==st.boss).slice(0,4)].map(c=>{let k=hm;if(st.boss&&c===st.boss&&st.rule==='boss'&&!st.tw)k=1.5;return k===1?c:{...c,hp:Math.round(c.hp*k/5)*5}});
     const sp=st.el?[st.el,st.el,st.el,'evo']:['evo'];fd=shuffle([...cr.map(c=>({t:'c',c})),...sp.map(k=>({t:'s',k}))])}else fd=fr?frDeck(fr.deck,fr.lv):foeDeck(md);
-  B={me:side(md),foe:side(fd),turn:'me',sel:null,selH:null,supUsed:false,busy:true,auto:(()=>{try{return localStorage.getItem('mr.auto')==='1'}catch(e){return false}})(),lastAct:Date.now(),over:false,win:null,adv:st&&!st.tw?adv:null,tw:tw||null,mis:st?st.mis:null,st,dmg:{me:0,foe:0},log:fr?escH(fr.name)+' destesiyle dostluk maçı':'Eller dağıtıldı',fr:fr||null,bid,stats:{hit:{},weak:0,ko:0}};
+  const AR=!st&&!fr&&S.tut!==6?MR.arenaRule():null;   // haftalık arena kuralı
+  if(AR){const tf=L=>{L=L.filter(x=>x.t!=='c'||MR.awOk(AR.k,x.c));if(AR.k==='hp')L=L.map(x=>x.t==='c'?{...x,c:{...x.c,hp:Math.round(x.c.hp*1.3/5)*5}}:x);return L};
+    fd=tf(fd);{const pool=CARDS.filter(c=>MR.awOk(AR.k,c)&&c.r<=1);let n=fd.filter(x=>x.t==='c').length;while(n<8&&pool.length){fd.push({t:'c',c:pool[Math.floor(Math.random()*pool.length)]});n++}if(AR.k==='hp')fd=tf(fd.map(x=>x))}
+    md=tf(md)}
+  B={me:side(md),foe:side(fd),awr:AR?AR.k:null,awEl:AR?AR.el:null,turn:'me',sel:null,selH:null,supUsed:false,busy:true,auto:(()=>{try{return localStorage.getItem('mr.auto')==='1'}catch(e){return false}})(),lastAct:Date.now(),over:false,win:null,adv:st&&!st.tw?adv:null,tw:tw||null,mis:st?st.mis:null,st,dmg:{me:0,foe:0},log:fr?escH(fr.name)+' destesiyle dostluk maçı':'Eller dağıtıldı',fr:fr||null,bid,stats:{hit:{},weak:0,ko:0}};
   if(!st&&!fr&&easyFoe()){B.easy=1;B.mis=Math.max(LEAGUES[lgOf(S.trophy||0)].mis,.45);B.log='Daha kolay bir rakip geldi';setTimeout(()=>toast('Üst üste kayıplar: bu sefer daha kolay bir rakip geldi'),900)}
   const tutB=S.tut===6&&!st&&!fr;
   if(tutB){// öğretici savaşı: kolay rakip; sahada Kıvılcık + 1 yaratık, 3. yer boş; elde 1 yaratık ve Evrim Taşı
@@ -2157,6 +2171,7 @@ async function startBattle(adv,fr,tw){if(window.__btStart)return;
   drawStart(B.me);drawStart(B.foe);
   for(const sd of['me','foe'])for(let m;(m=bestFill(B,sd));)placeX(B,sd,m.j,m.i);}
   if(st){tab='adv';if(st.rule==='burn')B.me.board.forEach(f=>{if(f)f.burn=2})}
+  if(AR){B.log=`Haftanın kuralı: <b>${AR.n}</b>`;setTimeout(()=>{if(B)toast(`Haftanın kuralı: ${AR.n}. ${AR.d}`)},700)}
   document.body.classList.add('inb');renderBattle();scrollTo(0,0);
   setTimeout(()=>{if(!B)return;announceAuras('me');announceAuras('foe')},500);setTimeout(()=>{if(!B)return;[0,1,2].forEach(i=>{exEnter('me',i);exEnter('foe',i)})},1600);
   const go=()=>{if(!B)return;B.t0=Date.now();B.iv=setInterval(clockTick,250);
@@ -2629,7 +2644,7 @@ function renderRules(){
   <p><b>Arena rakipleri:</b> Bronz ve Gümüş ligde rakipler sadece Yaygın kart kullanır; lig yükseldikçe rakipler güçlenir. Üst üste 3 yenilgiden sonra bir sonraki rakip daha kolay olur.</p>
   <p><b>Otomatik oynama:</b> Sıra sendeyken 15 saniye hamle yapmazsan oyun senin yerine oynar. Savaştaki <b>Otomatik</b> düğmesiyle savaşın tamamını otomatik oynatabilirsin.</p>
   <p><b>Ödüller:</b> Arena galibiyeti ${ECON.win} altın (+lig bonusu) ve kupa verir. Dostluk maçları ödülsüzdür. Ödül için savaş en az 30 saniye sürmeli.</p></div>
-  <h3>Ligler</h3><div class="box scroll"><table><tr><th>Lig</th><th>Kupa</th><th>Ek altın</th><th>Rakip güçlenme</th><th>İlk ulaşma ödülü</th></tr>${LEAGUES.map(l=>`<tr><td>${l.n}</td><td>${l.min}+</td><td>+${l.gold}</td><td>%${Math.round(l.up*100)}</td><td>${l.reward?l.reward+' paket':'-'}</td></tr>`).join('')}</table><p>Galibiyet <code>+${TROPHY.win}</code>, mağlubiyet <code>${TROPHY.loss}</code> kupa. Bir lige ulaştıktan sonra o ligin tabanının altına düşülmez. Rakip güçlenme: rakibin her kartının bir üst nadirlikten gelme ihtimali.</p></div>
+  <h3>Haftanın kuralı</h3><p>Arenada her hafta değişen bir kural geçerli olur (pazartesi 03:00'te yenilenir): bir türün güçlendiği hafta, sadece Yaygın ve Nadir yaratıkların oynandığı hafta, canların %30 fazla olduğu hafta, herkesin dolu saldırıyla başladığı hafta ya da Efsanevi, Kadim ve Ezeli kartların oynanmadığı hafta. Bu haftanın kuralı Arena ekranında yazar. Macera, kule ve arkadaş maçları etkilenmez.</p><h3>Ligler</h3><div class="box scroll"><table><tr><th>Lig</th><th>Kupa</th><th>Ek altın</th><th>Rakip güçlenme</th><th>İlk ulaşma ödülü</th></tr>${LEAGUES.map(l=>`<tr><td>${l.n}</td><td>${l.min}+</td><td>+${l.gold}</td><td>%${Math.round(l.up*100)}</td><td>${l.reward?l.reward+' paket':'-'}</td></tr>`).join('')}</table><p>Galibiyet <code>+${TROPHY.win}</code>, mağlubiyet <code>${TROPHY.loss}</code> kupa. Bir lige ulaştıktan sonra o ligin tabanının altına düşülmez. Rakip güçlenme: rakibin her kartının bir üst nadirlikten gelme ihtimali.</p></div>
   <h3>4. Ekonomi</h3>
   <div class="box scroll"><table><tr><th></th>${RAR.map(r=>`<th>${r.n}</th>`).join('')}</tr><tr><td>Kopya → toz</td>${RAR.map(r=>`<td>${r.dust}</td>`).join('')}</tr><tr><td>Üretim bedeli</td>${RAR.map(r=>`<td>${r.craft}</td>`).join('')}</tr><tr><td>Setteki adet</td>${POOL.map(p=>`<td>${p.length}</td>`).join('')}</tr></table>
   <p>Paket fiyatları: Seri 1 <code>${MR.packCost(1)}</code>, Seri 2 <code>${MR.packCost(2)}</code>, Seri 3 <code>${MR.packCost(3)}</code> altın. Galibiyet <code>${ECON.win}</code>, mağlubiyet <code>${ECON.loss}</code> altın. Başlangıçta ${ECON.startGold} altın ve ${ECON.freePacks} ücretsiz paket verilir. Her <code>6 saatte</code> 1 hediye paketi birikir (en fazla ${GIFT.max}); Paketler ekranından alınır. Her 3 arena galibiyetinde bir zafer sandığı açılır. <b>Kadim kartlar:</b> her Efsanevi'nin bir Kadim hali vardır. Bölgenin macerasını bitirip Kadim boss'u yenince, Efsanevi'nin kart detayından 3 kopya ve 1500 tozla açılır. Kadim kartlar 7 puan tutar, özel yetenekleri vardır; yenilince sahibi 1 kart daha kaybeder. Her gün 3 <b>günlük görev</b> gelir (gece yarısı yenilenir); üçünü de bitirince +1 paket. <b>Macera</b> modunda 6 bölge ve 30 bölüm var; her bölgenin 5. bölümü boss'tur, ilk geçişte altın, toz ve boss'larda paket verir.</p></div>
@@ -2752,7 +2767,7 @@ document.addEventListener('pointerdown',e=>{if(e.target.closest('.btn,.tgo,nav b
 // dosyaları telefonda saklayan servis: içeriği değişen bir görsel/ses olursa ASSET_V artırılır
 // SÜRÜM KONTROLÜ: yeni sürüm yayınlanınca APP_V ve version.txt birlikte artırılır.
 // İnternet varken oyun arada bir version.txt'ye bakar; farklıysa üstte 'Yeni sürüm hazır · Yenile' çıkar (savaş sırasında beklenir).
-const APP_V='2026.11.28-4';
+const APP_V='2026.11.28-5';
 function verCheck(){if(window.claude||!navigator.onLine)return;
   fetch('version.txt?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{t=(t||'').trim();if(/^[\w.-]{3,40}$/.test(t)&&t!==APP_V){window.__upd=t;updShow()}}).catch(()=>{})}
 function updShow(){if(!window.__upd||document.getElementById('updb'))return;if(B&&!B.over){window.__updLater=1;return}

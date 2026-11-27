@@ -560,6 +560,17 @@ function towerStage(el,f){const d=f/(TOWER.floors-1),r=srnd(7000+ELS.indexOf(el)
   const nm=big?(last?'Kule Zirvesi · ':'Güçlü Boss · ')+boss.name:bs?'Mini Boss · '+boss.name:`${T_N[el]} Kulesi ${f+1}`;
   return{tw:1,el,f,i:f,name:nm,rule,deck,boss,kind,big,mis:big?0:Math.max(.02,.4-.4*d),ss:big?ss*2:ss,gold:big?gold*2:gold,ks:big?(last?6:3):bs?1:0,pk:big?(last?5:2):0,last}}
 const T_N={fire:'Ateş',water:'Su',earth:'Toprak',air:'Hava',light:'Işık',shadow:'Gölge',metal:'Metal',poison:'Zehir'};
+
+// HAFTALIK ARENA KURALI: her pazartesi (TSİ 03:00) değişir; sadece arena maçlarında geçerli
+const AWR=[{k:'tboost',n:'{T} Haftası',d:'{T} türü yaratıklar %20 daha fazla hasar verir.'},
+ {k:'lowr',n:'Sade Güç',d:'Sadece Yaygın ve Nadir yaratıklar sahaya çıkar. Destendeki diğer yaratıklar bu hafta arenada oynanmaz.'},
+ {k:'hp',n:'Devler Haftası',d:'Bütün yaratıkların canı %30 fazla. Maçlar daha uzun sürer.'},
+ {k:'charge',n:'Hücum Haftası',d:'Sahaya çıkan her yaratık dolu saldırıyla başlar.'},
+ {k:'noleg',n:'Efsanesiz Hafta',d:'Efsanevi, Kadim ve Ezeli kartlar arenada sahaya çıkmaz.'}];
+const AW_DAY=86400000,awWeek=t=>Math.floor((t/AW_DAY+3)/7);
+const arenaRule=(t=Date.now())=>{const w=awWeek(t),r=AWR[w%AWR.length],el=r.k==='tboost'?ELS[Math.floor(w/AWR.length)%ELS.length]:null,f=s=>s.split('{T}').join(el?T_N[el]:'');
+  return{k:r.k,el,n:f(r.n),d:f(r.d),ends:((w+1)*7-3)*AW_DAY}};
+const awOk=(k,c)=>!c||!(k==='lowr'&&(c.r>1||c.ex||c.ez||c.prl&&BY[c.of]&&BY[c.of].r>1))&&!(k==='noleg'&&(c.r>=3||c.ex||c.ez));
 const twDone=(st,el)=>Math.max(0,Math.min(TOWER.floors,Math.floor(+((st.tw||{})[el])||0)));
 const twLeft=(st,now)=>{const d=dayKey(now);return st.twd&&st.twd.day===d?Math.max(0,TOWER.daily-st.twd.n):TOWER.daily};
 
@@ -696,7 +707,7 @@ function achSync(st,x){const have=new Set(st.ach||[]),nw=[];
   if(nw.length)st.ach=[...have];return nw}
 
 const MR={ELS,round5,round10,RAR,TYPE_HP,TYPE_RET,DMG,ATK,FXV,FX,atkDmg,PACK,packCost,XP,ECON,RAW,E1,E2,CARDS,BY,rootOf,N,pad,setOf,setCards,cno,setN,
-  EXA,EXCOST,EXD,EXC,exOf,EZA,EZDR,EZC,POOL,POOLS,EVO_NEED,STAGE_W,cw,SHINY,LEAGUES,lgOf,TROPHY,STREAK,strkB,CHEST,GIFT,DQP,DQB,srnd,SUPK,
+  EXA,EXCOST,EXD,EXC,exOf,AWR,arenaRule,awOk,EZA,EZDR,EZC,POOL,POOLS,EVO_NEED,STAGE_W,cw,SHINY,LEAGUES,lgOf,TROPHY,STREAK,strkB,CHEST,GIFT,DQP,DQB,srnd,SUPK,
   ADV_CH,ADV_RULE,ADV_N,ADV_P,advStage,advStageX,advEX,TUT,fresh,
   PRL,PRL_OFF,PRL_MUL,PRL_PACK,SETS,prlOf,givePrl,ECON_KEYS,CLIENT_KEYS,BATTLE_MIN_MS,BATTLE_PER_HOUR,own,tutOn,roll,drawCard,rollPack,copies,canEvo,canAwaken,giveSup,rndSup,addXp,
   giftTick,dayKey,dqList,dqInc,normalize,mergeClient,act,pubStats,avatarOf,ACH,ACH_RW,achList,achSync,achUnclaimed,
