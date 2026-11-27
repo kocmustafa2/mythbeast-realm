@@ -86,6 +86,8 @@ function ensureSchema(db) {
     const addCol = async sql => { try { await db.prepare(sql).run(); } catch (e) { if (!/duplicate column/i.test(String(e && e.message))) throw e; } };
     await addCol('ALTER TABLE saves ADD COLUMN rev INTEGER NOT NULL DEFAULT 0');
     await addCol('ALTER TABLE users ADD COLUMN banned INTEGER NOT NULL DEFAULT 0');   // engellenen oyuncu giriş yapamaz
+    await addCol('ALTER TABLE users ADD COLUMN rsalt TEXT');   // kurtarma kodu (şifre gibi gizlenerek saklanır)
+    await addCol('ALTER TABLE users ADD COLUMN rhash TEXT');
   }).catch(e => { schemaReady = null; throw e; });
   return schemaReady;
 }
@@ -103,6 +105,17 @@ async function hashPw(pw, saltHex) {
   const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveBits']);
   return hex(await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt, iterations: PBKDF2_ITER }, key, 256));
 }
+// ---------- KURTARMA KODU ----------
+// 12 karakter, karışması kolay harfler yok (0/O, 1/I/L); XXXX-XXXX-XXXX biçiminde gösterilir
+const RC_ABC = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+function newRecCode() { const b = crypto.getRandomValues(new Uint8Array(12)); let s = ''; for (const x of b) s += RC_ABC[x % RC_ABC.length]; return s.slice(0, 4) + '-' + s.slice(4, 8) + '-' + s.slice(8); }
+const recNorm = c => String(c || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+async function setRecCode(db, uid) { const code = newRecCode(), salt = randHex(16);
+  await db.prepare('UPDATE users SET rsalt = ?, rhash = ? WHERE id = ?').bind(salt, await hashPw(recNorm(code), salt), uid).run(); return code; }
+async function failCheck(db, key) { const f = await db.prepare('SELECT n, until FROM fails WHERE ukey = ?').bind(key).first(); return f && f.until > Date.now() ? f : null; }
+async function failAdd(db, key) { const now = Date.now(), f = await db.prepare('SELECT n, until FROM fails WHERE ukey = ?').bind(key).first();
+  const n = (f && f.until > now - 15 * 6e4 ? f.n : 0) + 1;
+  await db.prepare('INSERT INTO fails (ukey, n, until) VALUES (?, ?, ?) ON CONFLICT(ukey) DO UPDATE SET n = excluded.n, until = excluded.until').bind(key, n, n >= 5 ? now + 5 * 6e4 : now).run(); }
 function sameStr(a, b) {                                // sabit süreli karşılaştırma
   if (a.length !== b.length) return false;
   let d = 0; for (let i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i);
@@ -262,7 +275,28 @@ async function handleApi(req, env, path) {
     const user = { id, name: u }, owner = isOwner(env, user);
     const st = fixEz(MR.normalize(MR.fresh(), ctxOf(id)), owner);   // yeni hesap sunucuda sıfırdan başlar
     await storeState(db, id, st, 0, false);
-    return json({ token: await newSession(db, id), user: u, owner, save: { data: st, t: st.t || 0, rev: 1 } });
+    const rec = await setRecCode(db, id);
+    return json({ token: await newSession(db, id), user: u, owner, rec, save: { data: st, t: st.t || 0, rev: 1 } });
+  }
+
+  // Şifremi unuttum: kullanıcı adı + kurtarma kodu ile yeni şifre. Kod kullanılınca yenisi verilir, eski oturumlar kapanır.
+  if (path === '/api/recover' && method === 'POST') {
+    const { u, code, p } = await readBody(req);
+    if (typeof u !== 'string' || typeof code !== 'string') return err('Kullanıcı adı ve kurtarma kodu gerekli.');
+    if (typeof p !== 'string' || p.length < 6 || p.length > 64) return err('Yeni şifre en az 6 karakter olmalı.');
+    const key = 'r:' + ukeyOf(u);
+    if (await failCheck(db, key)) return err('Çok fazla yanlış deneme. Birkaç dakika sonra tekrar dene.', 429);
+    const row = await db.prepare('SELECT id, name, banned, rsalt, rhash FROM users WHERE ukey = ?').bind(ukeyOf(u)).first();
+    const ok = row && row.rhash && sameStr(await hashPw(recNorm(code), row.rsalt), row.rhash);
+    if (!ok) { await failAdd(db, key); return err('Kullanıcı adı ya da kurtarma kodu yanlış.', 401); }
+    if (row.banned) return err('Bu hesap yönetici tarafından engellendi.', 403);
+    const salt = randHex(16);
+    await db.batch([db.prepare('UPDATE users SET salt = ?, hash = ? WHERE id = ?').bind(salt, await hashPw(p, salt), row.id),
+      db.prepare('DELETE FROM sessions WHERE user_id = ?').bind(row.id), db.prepare('DELETE FROM fails WHERE ukey = ? OR ukey = ?').bind(key, ukeyOf(u))]);
+    const rec = await setRecCode(db, row.id), user = { id: row.id, name: row.name }, owner = isOwner(env, user);
+    const sv = await db.prepare('SELECT data, t, rev FROM saves WHERE user_id = ?').bind(row.id).first();
+    return json({ token: await newSession(db, row.id), user: row.name, owner, rec,
+      save: sv ? { data: fixEz(MR.normalize(JSON.parse(sv.data), ctxOf(row.id)), owner), t: sv.t, rev: sv.rev } : null });
   }
 
   if (path === '/api/login' && method === 'POST') {
@@ -300,8 +334,22 @@ async function handleApi(req, env, path) {
   }
   if (path === '/api/me' && method === 'GET') {
     await seenAt(db, user.id);
+    const rr = await db.prepare('SELECT rhash FROM users WHERE id = ?').bind(user.id).first();
     const sv = await db.prepare('SELECT data, t, rev FROM saves WHERE user_id = ?').bind(user.id).first();
-    return json({ user: user.name, owner, save: sv ? { data: fixEz(MR.normalize(JSON.parse(sv.data), ctxOf(user.id)), owner), t: sv.t, rev: sv.rev } : null });
+    return json({ user: user.name, owner, hasRec: !!(rr && rr.rhash), save: sv ? { data: fixEz(MR.normalize(JSON.parse(sv.data), ctxOf(user.id)), owner), t: sv.t, rev: sv.rev } : null });
+  }
+  // yeni kurtarma kodu (eskisi geçersiz olur)
+  if (path === '/api/recovery/new' && method === 'POST') return json({ rec: await setRecCode(db, user.id) });
+  // şifre değiştir: mevcut şifre gerekir; bu cihaz dışındaki oturumlar kapanır
+  if (path === '/api/password' && method === 'POST') {
+    const { old, p } = await readBody(req);
+    if (typeof p !== 'string' || p.length < 6 || p.length > 64) return err('Yeni şifre en az 6 karakter olmalı.');
+    const row = await db.prepare('SELECT salt, hash FROM users WHERE id = ?').bind(user.id).first();
+    if (typeof old !== 'string' || !sameStr(await hashPw(old, row.salt), row.hash)) return err('Mevcut şifre yanlış.', 401);
+    const salt = randHex(16);
+    await db.batch([db.prepare('UPDATE users SET salt = ?, hash = ? WHERE id = ?').bind(salt, await hashPw(p, salt), user.id),
+      db.prepare('DELETE FROM sessions WHERE user_id = ? AND token != ?').bind(user.id, user.token)]);
+    return json({ ok: true });
   }
   if (path === '/api/save' && method === 'PUT') {
     // Oyun sadece ayarları, deste seçimini ve öğreticinin ilk adımlarını değiştirebilir; ekonomi alanları yok sayılır.
@@ -887,6 +935,16 @@ async function adminApi(req, env, db, path, method, me) {
       });
       await econLog(db, o.id, 'admin', m.before, econSnap(m.st), `admin (${me.name}): ${note}`);
       return json({ ok: true, note });
+    }
+    // geçici şifre: oyuncunun bütün oturumları kapanır, oyuncu bu şifreyle girip Ayarlar'dan değiştirir
+    if (path === '/api/admin/pw' && method === 'POST') {
+      const b = await readBody(req), o = await target(b.u), p = String(b.p || '');
+      if (p.length < 6 || p.length > 64) throw uerr('Geçici şifre en az 6 karakter olmalı.');
+      const salt = randHex(16);
+      await db.batch([db.prepare('UPDATE users SET salt = ?, hash = ? WHERE id = ?').bind(salt, await hashPw(p, salt), o.id),
+        db.prepare('DELETE FROM sessions WHERE user_id = ?').bind(o.id), db.prepare('DELETE FROM fails WHERE ukey = ?').bind(ukeyOf(o.name))]);
+      await econLog(db, o.id, 'admin', null, null, `admin (${me.name}): geçici şifre belirlendi`);
+      return json({ ok: true });
     }
     if (path === '/api/admin/ban' && method === 'POST') {
       const b = await readBody(req), o = await target(b.u), ban = !!b.ban;

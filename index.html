@@ -998,6 +998,7 @@ body.inb main{padding:0 10px 16px}
 .rtas.any{--gc:#b9c4d6;width:16px;height:16px}
 .ssi{width:22px;height:22px;object-fit:contain;flex:none;vertical-align:middle;filter:drop-shadow(0 1px 2px #0008)}.ksw{position:relative;display:inline-block;width:24px;height:24px;flex:none;vertical-align:middle;font-style:normal}.ksw img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 0 4px #ffc84a88)}.ksw .kse{position:absolute;right:-4px;bottom:-3px;width:13px;height:13px;filter:drop-shadow(0 0 2px #000)}
 .lgr .ssi{width:17px;height:17px}.lgbig{width:88%;height:88%;object-fit:contain;filter:drop-shadow(0 2px 6px #0009)}.twres .ssi,.twres .ksw{width:30px;height:30px}.advw .ssi,.advw .ksw,.enr .ssi,.enr .ksw{width:24px;height:24px}
+.lnkb{background:none;border:0;color:#9fd4ff;font:inherit;font-size:13px;text-decoration:underline;padding:4px;align-self:center}.recc{font:26px/1.3 ui-monospace,monospace;letter-spacing:2px;text-align:center;padding:14px;border-radius:12px;background:#0008;color:#ffe28a;box-shadow:inset 0 0 0 1px #ffd25a66;user-select:all}.recok{display:flex;gap:8px;align-items:center;justify-content:center;font-size:14px}.adrow{display:flex;gap:6px}.adrow .accin{flex:1;min-width:0}
 .lgbox{display:flex;flex-direction:column;gap:8px}.lgg{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}
 .lgd{position:relative;aspect-ratio:1;border-radius:10px;background:#ffffff0d;box-shadow:inset 0 0 0 1px #ffffff14;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:2px}
 .lgd small{position:absolute;top:2px;left:4px;font-size:9px;color:#8f9bab}.lgr{display:flex;align-items:center;gap:2px;font:13px 'MRDisplay',sans-serif;flex-wrap:wrap;justify-content:center}.lgr img{width:16px;height:16px}.lgr .lgsup{width:15px;height:20px;border-radius:3px;object-fit:cover}
@@ -2712,6 +2713,7 @@ async function openAdmin(who){const ov=$('#ov');ov.className='ov on';const A=win
    <small class="adsm">Seçili kartların pozitif olanları da hediyeye eklenir.</small>
    <button class="btn" id="adgift">🎁 Hediye gönder</button>
    <p class="frh">Hesap</p>
+   <div class="adrow"><input class="accin" id="adpw" placeholder="Geçici şifre (en az 6)" maxlength="64" autocomplete="off" spellcheck="false"><button class="btn alt" id="adpwgo">🔑 Şifreyi sıfırla</button></div>
    <button class="btn ${d.banned?'':'alt'}" id="adban">${d.banned?'Engeli kaldır':'⛔ Engelle (giriş yapamaz, oturumları kapanır)'}</button>
    <p class="frh">Son maçlar</p>
    <div class="adlog">${(d.matches||[]).map(x=>`<div>${x.win?'✅':'❌'} ${escH(x.mode)} · ${escH(x.opp||'')} · ${x.dt>0?'+':''}${x.dt} · ${agoTxt(x.t)}</div>`).join('')||'<small class="adsm">Yok</small>'}</div>
@@ -2725,6 +2727,7 @@ async function openAdmin(who){const ov=$('#ov');ov.className='ov on';const A=win
   $('#adcgive').onclick=()=>{const c=A.cards;A.cards={};post('/api/admin/edit',{op:'add',p:{cards:c}})};
   $('#adcclr').onclick=()=>{A.cards={};re()};
   ov.querySelectorAll('[data-adrm]').forEach(b=>b.onclick=()=>{delete A.cards[b.dataset.adrm];re()});
+  $('#adpwgo').onclick=()=>{const p=$('#adpw').value.trim();if(p.length<6){toast('Geçici şifre en az 6 karakter');return}post('/api/admin/pw',{p},'Şifre sıfırlandı: '+p+' · oyuncuya ilet, girince Ayarlar → Şifre değiştir')};
   $('#adban').onclick=()=>post('/api/admin/ban',{ban:!d.banned},d.banned?'Engel kaldırıldı':'Oyuncu engellendi');
   $('#adgift').onclick=()=>{const cards={};Object.entries(A.cards).forEach(([k,n])=>{if(n>0)cards[k]=n});
     post('/api/admin/gift',{msg:$('#admsg').value,p:{gold:v('adhg'),dust:v('adhd'),free:v('adhf'),cards}},'Hediye gönderildi').then(()=>{A.cards={}})};
@@ -2906,13 +2909,58 @@ async function cloudInit(){if(window.claude)return;
   // çevrimiçi sinyali: oyun ekranda açıkken dakikada bir (bildirim sayılarını da tazeler)
   setInterval(()=>{if(cloudOn()&&document.visibilityState==='visible')frBadge()},60000);
   if(!accGet().tok){openAccount(true);return}   // hesap şart
-  try{afterAuth(await api('/api/me'),false);flushPend()}catch(e){if(e.status===401)openAccount(true)}}
+  try{const jm=await api('/api/me');afterAuth(jm,false);flushPend();recRemind(jm)}catch(e){if(e.status===401)openAccount(true)}}
+// giriş/kayıt/kurtarma sonrası: hesap ekranı kapanır, oyuna dönülür
+function authDone(){const ov=$('#ov');if(window.__accForce){ov.className='ov';ov.innerHTML='';window.__accForce=false;if(!B)render();if(S.tut===1&&!$('#title'))setTimeout(showWelcome,350)}else openSettings()}
+/* ---------- KURTARMA KODU ---------- */
+function showRec(code,isNew,then){const ov=$('#ov');ov.className='ov on';
+  ov.innerHTML=`<div class="fp setp recp"><div class="sth"><b>🔑 Kurtarma kodun</b></div>
+   <p class="sionote">${isNew?'Şifreni unutursan hesabına bu kodla girip yeni şifre belirlersin. <b>Ekran görüntüsünü al ya da bir yere yaz.</b> Kod bir daha gösterilmez.':'Yeni kurtarma kodun hazır. Eski kod artık geçersiz. <b>Ekran görüntüsünü al ya da bir yere yaz.</b>'}</p>
+   <div class="recc">${escH(code)}</div><textarea id="recta" readonly style="position:absolute;opacity:0;height:1px">${escH(code)}</textarea>
+   <button class="btn alt" id="reccp">Kopyala</button>
+   <label class="recok"><input type="checkbox" id="recchk"> Kodu kaydettim</label>
+   <button class="btn" id="recgo" disabled>Devam</button></div>`;
+  $('#reccp').onclick=()=>Promise.resolve(copyTxt($('#recta'))).then(ok=>toast(ok?'Kopyalandı':'Kopyalanamadı, ekran görüntüsü al'));
+  $('#recchk').onchange=e=>{$('#recgo').disabled=!e.target.checked};
+  $('#recgo').onclick=()=>{try{localStorage.setItem('mr.recAsk','x')}catch(e){}window.__hasRec=true;ov.className='ov';ov.innerHTML='';(then||(()=>{}))()}}
+function openRecover(force){const ov=$('#ov');ov.className='ov on';
+  ov.innerHTML=`<div class="fp setp"><div class="sth"><b>Şifremi unuttum</b><button class="stx" id="rcback" aria-label="Geri">✕</button></div>
+   <p class="sionote">Kayıt olurken verilen <b>kurtarma kodunu</b> yaz ve yeni şifreni belirle. Kodun yoksa oyunun yöneticisine yaz, sana geçici şifre verebilir.</p>
+   <input class="accin" id="rcu" placeholder="Kullanıcı adı" autocapitalize="off" spellcheck="false" maxlength="16">
+   <input class="accin" id="rcc" placeholder="Kurtarma kodu (XXXX-XXXX-XXXX)" autocapitalize="characters" spellcheck="false" maxlength="20">
+   <input class="accin" id="rcp" type="password" placeholder="Yeni şifre (en az 6 karakter)" autocomplete="new-password" maxlength="64">
+   <p class="sioerr" id="rcerr"></p><button class="btn" id="rcgo">Yeni şifreyi kaydet</button></div>`;
+  $('#rcback').onclick=()=>openAccount(force);
+  $('#rcgo').onclick=async()=>{const b=$('#rcgo'),er=$('#rcerr'),u=$('#rcu').value.trim(),code=$('#rcc').value,p=$('#rcp').value;er.textContent='';
+    if(!u||!code||!p){er.textContent='Üç alanı da doldur.';return}b.disabled=true;
+    try{const j=await api('/api/recover',{m:'POST',b:{u,code,p}});window.__accForce=!!force;afterAuth(j,true);toast('Şifren değişti, hoş geldin '+j.user);showRec(j.rec,false,authDone)}
+    catch(e){er.textContent=e.message;b.disabled=false}}}
+function openPwChange(){const ov=$('#ov');ov.className='ov on';
+  ov.innerHTML=`<div class="fp setp"><div class="sth"><b>Şifre değiştir</b><button class="stx" id="pwback" aria-label="Geri">✕</button></div>
+   <input class="accin" id="pwo" type="password" placeholder="Mevcut şifre" autocomplete="current-password" maxlength="64">
+   <input class="accin" id="pwn" type="password" placeholder="Yeni şifre (en az 6 karakter)" autocomplete="new-password" maxlength="64">
+   <p class="sioerr" id="pwerr"></p><button class="btn" id="pwgo">Kaydet</button>
+   <p class="sionote">Diğer cihazlardaki oturumların kapanır.</p></div>`;
+  $('#pwback').onclick=openSettings;
+  $('#pwgo').onclick=async()=>{const b=$('#pwgo');b.disabled=true;$('#pwerr').textContent='';
+    try{await api('/api/password',{m:'POST',b:{old:$('#pwo').value,p:$('#pwn').value}});toast('Şifren değişti');openSettings()}catch(e){$('#pwerr').textContent=e.message;b.disabled=false}}}
+async function newRecCode(btn){if(btn&&!btn.dataset.ok){btn.dataset.ok=1;btn.textContent='Eski kod geçersiz olacak. Emin misin?';return}
+  try{const j=await api('/api/recovery/new',{m:'POST'});showRec(j.rec,false,openSettings)}catch(e){toast(e.message)}}
+// kurtarma kodu olmayan eski hesaplara günde bir kez hatırlatma
+function recRemind(j){if(!j||j.hasRec!==false)return;window.__hasRec=false;let last='';try{last=localStorage.getItem('mr.recAsk')||''}catch(e){}
+  const d=new Date().toDateString();if(last===d)return;try{localStorage.setItem('mr.recAsk',d)}catch(e){}
+  setTimeout(()=>{if(B||$('#ov').classList.contains('on'))return;const ov=$('#ov');ov.className='ov on';
+    ov.innerHTML=`<div class="fp setp"><div class="sth"><b>🔑 Hesabını güvene al</b></div><p class="sionote">Hesabının kurtarma kodu yok. Şifreni unutursan hesabına geri dönmek için bir kurtarma kodu oluştur ve sakla.</p>
+     <button class="btn" id="rrgo">Kurtarma kodu oluştur</button><button class="btn alt" id="rrno">Sonra</button></div>`;
+    $('#rrno').onclick=()=>{ov.className='ov';ov.innerHTML=''};
+    $('#rrgo').onclick=async()=>{try{const r=await api('/api/recovery/new',{m:'POST'});showRec(r.rec,true,()=>{if(!B)render()})}catch(e){toast(e.message)}}},2500)}
 function openAccount(force){if(force&&$('#accu'))return;const ov=$('#ov');ov.className='ov on';window.__accForce=!!force;
   ov.innerHTML=`<div class="fp setp"><div class="sth"><b>Hesap</b>${force?'':'<button class="stx" id="accback" aria-label="Geri">✕</button>'}</div>${force?'<p class="sionote">Mythbeast Realm\'de ilerlemen hesabında saklanır. Oynamak için giriş yap ya da ücretsiz hesap aç.</p>':''}
     <input class="accin" id="accu" placeholder="Kullanıcı adı" autocomplete="username" autocapitalize="off" spellcheck="false" maxlength="16">
     <input class="accin" id="accp" type="password" placeholder="Şifre (en az 6 karakter)" autocomplete="current-password" maxlength="64">
     <p class="sioerr" id="accerr"></p>
     <div class="stsv2"><button class="btn" id="acclog">Giriş yap</button><button class="btn alt" id="accreg">Kayıt ol</button></div>
+    <button class="lnkb" id="accfgt">Şifremi unuttum</button>
     <p class="sionote"><b>Kayıt ol:</b> yeni hesap sıfırdan başlar.<br><b>Giriş yap:</b> hesabındaki ilerleme yüklenir.</p>
     ${force?'':'<button class="btn alt" id="accdone">Geri</button>'}</div>`;
   const er=$('#accerr'),bl=$('#acclog'),br=$('#accreg');
@@ -2920,9 +2968,9 @@ function openAccount(force){if(force&&$('#accu'))return;const ov=$('#ov');ov.cla
     if(!u||!p){er.textContent='Kullanıcı adı ve şifre yaz.';return}
     bl.disabled=br.disabled=true;
     try{const j=await api(reg?'/api/register':'/api/login',{m:'POST',b:{u,p}});afterAuth(j,!reg);
-      toast(reg?'Hesap açıldı, iyi oyunlar!':'Hoş geldin, '+j.user);if(window.__accForce){ov.className='ov';ov.innerHTML='';window.__accForce=false;if(!B)render();if(S.tut===1&&!$('#title'))setTimeout(showWelcome,350)}else openSettings()}
+      toast(reg?'Hesap açıldı, iyi oyunlar!':'Hoş geldin, '+j.user);if(reg&&j.rec)showRec(j.rec,true,authDone);else authDone()}
     catch(e){er.textContent=e.message}finally{bl.disabled=br.disabled=false}};
-  bl.onclick=()=>go(false);br.onclick=()=>go(true);
+  bl.onclick=()=>go(false);br.onclick=()=>go(true);$('#accfgt').onclick=()=>openRecover(force);
   $('#accp').onkeydown=e=>{if(e.key==='Enter')go(false)};
   if(!force){const back=()=>openSettings();$('#accback').onclick=back;$('#accdone').onclick=back}}
 /* ---------- KAYIT DIŞA / İÇE AKTARMA ---------- */
@@ -2961,7 +3009,7 @@ function openSettings(){const ov=$('#ov');ov.className='ov on';
     <div class="strow tg"><div class="stl"><span class="sic">${sndIco()}</span><b>Ses</b></div><button class="tgl ${SFX.on()?'on':''}" id="stsnd"><i></i></button></div>
     ${row('stmv','Müzik','<span class="sic">♫</span>',mvol())}
     ${row('stsv','Efektler','<span class="sic">✦</span>',svol())}
-    ${window.claude?'':(()=>{const a=accGet();return `<div class="stsv"><b>Hesap</b>${a.user?`<p class="sionote">Giriş yapıldı: <b>${escH(a.user)}</b>. İlerlemen buluta kaydediliyor, başka cihazdan da devam edebilirsin.</p><button class="btn alt" id="stout">Çıkış yap</button>`:`<p class="sionote">Giriş yaparsan ilerlemen buluta kaydedilir; telefon değişse bile kaybolmaz.</p><button class="btn" id="stacc">Giriş yap / Kayıt ol</button>`}</div>`})()}
+    ${window.claude?'':(()=>{const a=accGet();return `<div class="stsv"><b>Hesap</b>${a.user?`<p class="sionote">Giriş yapıldı: <b>${escH(a.user)}</b>. İlerlemen buluta kaydediliyor, başka cihazdan da devam edebilirsin.</p><button class="btn alt" id="strec">🔑 ${window.__hasRec===false?'Kurtarma kodu oluştur':'Yeni kurtarma kodu'}</button><button class="btn alt" id="stpw">Şifre değiştir</button><button class="btn alt" id="stout">Çıkış yap</button>`:`<p class="sionote">Giriş yaparsan ilerlemen buluta kaydedilir; telefon değişse bile kaybolmaz.</p><button class="btn" id="stacc">Giriş yap / Kayıt ol</button>`}</div>`})()}
     ${!window.claude&&accGet().owner?'<button class="btn alt" id="stadm">🛠️ Yönetici paneli</button>':''}
     <div class="stsv"><b>Kayıt</b><div class="stsv2"><button class="btn alt" id="stexp">Dışa aktar</button></div></div>
     <button class="btn alt" id="strules">📖 Kurallar ve oran tablosu</button>
@@ -2974,6 +3022,7 @@ function openSettings(){const ov=$('#ov');ov.className='ov on';
   const cl=()=>{ov.className='ov';ov.innerHTML='';if(tab==='rules')openRules()};$('#stclose').onclick=cl;$('#stok').onclick=cl;
   $('#stexp').onclick=()=>openSaveIO('exp');if($('#stadm'))$('#stadm').onclick=()=>openAdmin();
   if($('#stacc'))$('#stacc').onclick=openAccount;
+  {const sr=$('#strec');if(sr)sr.onclick=()=>newRecCode(window.__hasRec===false?null:sr);const sp=$('#stpw');if(sp)sp.onclick=openPwChange}
   $('#strules').onclick=()=>{if(B&&!B.over){toast('Önce savaşı bitir');return}ov.className='ov';ov.innerHTML='';openRules()};
   const so=$('#stout');if(so)so.onclick=async()=>{if(!so.dataset.ok){so.dataset.ok=1;so.textContent='Emin misin? Tekrar bas';return}
     try{await cloudPush(true)}catch(e){}try{await api('/api/logout',{m:'POST'})}catch(e){}
