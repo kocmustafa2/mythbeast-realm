@@ -136,6 +136,8 @@ function fixEz(data, owner) {
   if (owner) {
     const all = [...MR.CARDS, ...MR.EXC, ...MR.PRL];
     if ((data.ownAll || 0) < all.length) { for (const c of all) if (!(data.owned[c.id] > 0)) data.owned[c.id] = 1; data.ownAll = all.length; }
+    // sahibin isteği (2026-11-27): Feda, Bedel ve İrade destek kartlarından birer kez 5'er tane
+    if (!data.ownSup1) { data.sup = data.sup || {}; for (const k of ['feda', 'bedel', 'will']) data.sup[k] = (data.sup[k] || 0) + 5; data.ownSup1 = 1; }
   }
   return data;
 }
