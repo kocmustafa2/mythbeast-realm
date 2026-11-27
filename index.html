@@ -996,6 +996,8 @@ body.inb main{padding:0 10px 16px}
 .rtas{font-style:normal;display:inline-grid;place-items:center;width:22px;height:22px;flex:none;clip-path:polygon(50% 0,100% 38%,80% 100%,20% 100%,0 38%);background:radial-gradient(circle at 35% 30%,#fff9,transparent 45%),linear-gradient(160deg,var(--gc,#9ab),color-mix(in srgb,var(--gc,#9ab) 40%,#000));vertical-align:middle}.rtas .eic{width:13px;height:13px;filter:drop-shadow(0 0 2px #000)}
 .rtas.ks{clip-path:polygon(50% 0,90% 25%,90% 75%,50% 100%,10% 75%,10% 25%);background:radial-gradient(circle at 40% 30%,#fffc,transparent 40%),linear-gradient(160deg,#ffe28a,color-mix(in srgb,var(--gc,#fc5) 55%,#3a2400));box-shadow:0 0 8px #ffd25a}
 .rtas.any{--gc:#b9c4d6;width:16px;height:16px}
+.ssi{width:22px;height:22px;object-fit:contain;flex:none;vertical-align:middle;filter:drop-shadow(0 1px 2px #0008)}.ksw{position:relative;display:inline-block;width:24px;height:24px;flex:none;vertical-align:middle;font-style:normal}.ksw img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 0 4px #ffc84a88)}.ksw .kse{position:absolute;right:-4px;bottom:-3px;width:13px;height:13px;filter:drop-shadow(0 0 2px #000)}
+.lgr .ssi{width:17px;height:17px}.lgbig{width:88%;height:88%;object-fit:contain;filter:drop-shadow(0 2px 6px #0009)}.twres .ssi,.twres .ksw{width:30px;height:30px}.advw .ssi,.advw .ksw,.enr .ssi,.enr .ksw{width:24px;height:24px}
 .lgbox{display:flex;flex-direction:column;gap:8px}.lgg{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}
 .lgd{position:relative;aspect-ratio:1;border-radius:10px;background:#ffffff0d;box-shadow:inset 0 0 0 1px #ffffff14;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:2px}
 .lgd small{position:absolute;top:2px;left:4px;font-size:9px;color:#8f9bab}.lgr{display:flex;align-items:center;gap:2px;font:13px 'MRDisplay',sans-serif;flex-wrap:wrap;justify-content:center}.lgr img{width:16px;height:16px}.lgr .lgsup{width:15px;height:20px;border-radius:3px;object-fit:cover}
@@ -1011,8 +1013,8 @@ body.inb main{padding:0 10px 16px}
 .twtabs{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin:6px 0}.twt{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;border-radius:10px;border:0;background:#ffffff0d;color:#cfd8e3;font:inherit}.twt .eic{width:22px;height:22px}.twt small{font-size:10px}
 .twt.on{background:color-mix(in srgb,var(--ac) 25%,#0c1220);box-shadow:inset 0 0 0 1.5px var(--ac)}
 .twinfo{display:flex;flex-direction:column;gap:6px;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ac) 45%,transparent)}.twinfo>b{font:20px 'MRDisplay',sans-serif;color:var(--ac)}.twres{display:flex;gap:14px}.twres span{display:flex;align-items:center;gap:6px;font-size:13px}.twres b{font:18px 'MRDisplay',sans-serif}.twinfo small{color:#aab6c2;font-size:11.5px}
-.tower{position:relative;display:flex;flex-direction:column;gap:6px;margin:10px auto 20px;max-width:340px;padding:10px 14px;border-radius:18px;background:linear-gradient(180deg,color-mix(in srgb,var(--ac) 22%,#0a0e18),#0a0e18 70%);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ac) 40%,transparent)}
-.twf{display:flex;align-items:center;gap:10px;min-height:44px;padding:6px 12px;border:0;border-radius:12px;background:#ffffff0f;color:#e8eef5;font:inherit;text-align:left}
+.tower{position:relative;display:flex;flex-direction:column;gap:6px;margin:10px auto 20px;max-width:340px;padding:150px 14px 14px;border-radius:18px;background:linear-gradient(180deg,#0a0e1800 0,#0a0e1866 110px,#0a0e18b0 300px,#0a0e18e8 620px,#0a0e18 100%),var(--twbg) center top/100% auto no-repeat,#0a0e18;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ac) 40%,transparent)}
+.twf{display:flex;align-items:center;gap:10px;min-height:44px;padding:6px 12px;border:0;border-radius:12px;background:#0b1020b8;backdrop-filter:blur(3px);color:#e8eef5;font:inherit;text-align:left}
 .twf .twn{width:26px;font:16px 'MRDisplay',sans-serif;color:#8f9bab;text-align:center}.twf .twl{flex:1;font-size:14px}.twf em{font-style:normal;color:#7eff9a}
 .twf img{width:40px;height:40px;border-radius:10px;object-fit:cover;box-shadow:0 0 0 2px var(--ac)}
 .twf.boss{background:color-mix(in srgb,var(--ac) 18%,#14101c);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ac) 60%,transparent)}.twf.boss .twl{font:15px 'MRDisplay',sans-serif;color:var(--ac)}
@@ -2419,7 +2421,7 @@ document.addEventListener('pointerdown',e=>{if(e.target.closest('.btn,.tgo,nav b
 
 // görselleri önceden indir: başlangıç ekranında beklerken arka planda, sırayla
 // dosyaları telefonda saklayan servis: içeriği değişen bir görsel/ses olursa ASSET_V artırılır
-const ASSET_V=8;try{if('serviceWorker' in navigator&&location.protocol==='https:'||location.hostname==='localhost')navigator.serviceWorker.register('sw.js?v='+ASSET_V).catch(()=>{})}catch(e){}
+const ASSET_V=9;try{if('serviceWorker' in navigator&&location.protocol==='https:'||location.hostname==='localhost')navigator.serviceWorker.register('sw.js?v='+ASSET_V).catch(()=>{})}catch(e){}
 (function prefetch(){
   // önce kart resimleri (önce sahip olunanlar), sonra çerçeveler ve arka planlar
   const own=ALLC().filter(c=>owned(c.id)).map(c=>c.id),rest=ALLC().map(c=>c.id).filter(id=>!own.includes(id));
@@ -2995,11 +2997,11 @@ function bindDq(){document.querySelectorAll('[data-dq]').forEach(b=>b.onclick=as
 
 /* ---------- RUH TAŞI · KADİM TAŞ ---------- */
 const ssN=el=>(S.ss||{})[el]||0,ksN=el=>(S.ks||{})[el]||0;
-const gem=(el,k)=>`<i class="rtas${k?' '+k:''}" style="--gc:${AUC[el]}">${icon(el)}</i>`;
+const gem=(el,k)=>k==='ks'?`<i class="ksw"><img src="img/ic/ks.webp" alt=""><img class="kse" src="img/ic/${el}.webp" alt=""></i>`:`<img class="ssi" src="img/ic/ss_${el}.webp" alt="">`;
 /* ---------- 30 GÜNLÜK GİRİŞ ÖDÜLLERİ ---------- */
-function lgRw(R){const o=[];if(R.pk)o.push(`<img src="img/ic/pack.webp" alt=""><b>${R.pk}</b>`);if(R.g)o.push(`<img src="img/ic/gold.webp" alt=""><b>${R.g}</b>`);if(R.d)o.push(`<img src="img/ic/dust.webp" alt=""><b>${R.d}</b>`);
+function lgRw(R){if(R.big)return `<img class="lgbig" src="img/ic/bigchest.webp" alt="">`;const o=[];if(R.pk)o.push(`<img src="img/ic/pack.webp" alt=""><b>${R.pk}</b>`);if(R.g)o.push(`<img src="img/ic/gold.webp" alt=""><b>${R.g}</b>`);if(R.d)o.push(`<img src="img/ic/dust.webp" alt=""><b>${R.d}</b>`);
   if(R.sup)o.push(R.sup==='rnd'?`<img src="img/sup/evo.webp" alt="" class="lgsup"><b>?</b>`:`<img src="${supArt(R.sup)}" alt="" class="lgsup">`);
-  if(R.ss)o.push(`<i class="rtas any"></i><b>${R.ss}</b>`);if(R.ks)o.push(`<i class="rtas ks any"></i><b>${R.ks}</b>`);if(R.prl)o.push(`<b class="lgprl">✦</b>`);return o.slice(0,R.big?3:1).join('')}
+  if(R.ss)o.push(`<img class="ssi" src="img/ic/ss_any.webp" alt=""><b>${R.ss}</b>`);if(R.ks)o.push(`<img class="ssi" src="img/ic/ks.webp" alt=""><b>${R.ks}</b>`);if(R.prl)o.push(`<b class="lgprl">✦</b>`);return o.slice(0,R.big?3:1).join('')}
 function loginBox(){if(!cloudOn()&&!window.claude)return'';const L=S.lgn||{d:0,c:0},can=MR.loginCan(S,Date.now()),cur=L.d;
   return `<div class="fp lgbox"><div class="dqh"><b>Giriş ödülleri</b><small>${can?`Gün ${cur+1} hazır`:`Yarın: gün ${cur+1}`} · 30 günlük takvim</small></div>
   <div class="lgg">${MR.LOGIN.map((R,i)=>`<div class="lgd${i<cur?' done':''}${i===cur&&can?' now':''}${R.big?' big':''}${[6,13,19,26].includes(i)?' wk':''}"><small>${i+1}</small><div class="lgr">${lgRw(R)}</div>${i<cur?'<i>✓</i>':''}</div>`).join('')}</div>
@@ -3024,7 +3026,7 @@ function renderTowers(){const el=twSel,done=MR.twDone(S,el),F=MR.TOWER.floors;
   $('#main').innerHTML=`<h2>Macera</h2>${advSw()}<p class="sub">Her türün ${F} katlı bir kulesi var. Katları geçerek o türün <b>ruh taşlarını</b> topla. Boss katlarından <b>kadim taş</b> ve <b>Parlak kart</b> düşer. Taşlarla son evrim kartlarının seviyesini yükseltirsin.</p>
   <div class="twtabs">${ELS.map(e=>`<button class="twt${e===el?' on':''}" data-te="${e}" style="--ac:${AUC[e]}">${icon(e)}<small>${MR.twDone(S,e)}/${F}</small></button>`).join('')}</div>
   <div class="fp twinfo" style="--ac:${AUC[el]}"><b>${MR.T_N[el]} Kulesi</b><div class="twres"><span>${gem(el)}<b>${ssN(el)}</b> ruh taşı</span><span>${gem(el,'ks')}<b>${ksN(el)}</b> kadim taş</span></div><small>Geçilmiş katlar tekrar oynanabilir · bugün kalan tekrar ödülü: ${MR.twLeft(S,Date.now())}/${MR.TOWER.daily}</small></div>
-  <div class="tower" style="--ac:${AUC[el]}">${[...Array(F)].map((_,k)=>{const f=F-1-k,bs=MR.twBoss(f),stt=f<done?'done':f===done?'cur':'lock',S0=bs?MR.towerStage(el,f):null;
+  <div class="tower" style="--ac:${AUC[el]};--twbg:url(img/tw/${el}.webp)">${[...Array(F)].map((_,k)=>{const f=F-1-k,bs=MR.twBoss(f),stt=f<done?'done':f===done?'cur':'lock',S0=bs?MR.towerStage(el,f):null;
     return `<button class="twf ${stt}${bs?' boss':''}${f===F-1?' top':''}" data-tf="${f}"><span class="twn">${f+1}</span>${bs?`<img src="img/t/${S0.boss.id}.webp" alt="">`:''}<span class="twl">${bs?(f===F-1?'ZİRVE · ':'BOSS · ')+S0.boss.name:'Kat '+(f+1)}</span><em>${stt==='done'?'✓':stt==='lock'?'':'▶'}</em></button>`}).join('')}</div>`;
   bindAdvSw();document.querySelectorAll('[data-te]').forEach(b=>b.onclick=()=>{twSel=b.dataset.te;renderTowers()});
   document.querySelectorAll('.twf').forEach(b=>b.onclick=()=>{const f=+b.dataset.tf;if(f>done){toast('Önce alttaki katı geç');return}towerInfo(el,f)});
