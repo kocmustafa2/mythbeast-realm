@@ -1024,6 +1024,7 @@ body.inb main{padding:0 10px 16px}
 .aimg.pt{object-position:50% 12%}
 /* +10 süsü: kartın kendi çerçevesi kalır; üstüne ince akan prizma kenar, tepede küçük kristal taç (kullanıcının çerçevesinden), köşelerde parlayan yıldızlar, ara ara ışık süzülmesi */
 .lv10f{position:absolute;inset:0;z-index:12;pointer-events:none;transform:translateZ(3px);border-radius:inherit}
+.l10d{position:absolute;left:-2.2%;top:-9.5%;width:104.4%;height:111.4%;max-width:none;filter:drop-shadow(0 0 4px #ffcf4099) drop-shadow(0 2px 3px #0008)}.bk10f .l10d{left:-2.6%;top:-9.8%;width:105.2%;height:112%}
 .l10r{position:absolute;inset:-2px;border-radius:5%/3.6%;padding:3px;background:conic-gradient(from var(--a10,0deg),#ff5f6d,#ffc371,#fff3a8,#7cff9a,#5fd4ff,#b47bff,#ff5f6d);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:a10 4s linear infinite;filter:drop-shadow(0 0 5px #ff9ad8)}
 .l10c{position:absolute;left:50%;top:-10.5%;width:30%;translate:-50% 0;filter:drop-shadow(0 2px 4px #000a) drop-shadow(0 0 6px #fff6)}
 .l10s{position:absolute;width:11%;aspect-ratio:1;background:radial-gradient(circle,#fff 0 12%,#ffd6f5 22%,transparent 60%);clip-path:polygon(50% 0,60% 40%,100% 50%,60% 60%,50% 100%,40% 60%,0 50%,40% 40%);filter:drop-shadow(0 0 4px #ff9ad8);animation:l10tw 2.4s ease-in-out infinite}
@@ -1031,7 +1032,7 @@ body.inb main{padding:0 10px 16px}
 @keyframes l10tw{0%,100%{transform:scale(.7) rotate(0);opacity:.75}50%{transform:scale(1.15) rotate(45deg);opacity:1}}
 .l10w{position:absolute;inset:0;border-radius:inherit;overflow:hidden;background:linear-gradient(115deg,transparent 40%,#ffffff55 50%,transparent 60%) no-repeat;background-size:250% 100%;animation:l10sw 5s ease-in-out infinite;mix-blend-mode:screen}
 @keyframes l10sw{0%,70%{background-position:150% 0}100%{background-position:-60% 0}}
-.bk:has(.bk10f){overflow:visible}.bk:has(.bk10f) .bka{border-radius:11px 11px 0 0}.bk10f{border-radius:11px}.bk10f .l10w{border-radius:11px}
+.bk:has(.bk10f){overflow:visible}.bk:has(.bk10f) .bka{border-radius:11px 11px 0 0}.bk:has(.bk10f){box-shadow:0 4px 12px #000b}.bk10f{border-radius:11px}.bk10f .l10w{border-radius:11px}
 .bk10f .l10c{width:30%;top:-15%}.bk10f .l10s{width:13%}.bk10f .l10r{inset:-2px;border-radius:12px;padding:2.5px}
 @media (prefers-reduced-motion:reduce){.l10r,.l10s,.l10w{animation:none}}.card.lt4,.card.lt4 .cs,.card.lt4 .tilt{overflow:visible}.grid>.card.lt4{content-visibility:visible}.detail .card.lt4{margin-top:clamp(16px,5vw,34px)}.grid .card.lt4{margin-top:10px}/* savaşta +10: kartın kenarında akan gökkuşağı çerçeve (büyük çerçeve görseli savaş kartında isimleri kapatıyordu) */
 .bk10{position:absolute;inset:0;z-index:7;pointer-events:none;border-radius:inherit;padding:3px;background:conic-gradient(from var(--a10,0deg),#ff5f6d,#ffc371,#fff3a8,#7cff9a,#5fd4ff,#b47bff,#ff5f6d);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:a10 3s linear infinite;filter:drop-shadow(0 0 6px #ff9ad8)}
@@ -1300,7 +1301,7 @@ const nmS=(n,lim)=>{const k=nmK(n,lim);return k<1?` style="--nk:${k.toFixed(2)};
 // dikey resimlerde yaratığın başının yeri (resmin üstünden yüzde): kırpılan küçük alanlarda bu nokta görünür
 const FOC={206:16,207:14,208:18,209:14,210:20,211:22,212:16,213:10,214:14,215:15,216:14,217:20,218:22,219:14,220:16,221:16};
 const focY=c=>c&&FOC[c.id]!=null?FOC[c.id]:12;
-const LV10='<i class="lv10f"><b class="l10r"></b><img class="l10c" src="img/lv10cr.webp" alt=""><i class="l10s s1"></i><i class="l10s s2"></i><i class="l10s s3"></i><i class="l10s s4"></i><b class="l10w"></b></i>';   // +10 süsü: akan prizma kenar, taç, köşe yıldızları, ışık süzülmesi
+const LV10='<i class="lv10f"><img class="l10d" src="img/lv10dragon.webp" alt="" draggable="false"></i>';   // +10: ejder pullu altın çerçeve (kullanıcının görseli)   // +10 süsü: akan prizma kenar, taç, köşe yıldızları, ışık süzülmesi
 const lvTier=L=>L>=10?4:L>=7?3:L>=4?2:1;
 const lvN=c=>c.lv?`<span class="lvn lt${lvTier(c.lv)}">+${c.lv}</span>`:'';
 const lvHp=c=>c.lv&&c._big&&BY[c.id]?`${c.hp}<i class="lvd">+${c.hp-BY[c.id].hp}</i>`:c.hp;
@@ -2531,7 +2532,7 @@ function updShow(){if(!window.__upd||document.getElementById('updb'))return;if(B
   d.querySelector('#updx').onclick=()=>d.remove()}
 setTimeout(verCheck,6000);setInterval(verCheck,10*60e3);
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')verCheck()});addEventListener('online',()=>setTimeout(verCheck,2000));
-const ASSET_V=13;try{if('serviceWorker' in navigator&&location.protocol==='https:'||location.hostname==='localhost')navigator.serviceWorker.register('sw.js?v='+ASSET_V).catch(()=>{})}catch(e){}
+const ASSET_V=14;try{if('serviceWorker' in navigator&&location.protocol==='https:'||location.hostname==='localhost')navigator.serviceWorker.register('sw.js?v='+ASSET_V).catch(()=>{})}catch(e){}
 (function prefetch(){
   // önce kart resimleri (önce sahip olunanlar), sonra çerçeveler ve arka planlar
   const own=ALLC().filter(c=>owned(c.id)).map(c=>c.id),rest=ALLC().map(c=>c.id).filter(id=>!own.includes(id));
