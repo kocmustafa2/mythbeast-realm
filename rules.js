@@ -276,11 +276,15 @@ const PRL=PRL_SRC.map(id=>{const c=BY[id];return{...c,id:PRL_OFF+id,of:id,prl:1,
 PRL.forEach(c=>BY[c.id]=c);
 const prlOf=c=>BY[PRL_OFF+c.id]||null;
 
-const EZA={drain:'Sahadayken her tur rakibin bütün kartlarından 50 can çeker ve kendini iyileştirir'};const EZDR=50;
-const EZC=[[83,'Ezelhan','blood','drain',['Kıyamet Pençesi'],['Tutulma Nefesi','burn'],'Dünyanın başlangıcından önce vardı; altı türü yuttu ve gökyüzünü kararttı.',0,'whts'],
- [84,'Ölüağaç','blood','drain',['Kemik Dal'],['Çürüyen Orman','splash'],'Bastığı yerde orman küle döner; boynuzlarındaki fenerler kayıp ruhları taşır.',1,'l'],
- [85,'Boşgöz','blood','drain',['Boşluk Bakışı'],['Göğün Yarığı','splash'],'Gökyüzündeki yarığın ardından dünyayı izleyen tek göz.',0,'c']].map(([id,name,el,exa,a1,a2,flv,b,f])=>({id,name,el,exa,flv,ex:1,ez:1,r:3,stage:0,from:0,b,f,ret:2,hp:500,
-  atks:[{e:E1[3],name:a1[0],dmg:400},{e:E2[3],name:a2[0],fx:a2[1],dmg:400}]}));
+// Ezeli yetenekleri: her birinin kendi oyun tarzı (eski ortak 'can çekme' kaldırıldı)
+const EZA={devour:'Tür Yutucu: rakip sahadaki her farklı tür için +%10 güç; vurduğu kartın tür yeteneği 2 tur çalışmaz',
+  harvest:'Ruh Hasadı: sahadayken yenilen her kart ona +40 can, yanındakilere +20 can verir; yenilince bir kez son düşen kartını yarı canla geri getirir',
+  void:'Boşluk Bakışı: her tur rakibin bir kartını dondurur (o tur saldıramaz); rakibin oynadığı ilk destek kartı boşa gider',
+  drain:'Sahadayken her tur rakibin bütün kartlarından 50 can çeker ve kendini iyileştirir'};const EZDR=50;
+const EZC=[[83,'Ezelhan','blood','devour',['Kıyamet Pençesi'],['Tutulma Nefesi','burn'],'Dünyanın başlangıcından önce vardı; altı türü yuttu ve gökyüzünü kararttı.',0,'whts'],
+ [84,'Ölüağaç','blood','harvest',['Kemik Dal'],['Çürüyen Orman','splash'],'Bastığı yerde orman küle döner; boynuzlarındaki fenerler kayıp ruhları taşır.',1,'l'],
+ [85,'Boşgöz','blood','void',['Boşluk Bakışı'],['Göğün Yarığı','splash'],'Gökyüzündeki yarığın ardından dünyayı izleyen tek göz.',0,'c']].map(([id,name,el,exa,a1,a2,flv,b,f])=>({id,name,el,exa,flv,ex:1,ez:1,r:3,stage:0,from:0,b,f,ret:2,hp:500,
+  atks:[{e:E1[3],name:a1[0],dmg:250},{e:E2[3],name:a2[0],fx:a2[1],dmg:400}]}));
 EZC.forEach(c=>BY[c.id]=c);
 
 const POOL=[0,1,2,3].map(r=>CARDS.filter(c=>c.r===r));

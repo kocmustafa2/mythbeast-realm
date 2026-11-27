@@ -1009,6 +1009,7 @@ body.inb main{padding:0 10px 16px}
 .colhd{display:flex;flex-direction:column;align-items:stretch;gap:6px}.colhd .btn.sm{width:auto;padding:8px 14px;font-size:14px;margin:0}.dmk.t{background:#ff8a3d}
 .twdk{display:flex;flex-direction:column;gap:6px}.twdks{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}.twdks .chip{flex:none}.twdp{display:flex;gap:4px;overflow-x:auto}.twdp img{width:44px;height:44px;border-radius:8px;object-fit:cover;flex:none}.twdk small{color:#aab6c2;font-size:12px}
 #updb{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));left:50%;translate:-50% 0;z-index:60;display:flex;align-items:center;gap:8px;padding:8px 8px 8px 14px;border-radius:99px;background:linear-gradient(90deg,#3a2a6a,#1d3a6a);box-shadow:0 4px 16px #000a,inset 0 0 0 1.5px #ffd25a88;color:#fff;font:700 14px Rubik,sans-serif;white-space:nowrap}#updb button{border:0;border-radius:99px;font:inherit;cursor:pointer}#updgo{background:linear-gradient(#ffd25a,#e08a1e);color:#2a1600;padding:6px 14px}#updx{background:#ffffff1a;color:#fff;width:28px;height:28px;padding:0}
+.bkfz,.bkmu{position:absolute;left:50%;top:44%;translate:-50% -50%;z-index:5;padding:2px 8px;border-radius:8px;font:700 11px Rubik,sans-serif;white-space:nowrap;pointer-events:none}.bkfz{background:#7fd8ffdd;color:#06263a;box-shadow:0 0 12px #7fd8ff}.bkmu{top:58%;background:#2a0000dd;color:#ffb0b0;box-shadow:0 0 8px #c00000}.bk:has(.bkfz) .bka{filter:saturate(.4) brightness(1.15) hue-rotate(160deg)}
 .lgbox{display:flex;flex-direction:column;gap:8px}.lgg{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}
 .lgd{position:relative;aspect-ratio:1;border-radius:10px;background:#ffffff0d;box-shadow:inset 0 0 0 1px #ffffff14;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:2px}
 .lgd small{position:absolute;top:2px;left:4px;font-size:9px;color:#8f9bab}.lgr{display:flex;align-items:center;gap:2px;font:13px 'MRDisplay',sans-serif;flex-wrap:wrap;justify-content:center}.lgr img{width:16px;height:16px}.lgr .lgsup{width:15px;height:20px;border-radius:3px;object-fit:cover}
@@ -1063,7 +1064,7 @@ body.inb main{padding:0 10px 16px}
 <div id="title"><div class="tbg"></div><div class="tlogo"><img class="tlimg" src="img/logo.webp" alt="Mythbeast Realm"><span class="t3">Seri 1 · Elementler</span></div>
 <button class="sndb tsnd" id="tsnd" aria-label="Ses"></button><div class="tbtm"><button class="tgo" id="tgo" aria-label="Oyna"><img src="img/btn_play.webp" alt="Oyna"></button><p class="tinfo" id="tinfo"></p></div></div>
 
-<script src="rules.js?v=13"></script>
+<script src="rules.js?v=14"></script>
 <script>
 {
 // Ortak kurallar (rules.js): kart verisi ve ekonomi. Oyun ve sunucu aynı dosyayı kullanır.
@@ -1780,32 +1781,35 @@ function startTurn(s){B.justCharged=chargeStep(B,s)}
 // tur başı: dolma → Işık arınma → kötü etki hasarı (yanık/zehir/kanama, Gölge ile artar) → Su can
 function coreTurn(X,s){
   const bd=X[s].board,ev={charged:chargeStep(X,s),cleanse:[],dot:[],heal:[],spread:[],poison:[]};
-  const lp=Math.max(0,...bd.filter(f=>f&&f.hp>0&&f.c.el==='light').map(f=>tv(f.c,LIP)));
+  const ob0=X[s==='me'?'foe':'me'].board;[...bd,...ob0].forEach(f=>{if(f&&f.frz>0)f.frz--});bd.forEach(f=>{if(f&&f.mute>0)f.mute--});   // Boşgöz dondurması / Ezelhan susturması süreleri
+  const lp=Math.max(0,...bd.filter(f=>f&&f.hp>0&&f.c.el==='light'&&!(f.mute>0)).map(f=>tv(f.c,LIP)));
   if(lp)bd.forEach((f,i)=>{if(!f||f.hp<=0)return;let n=0;const r=()=>Math.random()*100<lp;
     if(f.burn&&r()){f.burn=0;n++}if(f.poiT>0&&r()){f.poi=0;f.poiT=0;n++}if(f.bldT>0&&r()){f.bld=0;f.bldT=0;n++}if(f.ampT>0&&r()){f.amp=1;f.ampT=0;n++}if(n)ev.cleanse.push(i)});
   bd.forEach((f,i)=>{if(!f||f.hp<=0)return;let d=0;
     if(f.burn>0){d+=FXV.burn;f.burn--}if(f.poiT>0){d+=f.poi;if(--f.poiT<=0&&f.hp>d)f.poi=0}if(f.bldT>0){d+=f.bld;if(--f.bldT<=0)f.bld=0}
     if(!d)return;d=Math.round(d*(f.ampT>0?f.amp:1));f.hp=Math.max(0,f.hp-d);ev.dot.push([i,d])});
   ev.spread=spreadPoi(X,s);
-  bd.forEach((w,i)=>{if(!w||w.hp<=0||w.c.el!=='water')return;const v=tv(w.c,TV.water);[i-1,i+1].forEach(j=>{const f=bd[j];if(f&&f.hp>0&&f.hp<mx(f)){const g=Math.min(v,mx(f)-f.hp);f.hp+=g;ev.heal.push([j,g])}})});
+  bd.forEach((w,i)=>{if(!w||w.hp<=0||w.c.el!=='water'||w.mute>0)return;const v=tv(w.c,TV.water);[i-1,i+1].forEach(j=>{const f=bd[j];if(f&&f.hp>0&&f.hp<mx(f)){const g=Math.min(v,mx(f)-f.hp);f.hp+=g;ev.heal.push([j,g])}})});
   bd.forEach(f=>{if(f&&f.ampT>0&&--f.ampT<=0)f.amp=1});
-  // Ezeli: sahadaki her Ezeli kart, rakibin bütün kartlarından can çeker
-  ev.drain=[];const ob=X[s==='me'?'foe':'me'].board;
-  bd.forEach((f,i)=>{if(!f||!f.c.ez||f.hp<=0)return;let got=0;const hit=[];ob.forEach((t,k)=>{if(!t||t.hp<=0)return;const d=Math.min(EZDR,t.hp);t.hp-=d;got+=d;hit.push(k)});if(hit.length){f.hp=Math.min(mx(f),f.hp+got);ev.drain.push([i,hit,got])}});
+  // Ezeli Boşgöz: her tur rakibin bir kartını dondurur (o kartın sahibinin sırasında saldıramaz)
+  ev.drain=[];ev.frz=[];const ob=ob0;
+  bd.forEach(f=>{if(!f||f.hp<=0||f.c.exa!=='void')return;const L=ob.map((t,k)=>t&&t.hp>0&&!(t.frz>0)?k:-1).filter(k=>k>=0);if(!L.length)return;const k=L[Math.floor(Math.random()*L.length)];ob[k].frz=2;ev.frz.push(k)});
   return ev;
 }
 // tek saldırı: hasar + efekt + destekler; olayları döndürür (arayüz ve simülasyon aynı kodu kullanır)
 function coreHit(X,s,ai,ti){
   const o=s==='me'?'foe':'me',A=X[s].board[ai],D=X[o].board[ti],at=curAtk(A),ev={side:[]};
   let base=atkOf(A);if(at.fx==='coin'){ev.coin=Math.random()<.5;if(ev.coin)base+=FXV.coin}
+  if(A.c.exa==='devour'){const nt=new Set(X[o].board.filter(f=>f&&f.hp>0).map(f=>f.c.el)).size;if(nt){base=Math.round(base*(1+.1*nt));ev.dev=nt}}   // Ezelhan: Tür Yutucu
   const r=calc(A,D,X[s].board,X[o].board,base);ev.k=r.k;ev.d=r.d;ev.sh=r.sh;
   const full=D.hp>=mx(D);D.hp=Math.max(0,D.hp-r.d);if(A.feda&&full&&D.hp<=0)D.ko2=1;A.ch=false;A.didAtk=true;
   if(D.hp<=0&&D.c.exa==='stand'&&!D.stood){D.hp=D.c.ez?100:Math.round(mx(D)/2);D.stood=1;ev.stood=1;D.ko2=0}
   if(at.fx==='burn'&&D.hp>0&&r.k!=='i'){D.burn=2;ev.burned=1}
+  if(A.c.exa==='devour'&&D.hp>0&&!D.c.ez){D.mute=2;ev.mute=1}
   if(at.fx==='splash')X[o].board.forEach((f,i)=>{if(f&&i!==ti&&rel(A.c.el,f.c.el)!=='i'){f.hp=Math.max(0,f.hp-FXV.splash);ev.side.push(i)}});
   if(at.fx==='heal'){A.hp=Math.min(mx(A),A.hp+FXV.heal);ev.heal=1}
   if(at.fx==='recoil'){A.hp=Math.max(0,A.hp-FXV.recoil);ev.recoil=1}
-  ev.fs=[];const el=A.c.el,v=TV[el]?tv(A.c,TV[el]):0;
+  ev.fs=[];const el=A.mute>0?'-':A.c.el,v=TV[el]?tv(A.c,TV[el]):0;   // susturulan kartın tür yeteneği çalışmaz
   if(r.k!=='i'){
     if(el==='fire')X[o].board.forEach((f,i)=>{if(f&&i!==ti&&f.hp>0&&rel('fire',f.c.el)!=='i'){const d=Math.min(v,f.hp);f.hp-=d;ev.fs.push([i,d])}});
     if(D.hp>0){
@@ -1842,6 +1846,7 @@ function rescue(X,s){const P=X[s];if(P.board.some(Boolean)||P.hand.some(x=>x.t==
 function drawX(X,s){const P=X[s];if(P.deck.length&&P.hand.length<BAT.handMax){P.hand.push(P.deck.shift());return true}return false}
 function pickSup(X,s,needOwn){const P=X[s];let best=null;P.hand.forEach((x,j)=>{if(x.t!=='s')return;P.board.forEach((f,i)=>{if(!f||canSup(x.k,f,needOwn)!==true)return;const v=(x.k==='feda'?(P.lives>2&&P.board.filter(Boolean).length>=2&&f.hp<mx(f)*.5?35:-99):x.k==='bedel'?(f.hp>mx(f)*.7?30:-99):x.k==='will'?60:x.k==='evo'?40:20)+f.hp/10;if(v<0)return;if(!best||v>best.v)best={j,i,v}})});return best}
 function doSup(X,s,j,i,r){const P=X[s],x=P.hand[j],f=P.board[i];P.hand.splice(j,1);drawX(X,s);
+  {const o=s==='me'?'foe':'me';X.voided=X.voided||{};if(!X.voided[s]&&X[o].board.some(g=>g&&g.hp>0&&g.c.exa==='void')){X.voided[s]=1;return{k:x.k,void:1}}}   // Boşgöz: ilk destek kartı boşa gider
   if(x.k==='bedel'){f.am=(f.am||1)*1.5;f.bdl=1;f.max=Math.max(5,Math.round(mx(f)/2));f.hp=Math.max(5,Math.round(f.hp/2));if(f.hp>f.max)f.hp=f.max;return{k:'bedel'}}
   if(x.k==='feda'){if(r==null||r===i||!P.board[r])r=P.board.findIndex((g,k)=>g&&k!==i);const R=P.board[r],pw=Math.round(atkOf(f)*.5),hp=Math.round(f.hp*.5);R.ab=(R.ab||0)+pw;R.hp+=hp;R.max=mx(R)+hp;R.feda=1;P.board[i]=null;P.lives=Math.max(1,P.lives-1);return{k:'feda',r,pw,hp,name:f.c.name}}
   if(x.k==='will'){X.skip=X.skip||{};X.skip[s==='me'?'foe':'me']=1;return{k:'will'}}
@@ -1901,7 +1906,7 @@ async function autoMove(){if(!autoDue()&&!(B&&B.auto&&!B.busy&&!B.over&&B.turn==
   if(!B.lock)for(let m;B&&!B.over&&(m=bestFill(B,'me'));){await placeAnim('me',m.j,m.i);await wait(220)}
   if(!B||B.over)return;
   if(!B.supUsed){const ms=pickSup(B,'me',false);if(ms){await supAnim('me',ms.j,ms.i);if(!B||B.over)return}}
-  let best=null;B.me.board.forEach((a,ai)=>{if(!a||(B.lock&&a.c.el!==B.lock))return;B.foe.board.forEach((d,di)=>{if(!d)return;const sc=aiScore(a,d,B.me.board,B.foe.board);if(!best||sc>best.sc)best={sc,ai,di}})});
+  let best=null;B.me.board.forEach((a,ai)=>{if(!a||a.frz>0||(B.lock&&a.c.el!==B.lock))return;B.foe.board.forEach((d,di)=>{if(!d)return;const sc=aiScore(a,d,B.me.board,B.foe.board);if(!best||sc>best.sc)best={sc,ai,di}})});
   if(best){if(await strike('me',best.ai,best.di))return}else{B.log='Saldıracak yaratık yok, sıra geçti';renderBattle();await wait(500)}
   if(!B||B.over)return;await foeMove()}
 function clockTick(){if(!B||B.over){if(B&&B.iv)clearInterval(B.iv);return}
@@ -1923,7 +1928,7 @@ function bk(f,s,i){
   const a=curAtk(f),big=f.ch&&c.atks[1],SH=c.ex||(s==='me'&&shownShiny(c.id)),src=SH&&SHART.has(c.id)?`img/s/${c.id}.jpg`:`img/t/${c.id}.webp`;
   return `<div class="bk${big?' ch':c.atks[1]&&!f.justIn&&!f.didAtk?' half':''}${s==='me'&&B.sel===i?' sel':''}${my&&!selS?' bpk':''}${tgt?' tg':''}${supOk?' sup':''}${SH?' holo':''}${c.ex?' ex':''}${c.ez?' ez':''}" data-s="${s}" data-i="${i}" data-u="${f.uid}" style="--ec:${AUC[c.el]}">
   <div class="bka" style="background-image:url(${src})"></div><div class="bkn">${c.name}</div>${c.lv?`<span class="bklv">Sv ${c.lv}</span>`:''}<img class="bke" src="img/ic/${c.el}.webp" alt="">
-  ${c.ez?'':c.ex?'<span class="bkx">EX</span>':''}${f.evo?'<span class="bkev">EVRİM TAŞI</span>':''}${f.st?`<span class="bkst"><img src="img/ic/${f.st}.webp" alt="">+10</span>`:''}${f.burn?`<span class="bkb"><img src="img/ic/burn.webp" alt="">${f.burn}</span>`:''}${f.poiT>0?`<span class="bkv bkp"><img src="img/ic/poison.webp" alt="">${f.poi}</span>`:''}${f.bldT>0?`<span class="bkv bkl"><img src="img/ic/blood.webp" alt="">${f.bld}</span>`:''}${f.ampT>0?`<span class="bkv bka2">${icon('shadow')}×${f.amp}</span>`:''}
+  ${c.ez?'':c.ex?'<span class="bkx">EX</span>':''}${f.evo?'<span class="bkev">EVRİM TAŞI</span>':''}${f.st?`<span class="bkst"><img src="img/ic/${f.st}.webp" alt="">+10</span>`:''}${f.burn?`<span class="bkb"><img src="img/ic/burn.webp" alt="">${f.burn}</span>`:''}${f.poiT>0?`<span class="bkv bkp"><img src="img/ic/poison.webp" alt="">${f.poi}</span>`:''}${f.bldT>0?`<span class="bkv bkl"><img src="img/ic/blood.webp" alt="">${f.bld}</span>`:''}${f.ampT>0?`<span class="bkv bka2">${icon('shadow')}×${f.amp}</span>`:''}${f.frz>0?'<span class="bkfz">❄ Donmuş</span>':''}${f.mute>0?'<span class="bkmu">Yetenek kapalı</span>':''}
   <div class="bkhp"><i class="${p<.35?'lo':''}" style="width:${p*100}%"></i><span>${f.hp} / ${mx(f)}</span></div>
   <div class="bkat${big?' big':''}"><span>${a.name}${a.fx?`<em>${FXS[a.fx]}</em>`:''}</span><b>${atkOf(f)}${a.fx==='coin'?'+':''}</b></div>${hint}</div>`}
 let handW=0;
@@ -1989,7 +1994,8 @@ async function supAnim(s,j,i,r){const src=s==='me'?document.querySelector(`.hk[d
   if(x.k==='evo'){const e0=elOf(s,i);if(e0)await e0.animate([{filter:'none'},{filter:'brightness(4) saturate(0)'}],{duration:450,fill:'forwards'}).finished.catch(()=>{})}
   if(r==null&&x.k==='feda'){let bv=-1;B[s].board.forEach((g,k)=>{if(g&&k!==i&&power(g.c)>bv){bv=power(g.c);r=k}})}
   const rr=doSup(B,s,j,i,r);r=rr;if(s==='me'){B.supUsed=true;if(B.tut&&B.tstep<2)B.tstep=2}renderBattle();newCardFx(s);const e=elOf(s,i);
-  if(r.k==='evo'){B.log=`${who}: <b>${r.e.name}</b> sahada!`;renderBattle();const e2=elOf(s,i);if(e2)e2.animate([{filter:'brightness(4)',transform:'scale(1.12)'},{filter:'none',transform:'none'}],{duration:600});ringFx(elOf(s,i),'light','Evrimleşti!');SFX.reveal(2)}
+  if(r.void){B.log=`Boşgöz'ün bakışı: ${who.toLowerCase()} oynadığı <b>${SUPN[r.k]}</b> boşa gitti!`;renderBattle();ringFx(e,'shadow','Boşa gitti!');SFX.hit('shadow','w')}
+  else if(r.k==='evo'){B.log=`${who}: <b>${r.e.name}</b> sahada!`;renderBattle();const e2=elOf(s,i);if(e2)e2.animate([{filter:'brightness(4)',transform:'scale(1.12)'},{filter:'none',transform:'none'}],{duration:600});ringFx(elOf(s,i),'light','Evrimleşti!');SFX.reveal(2)}
   else if(r.k==='will'){ringFx(e,'light','İrade!');SFX.reveal(2)}
   else if(r.k==='bedel'){ringFx(e,'poison','Güç +%50 · Can −%50');SFX.hit('poison','w')}
   else if(r.k==='feda'){B.log=`${who}: <b>${r.name}</b> feda edildi · güç +${r.pw}, can +${r.hp} aktarıldı · 1 kalp gitti`;renderBattle();const e3=elOf(s,r.r);ringFx(e3,'fire','Feda! +'+r.pw+' güç');bnum(e3,'+'+r.hp,'h');SFX.ko()}
@@ -2077,7 +2083,7 @@ function exEnter(s,i){if(!B)return;const f=B[s].board[i];if(!f||!f.c.ex||f.enter
   setTimeout(()=>{if(!B)return;if(f.c.exa==='blast'){ringFx(el,f.c.el,(f.c.ez?'EZELİ: ':'EX: ')+f.c.name);B[o].board.forEach((t,k)=>{if(!t)return;const dd=f.c.ez?40:50;t.hp=Math.max(1,t.hp-dd);const te=elOf(o,k);bnum(te,'−'+dd,'w')});SFX.hit(f.c.el,'w')}
    if(f.c.exa==='heal'){ringFx(el,'light','EX: '+f.c.name);B[s].board.forEach((t,k)=>{if(!t)return;const hh=f.c.ez?50:70;t.hp=Math.min(mx(t),t.hp+hh);clearBad(t);ringFx(elOf(s,k),'water','+'+hh+' can',150)});SFX.heal()}
    if(f.c.exa==='stand')ringFx(el,'shadow','EX: '+f.c.name);
-   if(f.c.exa==='drain'){ringFx(el,'shadow','EZELİ: '+f.c.name);SFX.hit('shadow','w')}
+   if(f.c.ez){ringFx(el,'shadow','EZELİ: '+f.c.name);SFX.hit('shadow','w')}
    setTimeout(()=>{if(B&&!B.over&&!B.busy)renderBattle()},900)},300)}
 async function sweep(){
   if(!B||B.over)return true;
@@ -2086,9 +2092,17 @@ async function sweep(){
   {const nf=dead.filter(([s])=>s==='foe').length;if(nf)dq('ko',null,nf)}SFX.ko();dead.forEach(([s,i])=>{const e=elOf(s,i);if(e)e.classList.add('kod')});
   await wait(650);if(!B||B.over)return true;
   const pk={me:auraKeys(B.me.board),foe:auraKeys(B.foe.board)};
-  dead.forEach(([s,i,f])=>{const n=koN(f);B[s].lives=Math.max(0,B[s].lives-n);B[s].board[i]=null});
+  // Ölüağaç: Ruh Hasadı (sahadaki her Ölüağaç, yenilen her kart için güçlenir; kendisi yenilince bir kez son düşen kartını geri getirir)
+  const hv=[];B.lastKO=B.lastKO||{};
+  ['me','foe'].forEach(s=>B[s].board.forEach((h,hi)=>{if(!h||h.hp<=0||h.c.exa!=='harvest')return;const n=dead.length;if(!n)return;h.max=mx(h)+40*n;h.hp+=40*n;
+    [hi-1,hi+1].forEach(j=>{const g=B[s].board[j];if(g&&g.hp>0){g.max=mx(g)+20*n;g.hp+=20*n}});hv.push([s,hi,n])}));
+  const rev=[];
+  dead.forEach(([s,i,f])=>{const n=koN(f);B[s].lives=Math.max(0,B[s].lives-n);B[s].board[i]=null;
+    if(f.c.exa==='harvest'&&!f.revd&&B.lastKO[s]&&B[s].lives>0){const c=B.lastKO[s],g=mk(c);g.hp=Math.max(10,Math.round(mx(g)/2/5)*5);g.revd=1;B[s].board[i]=g;rev.push([s,i,c])}
+    if(!f.c.ez)B.lastKO[s]=f.c});
   B.log=dead.map(([s,i,f])=>`<b>${f.c.name}</b> yenildi · ${s==='me'?'sen':'rakip'} ${koN(f)} can kaybetti${f.ko2?' (Feda: tek vuruş!)':''}`).join('<br>');
-  renderBattle();
+  if(hv.length)B.log+='<br>'+hv.map(([s,i,n])=>`<b>Ruh Hasadı</b>: Ölüağaç +${40*n} can`).join('<br>');if(rev.length)B.log+='<br>'+rev.map(([s,i,c])=>`<b>Ölüağaç</b> son ruhu geri çağırdı: <b>${c.name}</b> sahada!`).join('<br>');
+  renderBattle();hv.forEach(([s,i,n])=>{ringFx(elOf(s,i),'shadow','Ruh Hasadı +'+40*n)});rev.forEach(([s,i])=>ringFx(elOf(s,i),'light','Geri döndü!'));
   dead.forEach(([s])=>{const hs=document.querySelectorAll(`[data-lv="${s}"] img`),h=hs[B[s].lives];if(h)h.animate([{transform:'scale(2)',filter:'none'},{transform:'scale(.8)'}],{duration:550})});
   setTimeout(()=>{if(!B)return;announceAuras('me',pk.me);announceAuras('foe',pk.foe)},350);
   const fl=outOf(B,'foe'),ml=outOf(B,'me');
@@ -2100,6 +2114,7 @@ async function sweep(){
 // tur başı: dolma + yanık hasarı
 async function beginTurn(s){
   const ev=coreTurn(B,s);B.justCharged=ev.charged;renderBattle();
+  if(ev.frz&&ev.frz.length){const o=s==='me'?'foe':'me';ev.frz.forEach(k=>ringFx(elOf(o,k),'water','Donduruldu!'));SFX.hit('water','w');await wait(500)}
   if(!ev.cleanse.length&&!ev.dot.length&&!ev.heal.length&&!ev.drain.length&&!ev.spread.length)return false;
   if(ev.drain.length){await wait(250);const o=s==='me'?'foe':'me';for(const[i,hit,got]of ev.drain){ringFx(elOf(s,i),'shadow','Can çekti +'+got);hit.forEach(k=>{const e=elOf(o,k);bnum(e,'−'+EZDR,'w');if(e)e.classList.add('hit')});SFX.hit('shadow','w');await wait(650)}}
   await wait(300);
@@ -2208,7 +2223,7 @@ async function tap(s,i){
     const ok=canSup(x.k,f,true);if(ok!==true){toast(ok);return}
     if(x.k==='feda'){B.fedaI=i;B.log=`<b>${f.c.name}</b> feda edilecek · şimdi gücün aktarılacağı yaratığa dokun`;renderBattle();return}
     B.busy=true;const j=B.selH;B.selH=null;await supAnim('me',j,i);if(B&&!B.over){B.busy=false;renderBattle()}return}
-  if(s==='me'){if(!B.me.board[i])return;if(B.lock&&B.me.board[i].c.el!==B.lock){toast('İrade: bu tur sadece Işık yaratığın saldırabilir');return}B.sel=B.sel===i?null:i;SFX.select();renderBattle();return}
+  if(s==='me'){if(!B.me.board[i])return;if(B.me.board[i].frz>0){toast('Boşgöz bu yaratığı dondurdu: bu tur saldıramaz');return}if(B.lock&&B.me.board[i].c.el!==B.lock){toast('İrade: bu tur sadece Işık yaratığın saldırabilir');return}B.sel=B.sel===i?null:i;SFX.select();renderBattle();return}
   if(B.sel===null||!B.foe.board[i]||!B.me.board[B.sel])return;
   B.busy=true;const ai=B.sel;B.sel=null;tutHit();
   if(await strike('me',ai,i))return;
@@ -2226,8 +2241,8 @@ async function foeMove(){
   if(!B||B.over)return;
   const ms=pickSup(B,'foe',false);if(ms){await supAnim('foe',ms.j,ms.i);if(!B||B.over)return}}
   let best=null;
-  B.foe.board.forEach((a,ai2)=>{if(!a||(lk&&a.c.el!==lk))return;B.me.board.forEach((d,di)=>{if(!d)return;const sc=aiScore(a,d,B.foe.board,B.me.board);if(!best||sc>best.sc)best={sc,ai:ai2,di}})});
-  if(Math.random()<(B.mis??LEAGUES[lgOf(S.trophy||0)].mis)){const as=B.foe.board.map((f,i)=>f&&(!lk||f.c.el===lk)?i:-1).filter(i=>i>=0),ds=B.me.board.map((f,i)=>f?i:-1).filter(i=>i>=0);if(as.length&&ds.length)best={ai:as[Math.floor(Math.random()*as.length)],di:ds[Math.floor(Math.random()*ds.length)]}}
+  B.foe.board.forEach((a,ai2)=>{if(!a||a.frz>0||(lk&&a.c.el!==lk))return;B.me.board.forEach((d,di)=>{if(!d)return;const sc=aiScore(a,d,B.foe.board,B.me.board);if(!best||sc>best.sc)best={sc,ai:ai2,di}})});
+  if(Math.random()<(B.mis??LEAGUES[lgOf(S.trophy||0)].mis)){const as=B.foe.board.map((f,i)=>f&&!(f.frz>0)&&(!lk||f.c.el===lk)?i:-1).filter(i=>i>=0),ds=B.me.board.map((f,i)=>f?i:-1).filter(i=>i>=0);if(as.length&&ds.length)best={ai:as[Math.floor(Math.random()*as.length)],di:ds[Math.floor(Math.random()*ds.length)]}}
   if(best){if(await strike('foe',best.ai,best.di))return}else{B.log='Rakip saldıramadı';renderBattle();await wait(600)}
   if(!B||B.over)return;
   await meTurn(false);
