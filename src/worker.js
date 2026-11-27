@@ -119,6 +119,11 @@ function fixEz(data, owner) {
     if (base && EZ_IDS.has(base[0]) && !owner) delete data.owned[k];
   }
   if (owner) for (const id of EZ_IDS) if (!data.owned[id]) data.owned[id] = 1;
+  // Oyunun sahibi: bütün kartlardan (normal, EX, Parlak) en az 1 tane. Yeni kart eklendikçe eksikler bir kez tamamlanır.
+  if (owner) {
+    const all = [...MR.CARDS, ...MR.EXC, ...MR.PRL];
+    if ((data.ownAll || 0) < all.length) { for (const c of all) if (!(data.owned[c.id] > 0)) data.owned[c.id] = 1; data.ownAll = all.length; }
+  }
   return data;
 }
 
