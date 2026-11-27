@@ -2830,7 +2830,7 @@ async function openAdmin(who){const ov=$('#ov');ov.className='ov on';const A=win
    <p class="frh">Ekonomi günlüğü (son 40)</p>
    <div class="adlog">${(d.econ||[]).map(x=>`<div><b>${escH(x.a)}</b> 💰${x.gold_before??''}→${x.gold_after??''} 🗺️${x.advC_before??''}→${x.advC_after??''} 📦${x.free_before??''}→${x.free_after??''} ${x.note?'· '+escH(x.note):''} · ${agoTxt(x.t)}</div>`).join('')||'<small class="adsm">Yok</small>'}</div>`);
   const v=id=>Math.trunc(+($('#'+id)||{}).value||0),re=()=>openAdmin();
-  const post=async(url,b,ok)=>{try{const r=await api(url,{m:'POST',b:{u:A.u,...b}});toast(ok||r.note||'Tamam');re()}catch(e){toast(e.message)}};
+  const post=async(url,b,ok)=>{try{const r=await api(url,{m:'POST',b:{u:A.u,...b}});toast(ok||r.note||'Tamam');if(String(A.u||'').toLocaleLowerCase('tr')===String(accGet().user||'').toLocaleLowerCase('tr'))await cloudPull();re()}catch(e){toast(e.message)}};   // kendine verince oyun hemen güncellensin
   $('#adapply').onclick=()=>post('/api/admin/edit',{op:'add',p:{gold:v('adg'),dust:v('add'),free:v('adf'),trophy:v('adt')}});
   $('#adsgo').onclick=()=>post('/api/admin/edit',{op:'add',p:{sup:{[$('#adsk').value]:v('adsn')}}});
   $('#adavgo').onclick=()=>post('/api/admin/edit',{op:'adv',advC:v('adav')});
