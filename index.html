@@ -1077,7 +1077,7 @@ body.inb main{padding:0 10px 16px}
 <div id="title"><div class="tbg"></div><div class="tlogo"><img class="tlimg" src="img/logo.webp" alt="Mythbeast Realm"><span class="t3">Seri 1 · Elementler</span></div>
 <button class="sndb tsnd" id="tsnd" aria-label="Ses"></button><div class="tbtm"><button class="tgo" id="tgo" aria-label="Oyna"><img src="img/btn_play.webp" alt="Oyna"></button><p class="tinfo" id="tinfo"></p></div></div>
 
-<script src="rules.js?v=16"></script>
+<script src="rules.js?v=17"></script>
 <script>
 {
 // Ortak kurallar (rules.js): kart verisi ve ekonomi. Oyun ve sunucu aynı dosyayı kullanır.
@@ -1264,7 +1264,7 @@ function frameCard(c,o,F){
 FRAMES.metal=FRAMES.metal||FRAMES.air;FRAMES.poison=FRAMES.poison||FRAMES.earth;
 function frameFor(c){const FR=FRAMES[c.el];if(!FR||c.r>=3)return null;return c.r===2?FR.susl:c.r===0?(FR.basit||FR.sade):(FR.sade||FR.basit)}
 // parlak kart: tam resimli tasarım (resim bütün kartı kaplar, yazılar cam panellerde)
-const SHART=new Set([206,207,208,209,210,211,212,213,214,215,216,217,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,83,84,85,1,2,3,4,5,6,8,9,10,11,12,13,15,16,17,18,19,20,22,23,24,25,26,27,29,30,31,32,34,35,36,37,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82]);
+const SHART=new Set([218,219,220,221,206,207,208,209,210,211,212,213,214,215,216,217,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,83,84,85,1,2,3,4,5,6,8,9,10,11,12,13,15,16,17,18,19,20,22,23,24,25,26,27,29,30,31,32,34,35,36,37,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82]);
 function shinyCard(c,o){
   const big=o.full||o.big,src=big?`img/${c.id}.jpg`:`img/t/${c.id}.webp`;
   if(SHART.has(c.id)){const ps=big?`img/s/${c.id}.jpg`:`img/st/${c.id}.webp`;o={...o,_ps:ps}}
@@ -1357,7 +1357,7 @@ function rareStrip(){const R=(S.rare||[]).filter(x=>BY[x.id]);
 function renderPack(){
   if(tutOn())packSet=1;else packSet=S.pset||1;
   const can=S.free>0||S.gold>=MR.packCost(packSet),left=PACK.pity-S.pity;
-  $('#main').innerHTML=`<div class="psets">${[1,2,3].map(n=>`<button class="chip${packSet===n?' on':''}" data-ps="${n}"${tutOn()&&n>1?' disabled':''}>Seri ${n}${n===3?' · Yeni':''}</button>`).join('')}</div><h2>${packSet===3?'Seri 3 · Yeni Çizgiler':packSet===2?'Seri 2 · Metal ve Zehir':'Seri 1 · Elementler'}</h2><p class="sub">Her pakette 5 kart. ${packSet===3?'Seri 3 paketinden yeni çizgiler ve 6 yeni Efsanevi çıkar. Çok nadiren <b>✨ Parlak</b> kart da çıkabilir (asıl kaynak kuleler).':packSet===2?'Seri 2 paketinden sadece Metal ve Zehir kartları çıkar.':'Evrimli kartlar çok nadir çıkar, onları kopya toplayarak evrimleştir.'}</p>
+  $('#main').innerHTML=`<div class="psets">${[1,2,3].map(n=>`<button class="chip${packSet===n?' on':''}" data-ps="${n}"${tutOn()&&n>1?' disabled':''}>Seri ${n}${n===3?' · Yeni':''}</button>`).join('')}</div><h2>${packSet===3?'Seri 3 · Yeni Çizgiler':packSet===2?'Seri 2 · Metal ve Zehir':'Seri 1 · Elementler'}</h2><p class="sub">Her pakette 5 kart. ${packSet===3?'Seri 3 paketinden yeni çizgiler ve 8 yeni Efsanevi çıkar. Çok nadiren <b>✨ Parlak</b> kart da çıkabilir (asıl kaynak kuleler).':packSet===2?'Seri 2 paketinden sadece Metal ve Zehir kartları çıkar.':'Evrimli kartlar çok nadir çıkar, onları kopya toplayarak evrimleştir.'}</p>
   <div class="packzone"><div class="pk" id="pk">${packArt()}</div></div>
   <button class="btn" id="buy" ${can?'':'disabled'}>${S.free>0?`Ücretsiz paket aç (${S.free})`:`Paket aç · ${MR.packCost(packSet)} altın`}</button>
   ${!can?'<p class="free">Altının bitti. Arenada savaşarak altın kazan.</p>':''}

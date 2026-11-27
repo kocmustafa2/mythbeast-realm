@@ -243,6 +243,8 @@ const RAW=[
  [209,'Kasırga Tüylüyılanı','air',3,0,0,0,1,'',[[2,'Tüy Fırtınası'],[4,'Kasırga Kıvrımı','coin']],'Kıvrıldığı yerde gökyüzü dönmeye başlar.'],
  [210,'Işık Balinası','light',3,0,0,0,1,'',[[3,'Yıldız Şarkısı'],[4,'Göksel Dalga','heal']],'Şarkısı duyulduğunda bulutlar altına boyanır.'],
  [211,'Kâbus Kimerası','shadow',3,0,0,0,1,'',[[2,'Üçlü Isırık'],[4,'Kâbus Kükremesi','coin']],'Üç başı aynı anda uyumaz.'],
+ [218,'Çelik Mantikor','metal',3,0,0,10,1,'',[[3,'Çelik Pençe'],[4,'Demir İğne','splash']],'Kanatları dövülmüş çelikten, iğnesi kalkan deler.'],
+ [219,'Asit Wyverni','poison',3,0,0,0,1,'',[[2,'Asit Isırığı'],[4,'Zehir Bulutu','burn']],'Dokunduğu dal bir gecede kurur.'],
 ];
 const E1=[1,2,2,3],E2=[2,3,4,4];   // Yaygın, Nadir, Destansı, Efsanevi
 const CARDS=RAW.map(([id,name,el,r,stage,from,hpMod,b,f,atks,flv])=>({id,name,el,r,stage,from,b,f,flv,
@@ -274,7 +276,9 @@ const EXD=[[65,7,'Buz Ankası','water','blast',['Buz Tüyü'],['Donduran Fırtı
  [214,208,'Buzul Goril','water','heal',['Buz Yumruğu'],['Buzul Şifası','heal'],'Buzulların kalbinde binlerce yıl uyudu.'],
  [215,209,'Alev Tüylüyılanı','fire','blast',['Alev Tüyü'],['Ateş Kasırgası','splash'],'Tüyleri tutuştuğunda kasırga ateşe döndü.'],
  [216,210,'Ada Balinası','earth','heal',['Orman Şarkısı'],['Yaşam Pınarı','heal'],'Sırtındaki orman yüzyıllar boyunca büyüdü.'],
- [217,211,'Fırtına Kimerası','air','stand',['Şimşek Isırığı'],['Fırtına Kükremesi','splash'],'Üç başı aynı anda şimşek çaktırır.']];
+ [217,211,'Fırtına Kimerası','air','stand',['Şimşek Isırığı'],['Fırtına Kükremesi','splash'],'Üç başı aynı anda şimşek çaktırır.'],
+ [220,218,'Veba Mantikoru','poison','blast',['Veba Pençesi'],['Asit İğnesi','burn'],'Çeliği paslanınca zehir damarlarına yayıldı.'],
+ [221,219,'Demir Wyvern','metal','stand',['Demir Diş'],['Çelik Topuz','splash'],'Asidi soğuyunca pullarını demir kapladı.']];
 const EXC=EXD.map(([id,base,name,el,exa,a1,a2,flv])=>{const B0=BY[base];return{id,base,name,el,exa,flv,ex:1,r:3,stage:0,from:0,b:B0.b,f:B0.f,ret:B0.ret,hp:400,
   atks:[{e:E1[3],name:a1[0],fx:a1[1],dmg:Math.max(10,round5(105-(a1[1]?FX[a1[1]].cost:0)))},{e:E2[3],name:a2[0],fx:a2[1],dmg:Math.max(10,round5(190-(a2[1]?FX[a2[1]].cost:0)))}]}});
 EXC.forEach(c=>BY[c.id]=c);
