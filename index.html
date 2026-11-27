@@ -873,6 +873,9 @@ body.inb main{padding:0 10px 16px}
 .advw{display:flex;gap:8px;flex-wrap:wrap}.advw span{display:flex;align-items:center;gap:4px;background:#0008;border-radius:10px;padding:4px 10px;font:18px 'MRDisplay',sans-serif}.advw img{width:20px;height:20px}
 
 .scard.exc .sbrd{background:conic-gradient(from var(--ha,0deg),#ffd84a,#ff5a3c,#ffd84a,#fff6c0,#ffd84a);padding:6px}
+.scard.prlc .sbrd{background:conic-gradient(from var(--ha,0deg),#fff6c0,#ffd84a,#ffffff,#9ff0ff,#fff6c0);padding:6px}
+.scard.prlc{filter:drop-shadow(0 0 10px #fff3a8aa)}
+.scard.prlc .sstar{color:#fff3a8;text-shadow:0 0 6px #ffd84a}
 .exb{position:absolute;right:12px;top:58px;z-index:8;font:900 34px/1 'MRDisplay',sans-serif;letter-spacing:1px;color:#fff;padding:2px 12px 4px;border-radius:12px;background:linear-gradient(135deg,#ff3c3c,#ffb020);box-shadow:0 4px 12px #000a,inset 0 0 0 2px #fff6;text-shadow:0 2px 0 #7a1000;transform:rotate(6deg)}
 .sexa{font:700 11.5px/1.3 Rubik,sans-serif;color:#ffd36a;text-align:center;padding-bottom:4px;border-bottom:1px solid #ffffff22}
 .scard.exlock .sfull{filter:grayscale(1) brightness(.35)}.scard.exlock .spn,.scard.exlock .shd,.scard.exlock .exb{opacity:.5}
@@ -1018,13 +1021,13 @@ body.inb main{padding:0 10px 16px}
 <div id="title"><div class="tbg"></div><div class="tlogo"><img class="tlimg" src="img/logo.webp" alt="Mythbeast Realm"><span class="t3">Seri 1 · Elementler</span></div>
 <button class="sndb tsnd" id="tsnd" aria-label="Ses"></button><div class="tbtm"><button class="tgo" id="tgo" aria-label="Oyna"><img src="img/btn_play.webp" alt="Oyna"></button><p class="tinfo" id="tinfo"></p></div></div>
 
-<script src="rules.js?v=5"></script>
+<script src="rules.js?v=6"></script>
 <script>
 {
 // Ortak kurallar (rules.js): kart verisi ve ekonomi. Oyun ve sunucu aynı dosyayı kullanır.
 const {ELS,round5,round10,RAR,TYPE_HP,TYPE_RET,DMG,ATK,FXV,FX,atkDmg,PACK,XP,ECON,RAW,E1,E2,CARDS,BY,rootOf,N,pad,setOf,setCards,cno,setN,
   EXA,EXCOST,EXD,EXC,exOf,EZA,EZDR,EZC,POOL,POOLS,EVO_NEED,STAGE_W,cw,SHINY,LEAGUES,lgOf,TROPHY,STREAK,strkB,CHEST,GIFT,DQP,DQB,srnd,SUPK,
-  ADV_CH,ADV_RULE,ADV_N,ADV_P,advStage,advStageX,TUT,fresh}=MR;
+  ADV_CH,ADV_RULE,ADV_N,ADV_P,advStage,advStageX,TUT,fresh,PRL,PRL_OFF,prlOf}=MR;
 // paket simülasyonu ve görünüm için yardımcılar (asıl paket açma sunucuda)
 let packSet=1;
 const roll=o=>MR.roll(o,Math.random),drawCard=r=>MR.drawCard(r,packSet,Math.random),rollPack=pity=>MR.rollPack(pity,packSet,Math.random);
@@ -1127,13 +1130,13 @@ const en=(el,cls='')=>`<i class="en ${cls}" style="--ec:var(--ec-${el})">${icon(
 document.documentElement.style.cssText='--ec-metal:#8e9bb0;--ec-poison:#8fd10f;--ec-blood:#c40000;--ec-fire:#ff6a3d;--ec-water:#2f9be6;--ec-earth:#6f9e2e;--ec-air:#7e93b8;--ec-light:#e8b520;--ec-shadow:#6d4aa8';
 
 const ART={};
-const IMG=Object.fromEntries(Array.from({length:109},(_,i)=>[i+1,1]));
+const IMG=Object.fromEntries(Array.from({length:109},(_,i)=>[i+1,1]));PRL.forEach(c=>IMG[c.id]=1);
 /* ---------- UYANMIŞ EX KARTLAR ---------- */
 /* ---------- EZELİ KARTLAR (şimdilik sadece oyunun sahibine açık, paketten/rakipten çıkmaz) ---------- */
 const EZOWN='u_gCZR5eBoOHaN6bC0V8kJwQ';
 const exaTxt=c=>(c.ez?EZA:EXA)[c.exa];
 const koL=c=>c.ez?3:c.ex?2:1;   // yenilince giden can
-const ALLC=()=>[...CARDS,...EXC,...EZC.filter(c=>owned(c.id))];   // yapay zekâ görseli olan kartlar: img/<no>.jpg
+const ALLC=()=>[...CARDS,...EXC,...EZC.filter(c=>owned(c.id)),...PRL.filter(c=>owned(c.id))];   // yapay zekâ görseli olan kartlar: img/<no>.jpg
 // küçük görünümlerde hafif kopya (img/t), büyük görünümlerde tam boy görsel
 function artFull(c){return IMG[c.id]?`<img class="aimg" src="img/${c.id}.jpg" alt="${c.name}" draggable="false" decoding="async" onerror="imgRetry(this)">`:art(c)}
 window.imgRetry=im=>{const n=+(im.dataset.r||0);if(n>=3)return;im.dataset.r=n+1;setTimeout(()=>{const u=im.src.split('?')[0];im.src=u+'?r='+(n+1)},600*(n+1))};
@@ -1187,7 +1190,7 @@ window.__shiny=SHINY;
 const hasShiny=id=>(S.shiny||{})[id]>0;
 const shownShiny=id=>hasShiny(id)&&!(S.shOff||{})[id];
 const shCls=(c,o)=>{const sh=o.miss?false:(o.shiny??shownShiny(c.id));return sh?(o.noTilt?' holo still':' holo'):''};
-const holoFx='<div class="holo-fx"></div><div class="holo-sp"></div><div class="holo-tag">✦ PARLAK</div>';
+const holoFx='<div class="holo-fx"></div><div class="holo-sp"></div><div class="holo-tag">✦ HOLO</div>';
 function frameCard(c,o,F){
   const w=weakOf(c.el),rs=resOf(c.el);
   return `<div class="card fcard r${c.r} t-${c.el}${o.miss?' miss':''}${o.big?' big':''}${o.noTilt?'':' tiltable'}${shCls(c,o)}" data-id="${c.id}"${o.w?` style="--w:${o.w}"`:''}><div class="cs"><div class="tilt"><div class="fbox">
@@ -1206,17 +1209,18 @@ const SHART=new Set([86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,1
 function shinyCard(c,o){
   const big=o.full||o.big,src=big?`img/${c.id}.jpg`:`img/t/${c.id}.webp`;
   if(SHART.has(c.id)){const ps=big?`img/s/${c.id}.jpg`:`img/st/${c.id}.webp`;o={...o,_ps:ps}}
-  return `<div class="card scard r${c.r} t-${c.el}${c.ex?' exc':''}${c.ez?' ezc':''}${c.ex&&o.miss?' exlock':''}${o.big?' big':''}${o.noTilt?' still':' tiltable'} holo" data-id="${c.id}"${o.w?` style="--w:${o.w}"`:''}><div class="cs"><div class="tilt"><div class="sbox">
+  return `<div class="card scard r${c.r} t-${c.el}${c.ex?' exc':''}${c.ez?' ezc':''}${c.prl?' prlc':''}${c.ex&&o.miss?' exlock':''}${o.big?' big':''}${o.noTilt?' still':' tiltable'} holo" data-id="${c.id}"${o.w?` style="--w:${o.w}"`:''}><div class="cs"><div class="tilt"><div class="sbox">
   ${o._ps?`<div class="sfull" style="background-image:url(${o._ps})"></div>`:`<div class="sbg" style="background-image:url(${src})"></div>
   <div class="sart">${big?artFull(c):art(c)}</div>`}
   <div class="shd"><div class="snm"><span class="stg">${stageName(c)}</span><span class="n">${c.name}</span></div><div class="shp">${ic('heart','hpi')}${c.hp}<i class="ti">${icon(c.el)}</i></div></div>
   ${c.ez?'<img class="ezb" src="img/ic/blood.webp" alt="">':c.ex?'<div class="exb">EX</div>':''}<div class="spn">${c.ex?`<div class="sexa">${c.ez?'☠':'⚡'} ${exaTxt(c)}</div>`:`<div class="srb">${icon(c.el)}<span>${auraText(c)}</span></div>`}
    ${c.atks.map((a,ai)=>`<div class="sak"><div class="cost">${ai?'<span class="dolu">DOLU</span>':''}</div><div class="sakn">${a.name}</div><div class="sakd">${a.dmg}${a.fx==='coin'?'+':''}</div>${a.fx?`<div class="sakt">${ic(FXI[a.fx],'fxi')}${FX[a.fx].t}</div>`:''}</div>`).join('')}
    <div class="swr"><span>${ic('weak')}${weaksOf(c.el).map(x=>en(x)).join('')}×${WEAK}</span><span>${ic('shield')}${ressOf(c.el).map(x=>en(x)).join('')}−20${immsOf(c.el).length?` · ${immsOf(c.el).map(x=>en(x)).join('')}0`:''}</span></div>
-   <div class="sbt"><span>${c.ez?'Ezeli · Kıyamet':c.ex?'Uyanmış · Seri 1':`${cno(c)}/${pad(setN(c))} · Seri ${setOf(c)}`}</span><span class="sstar">${c.ez?'☠ EZELİ':c.ex?'EX':'✦ PARLAK'}</span></div></div>
+   <div class="sbt"><span>${c.ez?'Ezeli · Kıyamet':c.ex?'Uyanmış · Seri 1':c.prl?`${cno(BY[c.of])}/${pad(setN(BY[c.of]))} · Seri ${setOf(BY[c.of])}`:`${cno(c)}/${pad(setN(c))} · Seri ${setOf(c)}`}</span><span class="sstar">${c.ez?'☠ EZELİ':c.ex?'EX':c.prl?'✨ PARLAK':'✦ HOLO'}</span></div></div>
   ${c.ez?'<img class="ezfr" src="img/ez/frame.webp" alt="" draggable="false">':''}<div class="sbrd"></div><div class="holo-fx"></div><div class="holo-sp"></div><div class="shine"></div>${o.isNew?'<div class="new">YENİ</div>':''}</div></div></div>${o.extra||''}</div>`;
 }
 function cardHTML(c,o={}){
+  if(c.prl){const big=o.full||o.big;return shinyCard(c,{...o,_ps:big?`img/${c.id}.jpg`:`img/t/${c.id}.webp`})}   // Parlak: kendi tam resmi
   if(c.ex)return shinyCard(c,o);
   if(!o.miss&&(o.shiny??shownShiny(c.id))&&IMG[c.id])return shinyCard(c,o);
   const F=frameFor(c);if(F)return frameCard(c,o,F);
@@ -1309,7 +1313,7 @@ async function quickOpen(all){if(window.__pkBusy)return;window.__pkBusy=1;const 
   const nNew=got.filter(x=>x.isNew).length,best=got[0].c.r;
   ov.innerHTML=`<div class="fp setp frp qores"><div class="sth"><b>${n} paket · ${got.length} kart</b><button class="stx" id="qoclose" aria-label="Kapat">✕</button></div>
     <p class="sionote">${nNew?`<b>${nNew} yeni kart!</b> `:''}${best>=2?`En iyi: <b>${RAR[best].n}</b>`:''}${err?`<br><span class="sioerr">${escH(err)}</span>`:''}</p>
-    <div class="qog">${got.map(x=>`<div class="qoc r${x.c.r}${x.isNew||x.newSh?' nw':''}" data-qid="${x.c.id}">${cardHTML(x.c,{noTilt:1,shiny:!!x.sh})}${x.isNew?'<i class="qtag">YENİ</i>':x.newSh?'<i class="qtag sh">PARLAK</i>':''}</div>`).join('')}</div>
+    <div class="qog">${got.map(x=>`<div class="qoc r${x.c.r}${x.isNew||x.newSh?' nw':''}" data-qid="${x.c.id}">${cardHTML(x.c,{noTilt:1,shiny:!!x.sh})}${x.isNew?'<i class="qtag">YENİ</i>':x.newSh?'<i class="qtag sh">HOLO</i>':''}</div>`).join('')}</div>
     <button class="btn" id="qodone">Tamam</button></div>`;
   const close=()=>{ov.className='ov';ov.innerHTML='';if(tab==='pack')renderPack()};
   $('#qoclose').onclick=close;$('#qodone').onclick=close;
@@ -1438,7 +1442,7 @@ function reveal(res,dustGain){
       await wait(320);
     }
     const ban=$('#ban');ban.style.setProperty('--bc',RCOL[x.c.r]);ban.innerHTML=`<small>KART</small>${TI(RAR[x.c.r].n.toLocaleUpperCase('tr'))}`;ban.className='banner show';
-    if(x.sh){const b2=document.createElement('div');b2.className='shban';b2.innerHTML=x.newSh?'✦ PARLAK KART ✦<small>Koleksiyonuna yeni parlak kart eklendi</small>':'✦ PARLAK KART ✦';rc.appendChild(b2);sparkle(2)}
+    if(x.sh){const b2=document.createElement('div');b2.className='shban';b2.innerHTML=x.newSh?'✦ HOLO KART ✦<small>Koleksiyonuna yeni holo kart eklendi</small>':'✦ HOLO KART ✦';rc.appendChild(b2);sparkle(2)}
     if(x.isNew)setTimeout(()=>SFX.newCard(),250);
     if(x.isNew)rc.insertAdjacentHTML('beforeend',`<div class="burst"><svg viewBox="0 0 100 100"><polygon points="${starPts()}" fill="#ffb21e" stroke="#fff6" stroke-width="2"/></svg><b>YENİ</b></div>`);
     else $('#dl2').textContent=`Kopya · artık ${owned(x.c.id)} tane`;
@@ -1467,7 +1471,7 @@ function sparkle(r){
 function showSummary(res,dustGain){SFX.fan();
   $('#ov').className='ov on';$('#ov').onpointerdown=$('#ov').onpointermove=$('#ov').onpointerup=null;
   const ov=$('#ov'),can=S.free>0||S.gold>=PACK.cost,nw=res.filter(x=>x.isNew).length;
-  ov.innerHTML=`<div class="ovt">${nw} yeni kart${dustGain?` · +${dustGain} toz`:''}${res.some(x=>x.sh)?' · <span class="shtxt">✦ parlak!</span>':''}</div>
+  ov.innerHTML=`<div class="ovt">${nw} yeni kart${dustGain?` · +${dustGain} toz`:''}${res.some(x=>x.sh)?' · <span class="shtxt">✦ holo!</span>':''}</div>
   <div class="sum">${res.map(x=>`<div>${cardHTML(x.c,{isNew:x.isNew,w:'min(27vw,112px)',shiny:!!x.sh})}${x.isNew?'':`<div class="dl">×${owned(x.c.id)}</div>`}</div>`).join('')}</div>
   <div class="ovb"><button class="btn alt" id="done">Tamam</button>${can&&S.tut!==5?`<button class="btn" id="more">Bir tane daha</button>`:''}</div>
   ${can&&S.tut!==5?`<button class="btn alt qsum" id="qmore">⚡ Hızlı aç${S.free>1?` (${Math.min(20,S.free)} paket)`:''}</button>`:''}`;
@@ -1487,11 +1491,11 @@ function renderCol(){
   const groups=ELS.map(e=>({e,cards:list.filter(c=>c.el===e).sort((p,q)=>ord(p)-ord(q))})).filter(g=>g.cards.length);
   const body=groups.map(g=>{const all=CARDS.filter(c=>c.el===g.e),hv=all.filter(c=>owned(c.id)).length;
     return `<section class="tgrp t-${g.e}"><div class="tgh">${icon(g.e)}<b>${T[g.e].n}</b><span>${hv} / ${all.length}</span><div class="tgb"><i style="width:${hv/all.length*100}%"></i></div></div><div class="grid">${g.cards.map(one).join('')}</div></section>`}).join('');
-  $('#main').innerHTML=`<h2>Koleksiyon</h2><p class="sub">${uniq()} / ${N} kart · ⚡ ${EXC.filter(x=>owned(x.id)).length}/${EXC.length} EX · <span class="shtxt">✦ ${CARDS.filter(c=>hasShiny(c.id)).length} / ${N} parlak</span>. Eksik karta dokunup tozla üretebilirsin.</p>
-  <div class="filters">${[['all','Tümü'],['miss','Eksikler'],['shiny','✦ Parlak'],['sup','Destek'],...ELS.map(e=>[e,T[e].n])].map(([k,n])=>`<button class="chip${colF===k?' on':''}" data-f="${k}">${T[k]?icon(k):k==='sup'?'<img class="cico" src="img/sup/evo.webp" alt="">':''}${n}</button>`).join('')}</div>
+  $('#main').innerHTML=`<h2>Koleksiyon</h2><p class="sub">${uniq()} / ${N} kart · ⚡ ${EXC.filter(x=>owned(x.id)).length}/${EXC.length} EX · <span class="shtxt">✦ ${CARDS.filter(c=>hasShiny(c.id)).length} / ${N} holo</span>. Eksik karta dokunup tozla üretebilirsin.</p>
+  <div class="filters">${[['all','Tümü'],['miss','Eksikler'],['shiny','✦ Holo'],['sup','Destek'],...ELS.map(e=>[e,T[e].n])].map(([k,n])=>`<button class="chip${colF===k?' on':''}" data-f="${k}">${T[k]?icon(k):k==='sup'?'<img class="cico" src="img/sup/evo.webp" alt="">':''}${n}</button>`).join('')}</div>
   ${colF==='all'&&EZC.some(c=>owned(c.id))?`<section class="tgrp ezg"><div class="tgh"><b>☠ Ezeli</b><span>${EZC.filter(c=>owned(c.id)).length} / ${EZC.length}</span></div><div class="grid">${EZC.filter(c=>owned(c.id)).map(x=>cardHTML(x,{noTilt:1})).join('')}</div></section>`:''}${colF==='all'?`<section class="tgrp exg"><div class="tgh"><b>⚡ Uyanmış EX</b><span>${EXC.filter(x=>owned(x.id)).length} / ${EXC.length}</span></div><div class="grid">${EXC.map(x=>cardHTML(x,{noTilt:1,miss:!owned(x.id)})).join('')}</div></section>`:''}
   ${colF==='sup'||colF==='all'?`<section class="tgrp supg"><div class="tgh"><img class="cico" src="img/sup/evo.webp" alt=""><b>Destek kartları</b><span>${SUPK.reduce((t,k)=>t+supHave(k),0)} adet</span></div><div class="grid sgrid">${SUPK.map(k=>supCard(k,{n:supHave(k),desc:false})).join('')}</div></section>`:''}
-  ${colF==='sup'?'':body||(colF==='shiny'?'<div class="empty">Henüz parlak kartın yok. Paketlerdeki her kart %'+(SHINY.chance*100).toFixed(1).replace('.',',')+' ihtimalle parlak çıkar.</div>':'<div class="empty">Eksik kart yok, seri tamam!</div>')}`;
+  ${colF==='sup'?'':body||(colF==='shiny'?'<div class="empty">Henüz holo kartın yok. Paketlerdeki her kart %'+(SHINY.chance*100).toFixed(1).replace('.',',')+' ihtimalle holo çıkar.</div>':'<div class="empty">Eksik kart yok, seri tamam!</div>')}`;
   document.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{colF=b.dataset.f;renderCol();scrollTo(0,0)});
   document.querySelectorAll('.grid .card').forEach(el=>el.onclick=()=>showCard(BY[el.dataset.id],true));
   document.querySelectorAll('.sgrid .spc').forEach(el=>el.onclick=()=>showSup(el.dataset.sk));
@@ -1506,7 +1510,7 @@ function showCard(c,allowCraft){
   const evoRows=allowCraft&&chain.length?`<div class="evo"><b>Evrim</b><p class="evh">${root.name} kopyası: <b>${copies(root)}</b></p>${chain.map(t=>{const need=EVO_NEED[t.stage],pc=Math.min(100,copies(t)/need*100),lock=t.stage===2&&!owned(t.from);
     return `<div class="evr"><div class="evt"><span>${t.name}${owned(t.id)?' ✓':''}</span><small>${need} ${root.name}${lock?` · önce ${BY[t.from].name}`:''}</small><div class="evbar"><i style="width:${pc}%"></i></div></div><button class="btn evbtn" data-t="${t.id}" ${canEvo(t)?'':'disabled'}>Evrimleştir</button></div>`}).join('')}</div>`:'';
   ov.innerHTML=`<div class="detail">${cardHTML(c,{big:1,miss:!have,w:c.ez?'min(90vw,400px)':'min(70vw,300px)'})}
-  <div class="info"><p><span>Nadirlik</span><b>${c.ez?"Ezeli":R.n}</b></p><p><span>Sahip olunan</span><b>${have}</b></p>${hasShiny(c.id)?`<p class="shrow"><span class="shtxt">✦ Parlak sürüm</span><b>${S.shiny[c.id]} tane <button class="tgl sm ${shownShiny(c.id)?'on':''}" id="shtg" aria-label="Parlak göster"><i></i></button></b></p>`:''}
+  <div class="info"><p><span>Nadirlik</span><b>${c.ez?"Ezeli":R.n}</b></p><p><span>Sahip olunan</span><b>${have}</b></p>${hasShiny(c.id)?`<p class="shrow"><span class="shtxt">✦ Holo sürüm</span><b>${S.shiny[c.id]} tane <button class="tgl sm ${shownShiny(c.id)?'on':''}" id="shtg" aria-label="Holo göster"><i></i></button></b></p>`:''}
   ${c.from?`<p><span>Evrimleştiği kart</span><b>${BY[c.from].name}</b></p>`:''}${c.ex?`<p><span>${c.ez?'Ezeli':'EX'} yeteneği</span><b>${exaTxt(c)}</b></p><p><span>Deste puanı</span><b>${ptsOf(c)}</b></p>${c.base?`<p><span>Uyandığı kart</span><b>${BY[c.base].name}</b></p>`:`<p><span>Tür</span><b>${T[c.el].n}</b></p><p><span>Yenilince</span><b>${koL(c)} can götürür</b></p>`}`:''}</div>${evoRows}${allowCraft&&c.r===3&&!c.ex?awakenBox(c):''}
   <div class="ovb">${allowCraft&&!have&&c.stage===0&&!c.ex?`<button class="btn" id="craft" ${S.dust>=R.craft?'':'disabled'}>Üret · ${R.craft} toz</button>`:''}${allowCraft&&extra&&!c.ex?`<button class="btn alt" id="todust">${extra} kopya → ${extra*R.dust} toz</button>`:''}<button class="btn alt" id="close">Kapat</button></div></div>`;
   ov.classList.add('on');
@@ -1681,7 +1685,7 @@ function arenaStrip(){const st=S.streak||0,cp=S.chest||0,nc=S.chests||0,h=S.hist
 async function openChest(){
   if(!(S.chests>0)||window.__chBusy)return;window.__chBusy=1;let r;
   try{r=await act('chest')}catch(e){toast(e.message);return}finally{window.__chBusy=0}
-  const g=r.g,d=r.d,c=BY[r.id],isNew=r.isNew,csh=r.sh,pk=r.pk,csp=r.sup;renderTop();
+  const g=r.g,d=r.d,c=BY[r.id],isNew=r.isNew,csh=r.sh,pk=r.pk,csp=r.sup;renderTop();if(r.prl&&BY[r.prl])setTimeout(()=>toast(`✨ Parlak kart kazandın: ${BY[r.prl].name}!`),2600);
   const ov=$('#ov');ov.className='ov on';
   ov.innerHTML=`<div class="ovt">Zafer Sandığı</div><div class="chbig">${chestSvg()}</div><div class="chres"></div><div class="ovb" style="opacity:0"><button class="btn" id="chok">Tamam</button></div>`;
   const big=ov.querySelector('.chbig');big.classList.add('shake');SFX.rattle();
@@ -2236,7 +2240,7 @@ function renderRules(){
   <div class="box scroll"><table><tr><th>Slot</th>${RAR.map(r=>`<th>${r.n}</th>`).join('')}</tr>
   ${PACK.slots.map((o,i)=>`<tr><td>Kart ${i+1}${i===4?' (nadir slot)':''}</td>${eff(o).map(v=>`<td>%${+v.toFixed(2)}</td>`).join('')}</tr>`).join('')}
   <tr><td><b>Paket başına ortalama</b></td>${exp.map(v=>`<td><b>${v.toFixed(2)}</b></td>`).join('')}</tr></table>
-  <p>Kartlar açılırken nadirliğe göre sıralanır, en nadir kart en sona kalır.</p><p><b>Parlak kartlar:</b> paketten ya da sandıktan çıkan her kart <code>%${(SHINY.chance*100).toFixed(1).replace('.',',')}</code> ihtimalle parlak çıkar (paket başına yaklaşık ${Math.round(1/(1-(1-SHINY.chance)**5))} pakette bir). Parlak kartın gücü aynıdır, sadece görünüşü farklıdır; koleksiyonda ayrı sayılır ve kart detayından parlak görünümü açıp kapatabilirsin.</p><p><b>Evrimli kartlar</b> paketten çok zor çıkar: Nadir (Evrim 1) çıkacak bir slotta kartın gerçekten gelme ihtimali <code>%${STAGE_W[1]*100}</code>, Destansı (Evrim 2) için <code>%${STAGE_W[2]*100}</code>; gerisinde yerine Yaygın kart gelir. Yukarıdaki tablo bu etkiyi içerir.</p><p><b>Evrimleştirme:</b> aynı temel karttan fazladan <code>${EVO_NEED[1]}</code> kopya toplayınca Evrim 1, <code>${EVO_NEED[2]}</code> kopya toplayınca (Evrim 1'e sahipsen) Evrim 2 yapılır. Koleksiyondaki 1 tane her zaman kalır.</p>
+  <p>Kartlar açılırken nadirliğe göre sıralanır, en nadir kart en sona kalır.</p><p><b>Holo kartlar:</b> paketten ya da sandıktan çıkan her kart <code>%${(SHINY.chance*100).toFixed(1).replace('.',',')}</code> ihtimalle holo çıkar (paket başına yaklaşık ${Math.round(1/(1-(1-SHINY.chance)**5))} pakette bir). Holo kartın gücü aynıdır, sadece görünüşü farklıdır; koleksiyonda ayrı sayılır ve kart detayından holo görünümü açıp kapatabilirsin.</p><p><b>Parlak kartlar:</b> yaratığın kendisi de parlar. Normal kartla aynı sayılmaz; ayrı bir karttır ve kendi kopyalarıyla evrimleşir. Paketten çıkmaz, sadece ödüllerden gelir ve normal sürümünden <code>%7</code> güçlüdür.</p><p><b>Evrimli kartlar</b> paketten çok zor çıkar: Nadir (Evrim 1) çıkacak bir slotta kartın gerçekten gelme ihtimali <code>%${STAGE_W[1]*100}</code>, Destansı (Evrim 2) için <code>%${STAGE_W[2]*100}</code>; gerisinde yerine Yaygın kart gelir. Yukarıdaki tablo bu etkiyi içerir.</p><p><b>Evrimleştirme:</b> aynı temel karttan fazladan <code>${EVO_NEED[1]}</code> kopya toplayınca Evrim 1, <code>${EVO_NEED[2]}</code> kopya toplayınca (Evrim 1'e sahipsen) Evrim 2 yapılır. Koleksiyondaki 1 tane her zaman kalır.</p>
   <p><b>Efsanevi garantisi:</b> ${PACK.pity} paket boyunca Efsanevi çıkmazsa ${PACK.pity}. paketin son kartı kesin Efsanevi olur. Garanti olmasa bile ortalama her ${(1/legPer).toFixed(1)} pakette bir Efsanevi çıkar.</p></div>
   <h3>2. Kart değerleri</h3>
   <div class="box"><p><b>Can</b> = nadirlik tabanı + element ayarı + karta özel ayar</p>

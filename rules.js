@@ -167,6 +167,15 @@ const EXC=EXD.map(([id,base,name,el,exa,a1,a2,flv])=>{const B0=BY[base];return{i
 EXC.forEach(c=>BY[c.id]=c);
 const exOf=c=>EXC.find(x=>x.base===c.id);
 
+// PARLAK KARTLAR: yaratığın kendisi de parlar; normal kartla aynı sayılmaz, ayrı kart ve ayrı evrim çizgisidir.
+// Sadece ödüllerden gelir (paketten çıkmaz), normal sürümden %7 güçlüdür. Görsel: img/<id>.jpg ve img/t/<id>.webp (id = 10000 + normal kart no)
+const PRL_OFF=10000,PRL_MUL=1.07;
+const PRL_SRC=[];   // Parlak sürümü olan kartlar (evrimleriyle birlikte). Seri 3 görselleri geldikçe eklenecek.
+const PRL=PRL_SRC.map(id=>{const c=BY[id];return{...c,id:PRL_OFF+id,of:id,prl:1,from:c.from?PRL_OFF+c.from:0,
+  hp:Math.round(c.hp*PRL_MUL),atks:c.atks.map(a=>({...a,dmg:Math.round(a.dmg*PRL_MUL)}))}});
+PRL.forEach(c=>BY[c.id]=c);
+const prlOf=c=>BY[PRL_OFF+c.id]||null;
+
 const EZA={drain:'Sahadayken her tur rakibin bütün kartlarından 50 can çeker ve kendini iyileştirir'};const EZDR=50;
 const EZC=[[83,'Ezelhan','blood','drain',['Kıyamet Pençesi'],['Tutulma Nefesi','burn'],'Dünyanın başlangıcından önce vardı; altı türü yuttu ve gökyüzünü kararttı.',0,'whts'],
  [84,'Ölüağaç','blood','drain',['Kemik Dal'],['Çürüyen Orman','splash'],'Bastığı yerde orman küle döner; boynuzlarındaki fenerler kayıp ruhları taşır.',1,'l'],
@@ -198,7 +207,7 @@ const TROPHY={win:30,loss:-18,floorStep:true};   // lig tabanının altına dü�
 const STREAK={tr:[0,0,5,10,15],gold:[0,0,10,20,30]};
 const strkB=n=>{const k=Math.min(n,4);return{tr:STREAK.tr[k],g:STREAK.gold[k]}};
 // zafer sandığı: her 3 galibiyette 1 sandık; içerik lige göre artar
-const CHEST={need:3,gold:l=>50+l*15,dust:l=>10+l*5,card:[70,25,4.6,0.4],pack:.10};
+const CHEST={prl:.02,need:3,gold:l=>50+l*15,dust:l=>10+l*5,card:[70,25,4.6,0.4],pack:.10};
 
 const lgOf=t=>{let i=0;LEAGUES.forEach((l,k)=>{if(t>=l.min)i=k});return i};
 
@@ -345,6 +354,9 @@ function forfeit(st,now){const bt=st.bt;st.bt=null;if(!bt||bt.mode!=='arena'||bt
   st.trophy=Math.max(0,(st.trophy||0)+dt);st.losses++;st.streak=0;st.lstreak=(st.lstreak||0)+1;st.hist=[...(st.hist||[]),{w:0,dt}].slice(-5);return{dt}}
 
 // Tek giriş noktası: a = işlem adı, p = parametreler, ctx = {rng, now, uid?, friendOk?}
+// ödülden Parlak kart: Temel basamaktan, nadirlik ağırlığı sandıkla aynı
+function givePrl(st,rng){const P=PRL.filter(c=>c.stage===0);if(!P.length)return 0;const r=roll(CHEST.card,rng);let L=P.filter(c=>c.r===r);if(!L.length)L=P;
+  const c=L[Math.floor(rng()*L.length)];st.owned[c.id]=own(st,c.id)+1;return c.id}
 function act(st,a,p,ctx){p=p||{};const rng=ctx.rng,now=ctx.now;normalize(st,ctx);
   switch(a){
   case 'pack':{const set=tutOn(st)?1:(p.set===2?2:1);
@@ -360,7 +372,8 @@ function act(st,a,p,ctx){p=p||{};const rng=ctx.rng,now=ctx.now;normalize(st,ctx)
     let c=drawCard(roll(CHEST.card,rng),1,rng);if(c.stage>0&&rng()>STAGE_W[c.stage])c=drawCard(0,1,rng);
     const isNew=!own(st,c.id);st.owned[c.id]=own(st,c.id)+1;noteRare(st,c,now);const s=shinyRoll(st,c,rng),pk=rng()<CHEST.pack;
     st.gold+=g;st.dust+=d;if(pk)st.free++;const sup=rng()<.4?rndSup(rng):null;if(sup)giveSup(st,sup);addXp(st,XP.card[c.r]*(isNew?XP.newMult:1));
-    return{g,d,id:c.id,isNew,sh:s.sh,pk,sup}}
+    const prl=rng()<CHEST.prl?givePrl(st,rng):0;
+    return{g,d,id:c.id,isNew,sh:s.sh,pk,sup,prl}}
   case 'gift':{const n=st.gift||0;if(n<1)throw uerr('Henüz hediye paketi yok.');st.free+=n;st.gift=0;st.gt=now;return{n}}
   case 'evo':{const t=BY[p.id];if(!canEvo(st,t))throw uerr('Bu evrim için yeterli kopyan yok.');const root=rootOf(t);
     st.owned[root.id]-=EVO_NEED[t.stage];st.owned[t.id]=own(st,t.id)+1;st.evoN=(st.evoN||0)+1;if(st.tut===5&&t.id===TUT.evo)st.tut=6;return{id:t.id,from:root.id}}
@@ -407,7 +420,7 @@ function seasonGive(st,rw){st.free+=rw.pk||0;st.gold+=rw.g||0;if(rw.rank&&(!st.s
 const CLAN={cost:500,max:30,nameMin:3,nameMax:20,descMax:80};
 // kart isteği: 8 saatte bir, 24 saat açık; Yaygın 10, Nadir 4 kopya; bağışçının en az 2 kopyası olmalı
 const REQ={every:8*3600e3,dur:24*3600e3,need:[10,4],donorMin:2,reward:[{g:5,xp:1},{g:15,xp:3}],daily:20};
-const reqable=c=>!!c&&c.r<=1&&!c.ex&&!c.ez;
+const reqable=c=>!!c&&c.r<=1&&!c.ex&&!c.ez&&!c.prl;
 function reqCheck(st,id,now){const c=BY[id];if(!reqable(c))throw uerr('Sadece Yaygın ve Nadir kartlar istenebilir.');
   if(!(own(st,id)>0))throw uerr('Sadece sahip olduğun bir kartı isteyebilirsin.');
   const wait=(st.rqT||0)+REQ.every-now;if(wait>0)throw uerr(`Yeni istek için ${Math.ceil(wait/6e4)} dakika beklemelisin.`);return c}
@@ -467,7 +480,7 @@ function achSync(st,x){const have=new Set(st.ach||[]),nw=[];
 const MR={ELS,round5,round10,RAR,TYPE_HP,TYPE_RET,DMG,ATK,FXV,FX,atkDmg,PACK,XP,ECON,RAW,E1,E2,CARDS,BY,rootOf,N,pad,setOf,setCards,cno,setN,
   EXA,EXCOST,EXD,EXC,exOf,EZA,EZDR,EZC,POOL,POOLS,EVO_NEED,STAGE_W,cw,SHINY,LEAGUES,lgOf,TROPHY,STREAK,strkB,CHEST,GIFT,DQP,DQB,srnd,SUPK,
   ADV_CH,ADV_RULE,ADV_N,ADV_P,advStage,advStageX,TUT,fresh,
-  ECON_KEYS,CLIENT_KEYS,BATTLE_MIN_MS,BATTLE_PER_HOUR,own,tutOn,roll,drawCard,rollPack,copies,canEvo,canAwaken,giveSup,rndSup,addXp,
+  PRL,PRL_OFF,PRL_MUL,prlOf,givePrl,ECON_KEYS,CLIENT_KEYS,BATTLE_MIN_MS,BATTLE_PER_HOUR,own,tutOn,roll,drawCard,rollPack,copies,canEvo,canAwaken,giveSup,rndSup,addXp,
   giftTick,dayKey,dqList,dqInc,normalize,mergeClient,act,pubStats,avatarOf,ACH,ACH_RW,achList,achSync,achUnclaimed,
   SEASON,seasonOf,seasonEnd,seasonRewardFor,seasonGive,
   CLAN,REQ,reqable,reqCheck,reqOpen,dnLeft,donateCheck,donateGive,donateGet,clanPay};
