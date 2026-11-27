@@ -1008,6 +1008,7 @@ body.inb main{padding:0 10px 16px}
 .colbt{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%}.colbt .btn.sm{width:100%!important;white-space:nowrap}.invp{cursor:pointer}.invpn{gap:8px;max-height:calc(100dvh - 48px);min-height:0}.invtop{flex:none}.invbody{overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;min-height:0;flex:1;display:flex;flex-direction:column;gap:8px;padding-right:2px}.invg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.invc{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 2px;border:0;border-radius:12px;background:#ffffff0d;color:#e8eef5;font:inherit}.invc img{width:30px;height:30px;object-fit:contain}.invc .ssi,.invc .ksw{width:30px;height:30px}.invc b{font:17px 'MRDisplay',sans-serif}.invc small{font-size:10.5px;color:#aab6c2;text-align:center;line-height:1.1}.invc .invs{width:34px;height:46px;border-radius:5px;object-fit:cover}.invtip{margin:0;font-size:12.5px;color:#aab6c2}.invc.z{opacity:.45}
 .colhd{display:flex;flex-direction:column;align-items:stretch;gap:6px}.colhd .btn.sm{width:auto;padding:8px 14px;font-size:14px;margin:0}.dmk.t{background:#ff8a3d}
 .twdk{display:flex;flex-direction:column;gap:6px}.twdks{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}.twdks .chip{flex:none}.twdp{display:flex;gap:4px;overflow-x:auto}.twdp img{width:44px;height:44px;border-radius:8px;object-fit:cover;flex:none}.twdk small{color:#aab6c2;font-size:12px}
+#updb{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));left:50%;translate:-50% 0;z-index:60;display:flex;align-items:center;gap:8px;padding:8px 8px 8px 14px;border-radius:99px;background:linear-gradient(90deg,#3a2a6a,#1d3a6a);box-shadow:0 4px 16px #000a,inset 0 0 0 1.5px #ffd25a88;color:#fff;font:700 14px Rubik,sans-serif;white-space:nowrap}#updb button{border:0;border-radius:99px;font:inherit;cursor:pointer}#updgo{background:linear-gradient(#ffd25a,#e08a1e);color:#2a1600;padding:6px 14px}#updx{background:#ffffff1a;color:#fff;width:28px;height:28px;padding:0}
 .lgbox{display:flex;flex-direction:column;gap:8px}.lgg{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}
 .lgd{position:relative;aspect-ratio:1;border-radius:10px;background:#ffffff0d;box-shadow:inset 0 0 0 1px #ffffff14;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:2px}
 .lgd small{position:absolute;top:2px;left:4px;font-size:9px;color:#8f9bab}.lgr{display:flex;align-items:center;gap:2px;font:13px 'MRDisplay',sans-serif;flex-wrap:wrap;justify-content:center}.lgr img{width:16px;height:16px}.lgr .lgsup{width:15px;height:20px;border-radius:3px;object-fit:cover}
@@ -2054,6 +2055,7 @@ async function endBattle(win){
   else if(r&&r.rf!=null&&r.rf<1){B.why=r.rf>0?`Saatlik ${MR.BATTLE_PER_HOUR} savaş sınırını geçtin: ödüller %${Math.round(r.rf*100)}`:`Saatlik savaş sınırını çok aştın: bu savaştan ödül yok (kupa ve ilerleme sayıldı)`;toast(B.why)}
   try{const o=JSON.parse(dq0);((S.dq||{}).l||[]).forEach((m,k)=>{const D=DQP[m.i],b=o[k];if(m.p>=D.n&&!(b&&b.i===m.i&&b.p>=D.n))setTimeout(()=>toast('Görev tamamlandı: '+D.x(m.el)),700)})}catch(e){}
   navDot();renderTop();renderBattle();setTimeout(()=>{if(win){SFX.win();vConfetti()}else SFX.lose()},250);
+  if(window.__updLater){window.__updLater=0;setTimeout(updShow,1500)}
 }
 // sahadaki canı bitmiş kartları kaldırır, desteden yenisini getirir; savaş bittiyse true
 /* ---------- DESTEK ANİMASYONLARI ---------- */
@@ -2439,6 +2441,17 @@ document.addEventListener('pointerdown',e=>{if(e.target.closest('.btn,.tgo,nav b
 
 // görselleri önceden indir: başlangıç ekranında beklerken arka planda, sırayla
 // dosyaları telefonda saklayan servis: içeriği değişen bir görsel/ses olursa ASSET_V artırılır
+// SÜRÜM KONTROLÜ: yeni sürüm yayınlanınca APP_V ve version.txt birlikte artırılır.
+// İnternet varken oyun arada bir version.txt'ye bakar; farklıysa üstte 'Yeni sürüm hazır · Yenile' çıkar (savaş sırasında beklenir).
+const APP_V='2026.11.27-1';
+function verCheck(){if(window.claude||!navigator.onLine)return;
+  fetch('version.txt?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{t=(t||'').trim();if(/^[\w.-]{3,40}$/.test(t)&&t!==APP_V){window.__upd=t;updShow()}}).catch(()=>{})}
+function updShow(){if(!window.__upd||document.getElementById('updb'))return;if(B&&!B.over){window.__updLater=1;return}
+  const d=document.createElement('div');d.id='updb';d.innerHTML='<span>✨ Yeni sürüm hazır</span><button id="updgo">Yenile</button><button id="updx" aria-label="Kapat">✕</button>';document.body.appendChild(d);
+  d.querySelector('#updgo').onclick=async()=>{d.querySelector('#updgo').textContent='...';try{if(cloudOn())await cloudPush(true)}catch(e){}location.reload()};
+  d.querySelector('#updx').onclick=()=>d.remove()}
+setTimeout(verCheck,6000);setInterval(verCheck,10*60e3);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')verCheck()});addEventListener('online',()=>setTimeout(verCheck,2000));
 const ASSET_V=11;try{if('serviceWorker' in navigator&&location.protocol==='https:'||location.hostname==='localhost')navigator.serviceWorker.register('sw.js?v='+ASSET_V).catch(()=>{})}catch(e){}
 (function prefetch(){
   // önce kart resimleri (önce sahip olunanlar), sonra çerçeveler ve arka planlar
