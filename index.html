@@ -1268,6 +1268,7 @@ const SHART=new Set([86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,1
 function shinyCard(c,o){
   const big=o.full||o.big,src=big?`img/${c.id}.jpg`:`img/t/${c.id}.webp`;
   if(SHART.has(c.id)){const ps=big?`img/s/${c.id}.jpg`:`img/st/${c.id}.webp`;o={...o,_ps:ps}}
+  else if(!o._ps&&portArt(c)&&IMG[c.id])o={...o,_ps:big?`img/${c.id}.jpg`:`img/t/${c.id}.webp`};   // dikey resim: kartın tamamını kaplar, yaratığın başı kesilmez
   return `<div class="card scard r${c.r} t-${c.el}${c.ex?' exc':''}${c.ez?' ezc':''}${c.prl?' prlc':''}${c.ex&&o.miss?' exlock':''}${o.big?' big':''}${o.noTilt?' still':' tiltable'} holo" data-id="${c.id}"${o.w?` style="--w:${o.w}"`:''}><div class="cs"><div class="tilt"><div class="sbox">
   ${o._ps?`<div class="sfull" style="background-image:url(${o._ps})"></div>`:`<div class="sbg" style="background-image:url(${src})"></div>
   <div class="sart">${big?artFull(c):art(c)}</div>`}
