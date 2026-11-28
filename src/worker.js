@@ -201,6 +201,9 @@ async function cbRow(db, clanId, week) {
   if (!r) { const n = (await db.prepare('SELECT COUNT(*) AS n FROM clan_members WHERE clan_id = ?').bind(clanId).first()).n || 1, mx = MR.cbHp(n);
     await db.prepare('INSERT OR IGNORE INTO clan_boss (clan_id, week, hp, max, dmg, killed) VALUES (?, ?, ?, ?, ?, 0)').bind(clanId, week, mx, mx, '{}').run();
     r = await db.prepare('SELECT * FROM clan_boss WHERE clan_id = ? AND week = ?').bind(clanId, week).first(); }
+  // boss canı değiştiyse (ör. 30.000'e çıktı) yenilmemiş bossun canı farkı kadar artırılır
+  const want = MR.cbHp(1);
+  if (r && !r.killed && r.max < want) { const hp = r.hp + (want - r.max); await db.prepare('UPDATE clan_boss SET hp = ?, max = ? WHERE clan_id = ? AND week = ?').bind(hp, want, clanId, week).run(); r = { ...r, hp, max: want }; }
   return r;
 }
 // kriptografik rastgele sayı (0-1): paketleri ve sandıkları sunucu açar

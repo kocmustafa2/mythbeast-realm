@@ -1352,6 +1352,7 @@ body.nui .frp{animation:popin .25s ease}
 .evbar{height:7px;border-radius:4px;background:#ffffff18;margin:5px 0 2px;overflow:hidden}.evbar i{display:block;height:100%;background:linear-gradient(90deg,var(--ac),#fff8);border-radius:4px}
 .evr{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;max-width:46%}.evr span{display:inline-flex;align-items:center;gap:2px;font-size:12px;font-weight:700}.evr span img,.evr span svg{width:16px;height:16px}.evr em{font-style:normal;color:#7dff9a;font-weight:800}
 .btn.sm{padding:5px 12px;font-size:12px;width:auto;margin:0}
+.cbtag{font-size:11px;letter-spacing:.06em;color:#ffcf6a;background:#3a1a10cc;border:1px solid #ffcf6a66;border-radius:99px;padding:2px 8px}
 </style>
 </head>
 <body>
@@ -2339,6 +2340,7 @@ async function startBattle(adv,fr,tw,aw){if(window.__btStart)return;
    if(nc<DECK_MIN_C){toast(nc?`${nm} destesinde en az ${DECK_MIN_C} yaratık olmalı`:`${nm} destesi boş. Önce desteni kur`);openDeckEditor(tw?()=>towerInfo(tw.el,tw.f):adv!=null?()=>advInfo(adv):null,deckSlot(m));return}
    if(aw===1&&m==='a'&&!fr&&S.tut!==6){const AR=MR.arenaRule(),ok=ks.filter(k=>!isS(k)&&MR.awOk(AR.k,BY[k])).length;if(ok<DECK_MIN_C){toast(`Özel kural (${AR.n}): destende bu kurala uyan en az ${DECK_MIN_C} yaratık olmalı`);openDeckEditor(null,deckSlot(m));return}}}
   if(pendGet()&&!(await flushPend())){toast('Önceki savaşın sonucu henüz kaydedilemedi. Bağlantı gelince tekrar dene.');return}
+  let cbHpNow=null;if(aw==='cb'){try{const j=await api('/api/clan/boss');if(j.killed||j.hp<=0){toast('Bu haftanın boss\'u zaten yenildi');return}cbHpNow=j.hp}catch(e){toast(e.message);return}}
   window.__btStart=1;let bid,fo;
   // savaşı sunucu başlatır (kimlik + başlangıç zamanı); ödülleri bitişte sunucu hesaplar
   try{const r=await act('battle_start',{sp:aw===1?'aw':aw==='kw'?'kw':undefined,mode:aw==='dr'?'draft':aw==='cb'?'cboss':fr?'friend':tw?'tower':adv!=null?'adv':'arena',adv:adv!=null?adv:undefined,fr:fr?fr.name:undefined,el:tw?tw.el:undefined,f:tw?tw.f:undefined});bid=r.id;fo=r.forfeit}
@@ -2367,6 +2369,7 @@ async function startBattle(adv,fr,tw,aw){if(window.__btStart)return;
   }else{
   drawStart(B.me);drawStart(B.foe);
   for(const sd of['me','foe'])for(let m;(m=bestFill(B,sd));)placeX(B,sd,m.j,m.i);}
+  if(st&&st.cb){const bf=mk({...st.boss,hp:cbHpNow||MR.CB.hpFix});bf.max=MR.CB.hpFix;bf.hp=cbHpNow||MR.CB.hpFix;bf.justIn=false;bf.ch=!!bf.c.atks[1];B.foe={deck:[],hand:[],board:[null,bf,null],lives:99};B.cbBoss=bf;B.cbHp0=bf.hp;B.log=`<b>${st.boss.name}</b> · klanın ortak canı ${bf.hp.toLocaleString('tr')}`}
   if(st){tab=st.cb?'clan':'adv';if(st.rule==='burn')B.me.board.forEach(f=>{if(f)f.burn=2})}
   if(KWM){B.log='<b>Yetenek Arenası</b> · anahtar kelimeler açık';setTimeout(()=>{if(B&&!B.coach)toast('Yetenek Arenası: kartların anahtar kelimeleri bu maçta çalışır')},700)}
   if(B.fld&&!AR){B.log=`Savaş alanı: <b>${B.fld.n}</b>`;setTimeout(()=>{if(B&&!B.coach)toast(`Savaş alanı · ${B.fld.n}: ${B.fld.d}`)},700)}
@@ -2408,7 +2411,7 @@ async function coachTip(key,ic,title,txt){if(!B||!B.coach||B.over)return;B.cs=B.
 function coachIntro(m){const L=[],kw=k=>`<p class="cokw"><img src="img/kw/${k}.webp" alt=""><span><b>${MR.KW[k].n}:</b> ${MR.KW[k].d}</span></p>`;
   if(m==='kw'){const mine=[...new Set(B.me.deck.concat(B.me.hand,B.me.board.filter(Boolean)).map(x=>x&&x.c&&MR.kwOf(x.c)).filter(Boolean))];
     return['img/kw/mode.webp','Yetenek Arenası',`<p>Bu modda bazı kartların <b>anahtar kelimesi</b> canlanır. Kartın köşesindeki küçük simge hangi yeteneğe sahip olduğunu gösterir.</p>${(mine.length?mine:Object.keys(MR.KW)).map(kw).join('')}<p class="cono">Kalkan, Nöbetçi, Pusu ve Son Nefes kartları dengelemek için %10 daha zayıf. Kupa değişmez, altın kazanırsın. Bu ilk savaş yavaş oynanacak ve her yetenek ilk kez çalıştığında açıklanacak.</p>`]}
-  if(m==='cb')return['img/ic/kadim.webp','Klan Boss\'u',`<p>Karşında klanınla <b>ortak canı olan</b> bir Kadim boss var.</p><p><b>Kazanmak şart değil:</b> bu savaşta rakibe verdiğin her hasar boss'un canından düşer (bir savaşta en fazla ${MR.CB.cap}).</p><p>Günde ${MR.CB.daily} saldırı hakkın var. Boss yenilince hasar veren herkes ödül alır, en çok hasar veren 3 kişi ek ödül alır.</p><p class="cono">Boss'un canı 4 kat. Uzun yaşayan, çok vuran yaratıklar işe yarar.</p>`];
+  if(m==='cb')return['img/ic/kadim.webp','Klan Boss\'u',`<p>Karşında tek bir rakip var: Kadim boss. Onun 6 canı yok, canı <b>klanın ortak canıdır</b> (${MR.CB.hpFix.toLocaleString('tr')}). Ona vurduğun her hasar bu ortak candan düşer.</p><p>Senin 6 canın bitince, yaratıkların tükenince ya da süre dolunca saldırı biter. Boss'u sen bitirirsen klanın kazanır.</p><p>Günde ${MR.CB.daily} saldırı hakkın var. Boss yenilince hasar veren herkes ödül alır, en çok hasar veren 3 kişi ek ödül alır.</p><p class="cono">Boss her tur güçlü saldırısıyla vurur. Dayanıklı ve çok vuran yaratıklar işe yarar; boss'a bağışık türler hasar veremez.</p>`];
   const F=B.fld,AR=B.awr?MR.arenaRule():null;
   if(AR&&AR.k!=='field')return[AR.k==='tboost'?`img/ic/${AR.el}.webp`:`img/kw/aw_${AR.k}.webp`,'Özel Kural · '+AR.n,`<p>${AR.d}</p><p>Özel Kural 3 günde bir değişir. Bu maç <b>kupayı etkilemez</b>, sadece altın kazanırsın.</p><p class="cono">Kurala göre deste kur: bu kuralda hangi kartların güçlendiğini ya da oynanamadığını düşün.</p>`];
   if(F)return[FLDI(F),'Savaş alanı · '+F.n,`<p>${F.d}</p><p>Savaş alanı <b>iki taraf için de</b> geçerlidir. Ortadaki etikete dokunarak açıklamasını istediğin zaman görebilirsin.</p><p class="cono">Alanın türündeki yaratıklar genelde avantajlıdır. ${AR?'Bu maç kupayı etkilemez.':'Macera ve Kule\'de bazı bölümlerde çıkar.'}</p>`];
@@ -2480,7 +2483,7 @@ function renderBattle(){if(!B)return;document.body.dataset.fld=B.fld?B.fld.k:'';
     else info='Saldıracak yaratığına dokun'+(!B.supUsed&&me.hand.some(x=>x.t==='s')?' · ya da destek kartı oyna':'')}
   const pass=my&&!me.board.some(Boolean)&&!me.hand.some(x=>x.t==='c');
   $('#main').innerHTML=`<div class="ar2${B.fld?' fl-'+B.fld.k:''}">
-   <div class="b2top foe"><div class="lv" data-lv="foe">${hearts(fo.lives)}</div><b>${B.fr?escH(B.fr.name).toLocaleUpperCase('tr'):'RAKİP'}</b>${auraChips(fo.board)}<div class="b2pile"><img src="img/back.webp" alt=""><span>${fo.deck.length}</span></div></div>
+   <div class="b2top foe"><div class="lv" data-lv="foe">${B.cb?'<b class="cbtag">KLAN BOSS\'U</b>':hearts(fo.lives)}</div><b>${B.fr?escH(B.fr.name).toLocaleUpperCase('tr'):'RAKİP'}</b>${auraChips(fo.board)}<div class="b2pile"><img src="img/back.webp" alt=""><span>${fo.deck.length}</span></div></div>
    <div class="b2fh">${fo.hand.map(x=>`<img src="img/${x.t==='c'&&setOf(x.c)===2?'back2':'back'}.webp" alt="">`).join('')}</div>
    <div class="b2row foe">${fo.board.map((f,i)=>bk(f,'foe',i)).join('')}</div>
    <div class="b2mid"><div class="b2bar ${B.turn}${B.over?' end':''}"><span class="b2t">${TI(t)}</span><span class="b2clk${clockLeft()<=15&&!B.over?' low':''}" id="clk">${clockTxt()}</span></div>${B.fld?`<button class="b2fld" id="bfld" style="--fc:${AUC[B.fld.el]}"><img src="${FLDI(B.fld)}" alt="">${B.fld.n}</button>`:''}<div class="b2log">${info}</div>${pass?'<button class="btn alt b2pass" id="bpass">Pas geç</button>':''}${!B.over&&!B.tut&&!B.pz?`<button class="b2auto${B.auto?' on':''}" id="bauto"><img src="img/ic/auto.webp" alt="">Otomatik${B.auto?' · açık':''}</button>`:''}</div>
@@ -2584,7 +2587,7 @@ async function endBattle(win){
   // ödüller sunucuda hesaplanır: kupa, altın, seri, sandık, lig, macera, görevler
   let r=null,err=null;const rid=newRid();
   // sonuç gönderilmeden ÖNCE cihaza yazılır: Safari uygulamayı istek sırasında kapatırsa bir sonraki açılışta aynı rid ile tekrar gönderilir (sunucu ikinci kez uygulamaz)
-  const dmgS=Bk.cb?Math.round(Bk.dmg.me||0):undefined;
+  const dmgS=Bk.cb?Math.max(0,Math.round(Bk.cbBoss?Bk.cbHp0-Math.max(0,Bk.cbBoss.hp):(Bk.dmg.me||0))):undefined;   // boss: gerçekten düşen can
   pendSet({id:Bk.bid,win:!!win,stats:Bk.stats,dmg:dmgS,rid,t:Date.now()});
   try{r=await act('battle_end',{id:Bk.bid,win:!!win,stats:Bk.stats,dmg:dmgS},{rid});pendSet(null)}
   catch(e){err=e.message;if(!(e.status===0||e.status>=500))pendSet(null);else{err='Bağlantı yok: sonuç bu cihazda bekletiliyor, bağlantı gelince otomatik kaydedilecek.'}}
@@ -2778,7 +2781,7 @@ async function tap(s,i){
   await foeMove();
 }
 async function foeMove(){
-  if(!B||B.over)return;B.turn='foe';B.busy=true;B.sel=null;B.selH=null;renderBattle();
+  if(!B||B.over)return;if(B.cb)B.foe.board.forEach(f=>{if(f&&f.c.atks[1])f.ch=true});B.turn='foe';B.busy=true;B.sel=null;B.selH=null;renderBattle();
   let lk=null;if(B.skip&&B.skip.foe){B.skip.foe=0;B.skipX=1;
     if(B.foe.board.some(f=>f&&f.c.el==='light')){lk='light';B.log='İrade: rakip sadece Işık yaratığıyla saldırabilir';renderBattle();await wait(900)}
     else{B.log='İrade: rakip bu turu oynayamadı';renderBattle();await wait(1100);if(B&&!B.over)await meTurn(false);return}}

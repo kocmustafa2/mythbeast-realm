@@ -583,10 +583,10 @@ const kwOf=c=>c?(KWB[c.id]||(c.prl&&c.of?KWB[c.of]:null)||null):null;
 const kwRoot=c=>{let x=BY[c.prl&&c.of?c.of:c.id];while(x&&x.from&&BY[x.from])x=BY[x.from];return x};
 
 // KLAN BOSS'U: her pazartesi 03:00 (TSİ) yeni boss; klanın ortak canı; günde 2 deneme; hasar sunucuda toplanır
-const CB={daily:2,cap:3000,hp0:4000,hpM:2500,bossHp:4,rw:{g:400,free:1,ks:1},top:{g:300,free:1}};
+const CB={daily:2,cap:6000,hpFix:30000,hp0:4000,hpM:2500,bossHp:4,rw:{g:400,free:1,ks:1},top:{g:300,free:1}};
 const cbWeek=t=>Math.floor((t/AW_DAY+3)/7),cbEnds=w=>(w*7+4)*AW_DAY;
 const cbBoss=w=>{const L=EXC.filter(c=>!c.ez);return L[((w%L.length)+L.length)%L.length]};
-const cbHp=n=>CB.hp0+CB.hpM*Math.max(1,Math.min(30,n|0));
+const cbHp=n=>CB.hpFix;   // sabit ortak can (üye sayısından bağımsız)
 const cbLeft=(st,now)=>{const d=dayKey(now);return CB.daily-(st.cbd&&st.cbd.day===d?st.cbd.n:0)};
 function cbStage(w){const boss=cbBoss(w),el=boss.el,r=srnd(9100+w*37),pool=CARDS.filter(c=>c.el===el&&c.r===2),pool1=CARDS.filter(c=>c.el===el&&c.r===1);
   const B={...boss,hp:boss.hp*CB.bossHp},base=BY[boss.base]||CARDS.find(c=>c.el===el&&c.r===3);
