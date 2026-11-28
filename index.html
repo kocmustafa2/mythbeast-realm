@@ -1381,7 +1381,7 @@ body.nui .frp{animation:popin .25s ease}
 <div id="title"><div class="tbg"></div><div class="tlogo"><img class="tlimg" src="img/logo.webp" alt="Mythbeast Realm"><span class="t3">Seri 1 · Elementler</span></div>
 <button class="sndb tsnd" id="tsnd" aria-label="Ses"></button><div class="tbtm"><button class="tgo" id="tgo" aria-label="Oyna"><img src="img/btn_play.webp" alt="Oyna"></button><p class="tinfo" id="tinfo"></p></div></div>
 
-<script src="rules.js?v=28"></script>
+<script src="rules.js?v=29"></script>
 <script>
 {
 // Ortak kurallar (rules.js): kart verisi ve ekonomi. Oyun ve sunucu aynı dosyayı kullanır.
@@ -2113,7 +2113,17 @@ function drFoe(){const D=DRF(),w=(S.dr&&S.dr.w)||0,W=[.45-.03*w,.33,.17+.02*w,.0
     const L=shuffle(pool.filter(c=>c.r===r&&(cnt[c.id]||0)<(r>=3?1:2))).slice(0,3);if(!L.length)continue;
     const c=Math.random()<.35+.07*w?L.sort((a,b)=>power(b)-power(a))[0]:L[0];out.push(c);cnt[c.id]=(cnt[c.id]||0)+1}
   return shuffle([...out.map(c=>({t:'c',c})),...MR.drSup(out.map(c=>c.id)).map(k=>({t:'s',k}))])}
-function openDraft(){const ov=$('#ov'),d=S.dr,D=DRF();ov.className='ov on';const close=()=>{ov.className='ov';ov.innerHTML='';render()};
+// seçim anında ekranda uygulanır (seçenekler sunucuda baştan üretilip telefona gelir), sunucuya sırayla arka planda gönderilir
+let drQ=Promise.resolve(),drBusy=0;
+function drPick(i){const d=S.dr;if(!d||!d.opts||!d.opts[i]||d.sup)return;buzz();const n=d.deck.length,D=DRF();
+  if(window.claude){act('draft_pick',{i,n}).then(()=>openDraft(),e=>toast(e.message));return}
+  if(d.all&&d.all.length){d.deck.push(d.opts[i]);if(d.deck.length<D.picks)d.opts=d.all[d.deck.length];else{d.opts=[];d.sup=MR.drSup(d.deck);delete d.all;drPre()}openDraft();
+    const loc=structuredClone(S.dr);window.__drL=loc;drBusy++;drQ=drQ.then(()=>act('draft_pick',{i,n})).then(()=>{if(--drBusy>0&&window.__drL)S.dr=structuredClone(window.__drL);else if($('#drfight'))openDraft()},async e=>{drBusy--;toast(e.message);try{await cloudPull()}catch(_){}openDraft()});return}
+  // eski draft (seçenekleri baştan üretilmemiş): sunucu cevabını bekle
+  document.querySelectorAll('.dro').forEach(x=>x.disabled=true);act('draft_pick',{i,n}).then(()=>{renderTop();openDraft()},e=>{toast(e.message);openDraft()})}
+// draft kartlarının görselleri önceden yüklenir (savaşta gecikme olmasın)
+function drPre(){const d=S.dr;if(!d)return;[...new Set([...d.deck,...(d.all||[]).flat()])].forEach(i=>{const im=new Image();im.src=`img/t/${i}.webp`})}
+function openDraft(){const ov=$('#ov'),d=S.dr,D=DRF();if(d&&!window.__drPre){window.__drPre=1;drPre()}ov.className='ov on';const close=()=>{ov.className='ov';ov.innerHTML='';render()};
   const rec=d?`<div class="drrec"><div class="drw">${Array.from({length:D.maxW},(_,i)=>`<i class="${i<d.w?'on':''}">${i<d.w?'★':''}</i>`).join('')}</div><div class="drl">${Array.from({length:D.maxL},(_,i)=>`<img src="img/ic/heart.webp" alt="" class="${i<d.l?'lost':''}">`).join('')}</div></div>`:'';
   const mini=d&&d.deck.length?`<div class="drdeck">${d.deck.map(i=>{const c=BY[i];return c?`<img src="img/t/${c.id}.webp" class="r${c.r}${c.ex?' ex':''}" alt="" title="${escH(c.name)}">`:''}).join('')}${d.sup?d.sup.map(k=>`<img src="${supArt(k)}" class="sup" alt="">`).join(''):''}</div>`:'';
   let body;
@@ -2127,8 +2137,8 @@ function openDraft(){const ov=$('#ov'),d=S.dr,D=DRF();ov.className='ov on';const
   ov.querySelector('#drx').onclick=close;
   const go=async(a,p)=>{try{const r=await act(a,p);renderTop();return r}catch(e){toast(e.message);return null}};
   const b1=ov.querySelector('#drstart');if(b1)b1.onclick=async()=>{b1.disabled=true;if(await go('draft_start',{}))openDraft();else b1.disabled=false};
-  ov.querySelectorAll('.dro').forEach(b=>b.onclick=async()=>{ov.querySelectorAll('.dro').forEach(x=>x.disabled=true);b.classList.add('pick');buzz();await wait(250);await go('draft_pick',{i:+b.dataset.i});openDraft()});
-  const f=ov.querySelector('#drfight');if(f)f.onclick=()=>{ov.className='ov';ov.innerHTML='';startBattle(null,null,null,'dr')};
+  ov.querySelectorAll('.dro').forEach(b=>b.onclick=()=>drPick(+b.dataset.i));
+  const f=ov.querySelector('#drfight');if(f)f.onclick=async()=>{f.disabled=true;await drQ.catch(()=>{});ov.className='ov';ov.innerHTML='';startBattle(null,null,null,'dr')};
   const cl=async q=>{const r=await go('draft_claim',q?{quit:1}:{});if(r){toast(`Draft ödülü: +${r.g} altın${r.free?` · +${r.free} paket`:''}${r.ks?` · +${r.ks} kadim taş`:''}`);if(r.w>=3)vConfetti();close()}};
   const c1=ov.querySelector('#drclaim');if(c1)c1.onclick=()=>cl(0);
   const q=ov.querySelector('#drquit');if(q)q.onclick=()=>{if(confirm('Draft bitsin mi? Şu anki galibiyetine göre ödül alırsın.'))cl(1)}}
@@ -3022,7 +3032,7 @@ document.addEventListener('pointerdown',e=>{if(e.target.closest('.btn,.tgo,nav b
 // dosyaları telefonda saklayan servis: içeriği değişen bir görsel/ses olursa ASSET_V artırılır
 // SÜRÜM KONTROLÜ: yeni sürüm yayınlanınca APP_V ve version.txt birlikte artırılır.
 // İnternet varken oyun arada bir version.txt'ye bakar; farklıysa üstte 'Yeni sürüm hazır · Yenile' çıkar (savaş sırasında beklenir).
-const APP_V='2026.11.28-11';
+const APP_V='2026.11.28-12';
 function verCheck(){if(window.claude||!navigator.onLine)return;
   fetch('version.txt?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{t=(t||'').trim();if(/^[\w.-]{3,40}$/.test(t)&&t!==APP_V){window.__upd=t;updShow()}}).catch(()=>{})}
 function updShow(){if(!window.__upd||document.getElementById('updb'))return;if(B&&!B.over){window.__updLater=1;return}

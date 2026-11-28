@@ -685,9 +685,10 @@ function act(st,a,p,ctx){p=p||{};const rng=ctx.rng,now=ctx.now;normalize(st,ctx)
   case 'pz_claim':{const d=dayKey(now);if(st.pz&&st.pz.day===d)throw uerr('Bugünün bulmacasını zaten çözdün.');const y=dayKey(now-AW_DAY),sk=st.pz&&st.pz.day===y?(st.pz.sk||0)+1:1;
     st.pz={day:d,sk};st.gold+=PZ.g;const R={g:PZ.g,sk,free:0};if(sk%PZ.streak===0){st.free+=PZ.free;R.free=PZ.free}st.pzN=(st.pzN||0)+1;return R}
   case 'draft_start':{if(st.dr&&!st.dr.done)throw uerr('Devam eden bir draft var.');if(tutOn(st))throw uerr('Önce öğreticiyi bitir.');if((st.gold||0)<DRAFT.cost)throw uerr('Draft için '+DRAFT.cost+' altın gerekli.');
-    st.gold-=DRAFT.cost;st.dr={deck:[],opts:[],sup:null,w:0,l:0,t:now,done:0};st.dr.opts=drOpts(st.dr,rng);st.drN=(st.drN||0)+1;return{dr:st.dr}}
+    st.gold-=DRAFT.cost;st.dr={deck:[],opts:[],sup:null,w:0,l:0,t:now,done:0,all:[]};{const tmp={deck:[]};for(let k=0;k<DRAFT.picks;k++){const o=drOpts(tmp,rng);st.dr.all.push(o);tmp.deck.push(o[0])}}st.dr.opts=st.dr.all[0];st.drN=(st.drN||0)+1;return{dr:st.dr}}
   case 'draft_pick':{const d=st.dr;if(!d||!d.opts||!d.opts.length)throw uerr('Seçilecek kart yok.');const i=Math.floor(+p.i);if(!(i>=0&&i<d.opts.length))throw uerr('Geçersiz seçim.');
-    d.deck.push(d.opts[i]);if(d.deck.length<DRAFT.picks)d.opts=drOpts(d,rng);else{d.opts=[];d.sup=drSup(d.deck)}return{dr:d}}
+    if(p.n!=null&&+p.n!==d.deck.length)throw uerr('Seçim sırası uyuşmadı, yenileniyor.');
+    d.deck.push(d.opts[i]);if(d.deck.length<DRAFT.picks)d.opts=d.all&&d.all[d.deck.length]?d.all[d.deck.length]:drOpts(d,rng);else{d.opts=[];d.sup=drSup(d.deck);delete d.all}return{dr:d}}
   case 'draft_claim':{const d=st.dr;if(!d)throw uerr('Aktif draft yok.');if(!d.done&&!p.quit)throw uerr('Draft henüz bitmedi.');if(st.bt&&st.bt.mode==='draft')throw uerr('Önce savaşı bitir.');
     const w=Math.min(DRAFT.maxW,d.w),rw=DRAFT.rw[w],R={w,l:d.l,g:rw.g,free:rw.free||0,ks:0,el:null};st.gold+=R.g;st.free+=R.free;
     if(rw.ks){R.el=ELS[Math.floor(rng()*ELS.length)];R.ks=rw.ks;giveKS(st,R.el,rw.ks)}st.drBest=Math.max(st.drBest||0,w);st.dr=null;return R}
