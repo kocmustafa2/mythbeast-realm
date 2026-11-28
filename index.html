@@ -1270,6 +1270,15 @@ body.nui .frp{animation:popin .25s ease}
 .awi b{position:relative;width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font-size:24px;background:radial-gradient(#2a2250,#0d0b1e);box-shadow:0 0 14px color-mix(in srgb,var(--ac) 60%,transparent)}.awi img{width:32px;height:32px}
 .awm>div>b{display:block;font:20px/1.1 'MRDisplay',sans-serif;text-shadow:0 2px 8px color-mix(in srgb,var(--ac) 60%,transparent)}.awm p{margin:3px 0 0;font:500 12px/1.35 Rubik,sans-serif;color:#ddd6f5}
 .awgo{display:block;width:100%;margin-top:10px;border:0;border-radius:12px;padding:9px 12px;font:800 13px Rubik,sans-serif;color:#2a1a06;background:linear-gradient(#ffe39a,#f2a632);box-shadow:0 3px 0 #9c6a1e}.awgo:active{transform:translateY(2px);box-shadow:0 1px 0 #9c6a1e}
+.kwc{margin:12px 0 0;padding:12px;border-radius:18px;background:linear-gradient(135deg,#123b3a,#0f1e33 70%);border:1.5px solid #3fd1b688;box-shadow:0 8px 22px #0007}
+.kwh{display:flex;align-items:center;gap:8px}.kwh b{font:20px 'MRDisplay',sans-serif}.kwh span{font:800 10px Rubik,sans-serif;letter-spacing:.8px;text-transform:uppercase;background:#3fd1b6;color:#06302a;border-radius:8px;padding:2px 7px;animation:glowd 1.6s infinite}
+.kwc p{margin:5px 0 8px;font:500 12px/1.35 Rubik,sans-serif;color:#cfe9e4}
+.kwl{display:flex;flex-wrap:wrap;gap:5px}.kwl span{font:700 11.5px Rubik,sans-serif;background:#ffffff12;border:1px solid #ffffff22;border-radius:10px;padding:3px 8px}
+.kwgo{display:block;width:100%;margin-top:10px;border:0;border-radius:12px;padding:9px;font:800 13px Rubik,sans-serif;color:#06302a;background:linear-gradient(#8ff5dd,#2fbf9c);box-shadow:0 3px 0 #17705c}.kwgo:active{transform:translateY(2px);box-shadow:0 1px 0 #17705c}
+.bkkw{position:absolute;left:4px;top:21px;z-index:30;transform:translateZ(8px);font-size:16px;line-height:1;filter:drop-shadow(0 1px 2px #000);background:#000a;border-radius:8px;padding:2px 3px}
+.bksh{position:absolute;left:4px;top:21px;z-index:30;transform:translateZ(8px);font-size:16px;line-height:1;background:#3fa0ffcc;border-radius:8px;padding:2px 3px;box-shadow:0 0 8px #3fa0ff}
+.bktok{position:absolute;right:4px;top:21px;z-index:30;transform:translateZ(8px);font:800 9px Rubik,sans-serif;background:#000b;border-radius:6px;padding:1px 4px}
+.kwinf{background:linear-gradient(135deg,#123b3a,#0f1e33);border:1px solid #3fd1b688;border-radius:14px;padding:9px 11px;margin:0 0 10px}.kwinf b{font:16px 'MRDisplay',sans-serif}.kwinf p{margin:3px 0;font:500 12.5px/1.35 Rubik,sans-serif;color:#d8f2ec}.kwinf small{font:700 11px Rubik,sans-serif;color:#7ff0d3}
 </style>
 </head>
 <body>
@@ -1297,7 +1306,7 @@ body.nui .frp{animation:popin .25s ease}
 <div id="title"><div class="tbg"></div><div class="tlogo"><img class="tlimg" src="img/logo.webp" alt="Mythbeast Realm"><span class="t3">Seri 1 · Elementler</span></div>
 <button class="sndb tsnd" id="tsnd" aria-label="Ses"></button><div class="tbtm"><button class="tgo" id="tgo" aria-label="Oyna"><img src="img/btn_play.webp" alt="Oyna"></button><p class="tinfo" id="tinfo"></p></div></div>
 
-<script src="rules.js?v=23"></script>
+<script src="rules.js?v=24"></script>
 <script>
 {
 // Ortak kurallar (rules.js): kart verisi ve ekonomi. Oyun ve sunucu aynı dosyayı kullanır.
@@ -1412,7 +1421,9 @@ const IMG=Object.fromEntries(Array.from({length:109},(_,i)=>[i+1,1]));CARDS.forE
 const EZOWN='u_gCZR5eBoOHaN6bC0V8kJwQ';
 const exaTxt=c=>(c.ez?EZA:EXA)[c.exa];
 const koL=c=>c.ez?3:c.ex?2:1;   // yenilince giden can
-const koN=f=>f.ko2?Math.max(2,koL(f.c)):koL(f.c);   // Feda alan yaratık tek vuruşta yenerse en az 2 can
+const koN=f=>f.tok?0:f.ko2?Math.max(2,koL(f.c)):koL(f.c);
+const kwX=(X,f)=>X&&X.kw&&f?MR.kwOf(f.c):null;   // Yetenek Arenası anahtar kelimesi
+const tauntOk=(X,o,di)=>{if(!X||!X.kw)return true;const t=X[o].board.some(f=>f&&f.hp>0&&MR.kwOf(f.c)==='nobet');return !t||(X[o].board[di]&&MR.kwOf(X[o].board[di].c)==='nobet')};   // Feda alan yaratık tek vuruşta yenerse en az 2 can
 const ALLC=()=>[...CARDS,...EXC,...EZC.filter(c=>owned(c.id)),...PRL.filter(c=>owned(c.id))];   // yapay zekâ görseli olan kartlar: img/<no>.jpg
 // küçük görünümlerde hafif kopya (img/t), büyük görünümlerde tam boy görsel
 function artFull(c){return IMG[c.id]?`<img class="aimg" src="img/${c.id}.jpg" alt="${c.name}" draggable="false" decoding="async" onerror="imgRetry(this)">`:art(c)}
@@ -1835,7 +1846,7 @@ function showCard(c,allowCraft){
   const evoRows=allowCraft&&chain.length?`<div class="evo"><b>Evrim</b><p class="evh">${root.name} kopyası: <b>${copies(root)}</b></p>${chain.map(t=>{const need=EVO_NEED[t.stage],pc=Math.min(100,copies(t)/need*100),lock=t.stage===2&&!owned(t.from);
     return `<div class="evr"><div class="evt"><span>${t.name}${owned(t.id)?' ✓':''}</span><small>${need} ${root.name}${lock?` · önce ${BY[t.from].name}`:''}</small><div class="evbar"><i style="width:${pc}%"></i></div></div><button class="btn evbtn" data-t="${t.id}" ${canEvo(t)?'':'disabled'}>Evrimleştir</button></div>`}).join('')}</div>`:'';
   ov.innerHTML=`<div class="detail">${cardHTML(c,{big:1,miss:!have,w:c.ez?'min(90vw,400px)':'min(70vw,300px)'})}
-  <div class="info"><p><span>Nadirlik</span><b>${c.ez?"Ezeli":R.n}</b></p><p><span>Sahip olunan</span><b>${have}</b></p>${hasShiny(c.id)?`<p class="shrow"><span class="shtxt">✦ Holo sürüm</span><b>${S.shiny[c.id]} tane <button class="tgl sm ${shownShiny(c.id)?'on':''}" id="shtg" aria-label="Holo göster"><i></i></button></b></p>`:''}
+  ${MR.kwOf(c)?`<div class="kwinf"><b>${MR.KW[MR.kwOf(c)].i} ${MR.KW[MR.kwOf(c)].n}</b><p>${MR.KW[MR.kwOf(c)].d}</p><small>Yetenek Arenası\'nda çalışır</small></div>`:''}  <div class="info"><p><span>Nadirlik</span><b>${c.ez?"Ezeli":R.n}</b></p><p><span>Sahip olunan</span><b>${have}</b></p>${hasShiny(c.id)?`<p class="shrow"><span class="shtxt">✦ Holo sürüm</span><b>${S.shiny[c.id]} tane <button class="tgl sm ${shownShiny(c.id)?'on':''}" id="shtg" aria-label="Holo göster"><i></i></button></b></p>`:''}
   ${c.from?`<p><span>Evrimleştiği kart</span><b>${BY[c.from].name}</b></p>`:''}${c.ex?`<p><span>${c.ez?'Ezeli':'Kadim'} yeteneği</span><b>${exaTxt(c)}</b></p><p><span>Deste puanı</span><b>${ptsOf(c)}</b></p>${c.base?`<p><span>Kökeni</span><b>${BY[c.base].name}</b></p>`:`<p><span>Tür</span><b>${T[c.el].n}</b></p><p><span>Yenilince</span><b>${koL(c)} can götürür</b></p>`}`:''}</div>${evoRows}${allowCraft&&MR.lvable(c)&&have?lvBox(c):''}${allowCraft&&c.r===3&&!c.ex?awakenBox(c):''}
   <div class="ovb">${allowCraft&&!have&&c.stage===0&&!c.ex?`<button class="btn" id="craft" ${S.dust>=R.craft?'':'disabled'}>Üret · ${R.craft} toz</button>`:''}${allowCraft&&extra&&!c.ex?`<button class="btn alt" id="todust">${extra} kopya → ${extra*R.dust} toz</button>`:''}<button class="btn alt" id="close">Kapat</button></div></div>`;
   ov.classList.add('on');
@@ -1967,6 +1978,9 @@ function supTile(k,o={}){return `<div class="dt sup${o.sel?' sel':''}${o.dis?' d
 const tileK=(k,o)=>isS(k)?supTile(k.slice(2),o):deckTile(BY[k],o);
 // YENİ ARAYÜZ (deneme): sadece oyunun sahibinde, Ayarlar'dan açılır
 const NUI=()=>true;   // yeni arayüz herkese açık (2026-11-28)
+function kwCard(){if(!uniq())return '';const ks=Object.keys(MR.KW);
+  return `<div class="kwc"><div class="kwh"><b>Yetenek Arenası</b><span>Yeni mod</span></div><p>Bazı kartların anahtar kelimeleri bu modda canlanır. Ödüller normal arenayla aynı.</p>
+   <div class="kwl">${ks.map(k=>`<span title="${MR.KW[k].d}">${MR.KW[k].i} ${MR.KW[k].n}</span>`).join('')}</div><button class="kwgo" id="kwgo">Yetenek Arenası'nda savaş</button></div>`}
 function awCard(){const R=MR.arenaRule(),ms=R.ends-Date.now(),d=Math.floor(ms/AW_DAY_C),h=Math.floor(ms%AW_DAY_C/3600000),m=Math.floor(ms%3600000/60000);
   const ic={tboost:R.el?`<img src="img/ic/${R.el}.webp" alt="">`:'⚔️',lowr:'🃏',hp:'🛡️',charge:'⚡',noleg:'🚫'}[R.k];
   return `<div class="awr"${R.el?` style="--ac:${AUC[R.el]}"`:''}><div class="awt"><span class="awrib">✦ ÖZEL KURAL</span><span class="awtm">⏳ ${d?d+'g ':''}${h}sa${d?'':' '+m+'dk'}</span></div>
@@ -2092,9 +2106,13 @@ function coreHit(X,s,ai,ti){
   const o=s==='me'?'foe':'me',A=X[s].board[ai],D=X[o].board[ti],at=curAtk(A),ev={side:[]};
   let base=atkOf(A);if(at.fx==='coin'){ev.coin=Math.random()<.5;if(ev.coin)base+=FXV.coin}
   if(X.awr==='tboost'&&A.c.el===X.awEl)base=Math.round(base*1.2);   // haftalık kural
+  if(kwX(X,A)==='bag'&&X[s].board.some(f=>f&&f!==A&&f.hp>0&&f.c.el===A.c.el)){base=Math.round(base*1.15);ev.bag=1}
   if(A.c.exa==='devour'){const nt=new Set(X[o].board.filter(f=>f&&f.hp>0).map(f=>f.c.el)).size;if(nt){base=Math.round(base*(1+.1*nt));ev.dev=nt}}   // Ezelhan: Tür Yutucu
   const r=calc(A,D,X[s].board,X[o].board,base);ev.k=r.k;ev.d=r.d;ev.sh=r.sh;
-  const full=D.hp>=mx(D);D.hp=Math.max(0,D.hp-r.d);if(A.feda&&full&&D.hp<=0)D.ko2=1;A.ch=false;A.didAtk=true;
+  if(D.shield>0&&r.d>0){D.shield=0;r.d=0;ev.d=0;ev.shield=1}   // Kalkan
+  const full=D.hp>=mx(D);D.hp=Math.max(0,D.hp-r.d);
+  if(kwX(X,A)==='sessiz'&&D.hp>0&&!D.c.ez&&r.d>0){D.mute=Math.max(D.mute||0,1);ev.mute=1}
+  if(D.hp<=0&&kwX(X,D)==='sonnefes'){const al=X[s].board.map((f,k)=>f&&f.hp>0?k:-1).filter(k=>k>=0);if(al.length){const k=al[Math.floor(Math.random()*al.length)];X[s].board[k].hp=Math.max(0,X[s].board[k].hp-40);ev.sn=k}}if(A.feda&&full&&D.hp<=0)D.ko2=1;A.ch=false;A.didAtk=true;
   if(D.hp<=0&&D.c.exa==='stand'&&!D.stood){D.hp=D.c.ez?100:Math.round(mx(D)/2);D.stood=1;ev.stood=1;D.ko2=0}
   if(at.fx==='burn'&&D.hp>0&&r.k!=='i'){D.burn=2;ev.burned=1}
   if(A.c.exa==='devour'&&D.hp>0&&!D.c.ez){D.mute=2;ev.mute=1}
@@ -2123,11 +2141,11 @@ function renderArena(){
   if(B)return renderBattle();
   const n=uniq();
   const fightB=n?`<button class="btn fightb" id="fight">${NUI()?`SAVAŞ<small>Galibiyet +${TROPHY.win} kupa · ${ECON.win+LEAGUES[lgOf(S.trophy||0)].gold} altın</small>`:'Savaşa gir'}</button>`:`<div class="empty">Arena için en az 1 kartın olmalı. Önce bir paket aç.</div>`;
-  $('#main').innerHTML=`<h2>Arena</h2>${NUI()?`${leagueCard()}${awCard()}${fightB}${deckMini()}${arenaStrip()}${seasonCard()}${friendsCard()}`:`${leagueCard()}${awCard()}${seasonCard()}${friendsCard()}${arenaStrip()}${deckView()}${fightB}`}<p class="sub">Galibiyet <b>+${TROPHY.win}</b> kupa ve ${ECON.win+LEAGUES[lgOf(S.trophy||0)].gold} altın, mağlubiyet ${TROPHY.loss} kupa ve ${ECON.loss} altın. Lig tabanının altına düşmezsin. Üst üste galibiyetler ek kupa ve altın verir. Her 3 galibiyette bir zafer sandığı kazanırsın. (${S.wins} G · ${S.losses} M)</p>
+  $('#main').innerHTML=`<h2>Arena</h2>${NUI()?`${leagueCard()}${fightB}${awCard()}${kwCard()}${deckMini()}${arenaStrip()}${seasonCard()}${friendsCard()}`:`${leagueCard()}${awCard()}${seasonCard()}${friendsCard()}${arenaStrip()}${deckView()}${fightB}`}<p class="sub">Galibiyet <b>+${TROPHY.win}</b> kupa ve ${ECON.win+LEAGUES[lgOf(S.trophy||0)].gold} altın, mağlubiyet ${TROPHY.loss} kupa ve ${ECON.loss} altın. Lig tabanının altına düşmezsin. Üst üste galibiyetler ek kupa ve altın verir. Her 3 galibiyette bir zafer sandığı kazanırsın. (${S.wins} G · ${S.losses} M)</p>
   <div class="box"><p><b>Deste 15 kart:</b> yaratıklar ve destek kartları karışık durur. Elinde en fazla 5 kart olur. Bir kartı oynadığında (yaratık koyunca ya da destek kullanınca) yerine desteden yenisi gelir.</p><p><b>Sahada 3 yaratık</b> savaşır. Boş yere elinden yaratık koyabilirsin. Her tur en fazla 1 destek kartı oynar, sonra bir yaratığınla saldırırsın; saldırı turu bitirir.</p><p><b>Destek kartları:</b> Tür taşı aynı türden yaratığa +30 can ve +10 hasar verir. Evrim Taşı temel yaratığı yenilene kadar evrimleştirir; evrimli hali koleksiyonunda olmalı.</p><p><b>6 can:</b> yenilen her yaratık 1 can götürür (Kadim 2 can). Canı biten kaybeder. <b>Toplam süre 3 dakika:</b> süre bitince canı fazla olan, eşitse daha çok hasar veren kazanır.</p><p>Bir tur saldırmayan yaratık <b>dolar</b> ve sonraki vuruşunda güçlü ikinci saldırısını kullanır. Her türün kendi yeteneği vardır (Toprak dayanıklı, Su yanına can, Ateş sıçrama, Zehir ve Metal süreli hasar, Gölge kötü etkileri artırır, Işık arındırır, Hava ikinci vuruş) ve evrimle güçlenir.</p></div>
   ${typeChart()}
   `;
-  const f=$('#fight');if(f)f.onclick=()=>startBattle();{const ag=$('#awgo');if(ag)ag.onclick=()=>startBattle(null,null,null,1)}const dme=$('#dmedit');if(dme)dme.onclick=()=>openDeckEditor(()=>render(),S.dA);const fb=$('#frbtn');if(fb)fb.onclick=()=>openFriends();const snb=$('#snbtn');if(snb)snb.onclick=()=>openSeason();if(cloudOn()&&Date.now()-(window.__snT||0)>60000)seasonLoad();const oc=$('#opench');if(oc)oc.onclick=openChest;
+  const f=$('#fight');if(f)f.onclick=()=>startBattle();{const ag=$('#awgo');if(ag)ag.onclick=()=>startBattle(null,null,null,1);const kg=$('#kwgo');if(kg)kg.onclick=()=>startBattle(null,null,null,'kw')}const dme=$('#dmedit');if(dme)dme.onclick=()=>openDeckEditor(()=>render(),S.dA);const fb=$('#frbtn');if(fb)fb.onclick=()=>openFriends();const snb=$('#snbtn');if(snb)snb.onclick=()=>openSeason();if(cloudOn()&&Date.now()-(window.__snT||0)>60000)seasonLoad();const oc=$('#opench');if(oc)oc.onclick=openChest;
 }
 function side(entries){return{deck:entries.slice(),hand:[],board:[null,null,null],lives:BAT.lives}}
 function drawStart(P){const tot=P.deck.filter(x=>x.t==='c').length,need=Math.min(3,tot);for(let t=0;t<30;t++){P.hand=P.deck.splice(0,BAT.hand);if(P.hand.filter(x=>x.t==='c').length>=need)return;P.deck.push(...P.hand);shuffle(P.deck)}}
@@ -2135,7 +2153,10 @@ const mkF=c=>mk(c);
 function foeMod(f){if(!B||!B.st)return f;const st=B.st;if(st.rule==='charged'||(st.rule==='boss'&&st.boss&&f.c.id===st.boss.id))f.ch=!!f.c.atks[1];return f}
 // elden sahaya: en güçlü yaratık boş yere
 function bestFill(X,s){const i=X[s].board.findIndex(f=>!f);if(i<0)return null;let j=-1,bv=-1;X[s].hand.forEach((x,k)=>{if(x.t==='c'&&power(x.c)>bv){bv=power(x.c);j=k}});return j<0?null:{j,i}}
-function placeX(X,s,j,i){const f=mk(X[s].hand[j].c);if(X.awr==='charge')f.ch=true;X[s].hand.splice(j,1);X[s].board[i]=s==='foe'?foeMod(f):f;drawX(X,s);return f}
+function placeX(X,s,j,i){const f=mk(X[s].hand[j].c);if(X.awr==='charge')f.ch=true;X[s].hand.splice(j,1);X[s].board[i]=s==='foe'?foeMod(f):f;
+  const kw=kwX(X,f);if(kw==='kalkan')f.shield=1;if(kw==='pusu'&&f.c.atks[1])f.ch=true;
+  if(kw==='cagir'){const e=X[s].board.findIndex(x=>!x),rc=MR.kwRoot(f.c);if(e>=0&&rc){const t=mk({...rc,hp:Math.round(rc.hp/2/5)*5,atks:rc.atks.map(a=>({...a,dmg:Math.round(a.dmg/2/5)*5}))});t.tok=1;X[s].board[e]=s==='foe'?foeMod(t):t;f.summ=e}}
+  drawX(X,s);return f}
 // sahada yaratık yok ve elde yaratık kalmadıysa: bir destek kartı desteye döner, yerine desteden yaratık gelir
 function rescue(X,s){const P=X[s];if(P.board.some(Boolean)||P.hand.some(x=>x.t==='c'))return false;const k=P.deck.findIndex(x=>x.t==='c');if(k<0)return false;const c=P.deck.splice(k,1)[0];const j=P.hand.findIndex(x=>x.t==='s');if(j>=0)P.deck.push(P.hand.splice(j,1,c)[0]);else P.hand.push(c);return true}
 function drawX(X,s){const P=X[s];if(P.deck.length&&P.hand.length<BAT.handMax){P.hand.push(P.deck.shift());return true}return false}
@@ -2151,7 +2172,7 @@ const outOf=(X,s)=>X[s].lives<=0||(!X[s].board.some(Boolean)&&!X[s].hand.some(x=
 async function startBattle(adv,fr,tw,aw){if(window.__btStart)return;
   {const m=tw?'t':adv!=null?'m':'a',ks=deckKeys(m),nc=ks.filter(k=>!isS(k)).length,nm=ensDecks()[deckSlot(m)].n;
    if(nc<DECK_MIN_C){toast(nc?`${nm} destesinde en az ${DECK_MIN_C} yaratık olmalı`:`${nm} destesi boş. Önce desteni kur`);openDeckEditor(tw?()=>towerInfo(tw.el,tw.f):adv!=null?()=>advInfo(adv):null,deckSlot(m));return}
-   if(aw&&m==='a'&&!fr&&S.tut!==6){const AR=MR.arenaRule(),ok=ks.filter(k=>!isS(k)&&MR.awOk(AR.k,BY[k])).length;if(ok<DECK_MIN_C){toast(`Özel kural (${AR.n}): destende bu kurala uyan en az ${DECK_MIN_C} yaratık olmalı`);openDeckEditor(null,deckSlot(m));return}}}
+   if(aw===1&&m==='a'&&!fr&&S.tut!==6){const AR=MR.arenaRule(),ok=ks.filter(k=>!isS(k)&&MR.awOk(AR.k,BY[k])).length;if(ok<DECK_MIN_C){toast(`Özel kural (${AR.n}): destende bu kurala uyan en az ${DECK_MIN_C} yaratık olmalı`);openDeckEditor(null,deckSlot(m));return}}}
   if(pendGet()&&!(await flushPend())){toast('Önceki savaşın sonucu henüz kaydedilemedi. Bağlantı gelince tekrar dene.');return}
   window.__btStart=1;let bid,fo;
   // savaşı sunucu başlatır (kimlik + başlangıç zamanı); ödülleri bitişte sunucu hesaplar
@@ -2162,11 +2183,12 @@ async function startBattle(adv,fr,tw,aw){if(window.__btStart)return;
   deckMode=tw?'t':adv!=null?'m':'a';const st=adv!=null?advStage(adv):tw?MR.towerStage(tw.el,tw.f):null;let md=myDeck(),fd;
   if(st){const hm=st.rule==='hp'&&!st.tw?1.2:1,cr=[...st.deck,...st.deck.filter(c=>c!==st.boss).slice(0,4)].map(c=>{let k=hm;if(st.boss&&c===st.boss&&st.rule==='boss'&&!st.tw)k=1.5;return k===1?c:{...c,hp:Math.round(c.hp*k/5)*5}});
     const sp=st.el?[st.el,st.el,st.el,'evo']:['evo'];fd=shuffle([...cr.map(c=>({t:'c',c})),...sp.map(k=>({t:'s',k}))])}else fd=fr?frDeck(fr.deck,fr.lv):foeDeck(md);
-  const AR=aw&&!st&&!fr&&S.tut!==6?MR.arenaRule():null;   // haftalık arena kuralı
+  const AR=aw===1&&!st&&!fr&&S.tut!==6?MR.arenaRule():null,KWM=aw==='kw'&&!st&&!fr&&S.tut!==6;   // haftalık arena kuralı
   if(AR){const tf=L=>{L=L.filter(x=>x.t!=='c'||MR.awOk(AR.k,x.c));if(AR.k==='hp')L=L.map(x=>x.t==='c'?{...x,c:{...x.c,hp:Math.round(x.c.hp*1.3/5)*5}}:x);return L};
     fd=tf(fd);{const pool=CARDS.filter(c=>MR.awOk(AR.k,c)&&c.r<=1);let n=fd.filter(x=>x.t==='c').length;while(n<8&&pool.length){fd.push({t:'c',c:pool[Math.floor(Math.random()*pool.length)]});n++}if(AR.k==='hp')fd=tf(fd.map(x=>x))}
     md=tf(md)}
-  B={me:side(md),foe:side(fd),awr:AR?AR.k:null,awEl:AR?AR.el:null,turn:'me',sel:null,selH:null,supUsed:false,busy:true,auto:(()=>{try{return localStorage.getItem('mr.auto')==='1'}catch(e){return false}})(),lastAct:Date.now(),over:false,win:null,adv:st&&!st.tw?adv:null,tw:tw||null,mis:st?st.mis:null,st,dmg:{me:0,foe:0},log:fr?escH(fr.name)+' destesiyle dostluk maçı':'Eller dağıtıldı',fr:fr||null,bid,stats:{hit:{},weak:0,ko:0}};
+  if(KWM){const tf=L=>L.map(x=>{if(x.t!=='c')return x;const k=MR.kwOf(x.c);if(!k)return x;const c=x.c;return{...x,c:k==='kalkan'||k==='nobet'?{...c,hp:Math.round(c.hp*.9/5)*5}:{...c,atks:c.atks.map(a=>({...a,dmg:Math.round(a.dmg*.9/5)*5}))}}});md=tf(md);fd=tf(fd)}
+  B={me:side(md),foe:side(fd),kw:KWM?1:0,awr:AR?AR.k:null,awEl:AR?AR.el:null,turn:'me',sel:null,selH:null,supUsed:false,busy:true,auto:(()=>{try{return localStorage.getItem('mr.auto')==='1'}catch(e){return false}})(),lastAct:Date.now(),over:false,win:null,adv:st&&!st.tw?adv:null,tw:tw||null,mis:st?st.mis:null,st,dmg:{me:0,foe:0},log:fr?escH(fr.name)+' destesiyle dostluk maçı':'Eller dağıtıldı',fr:fr||null,bid,stats:{hit:{},weak:0,ko:0}};
   if(!st&&!fr&&easyFoe()){B.easy=1;B.mis=Math.max(LEAGUES[lgOf(S.trophy||0)].mis,.45);B.log='Daha kolay bir rakip geldi';setTimeout(()=>toast('Üst üste kayıplar: bu sefer daha kolay bir rakip geldi'),900)}
   const tutB=S.tut===6&&!st&&!fr;
   if(tutB){// öğretici savaşı: kolay rakip; sahada Kıvılcık + 1 yaratık, 3. yer boş; elde 1 yaratık ve Evrim Taşı
@@ -2181,6 +2203,7 @@ async function startBattle(adv,fr,tw,aw){if(window.__btStart)return;
   drawStart(B.me);drawStart(B.foe);
   for(const sd of['me','foe'])for(let m;(m=bestFill(B,sd));)placeX(B,sd,m.j,m.i);}
   if(st){tab='adv';if(st.rule==='burn')B.me.board.forEach(f=>{if(f)f.burn=2})}
+  if(KWM){B.log='<b>Yetenek Arenası</b> · anahtar kelimeler açık';setTimeout(()=>{if(B)toast('Yetenek Arenası: kartların anahtar kelimeleri bu maçta çalışır')},700)}
   if(AR){B.log=`Özel kural: <b>${AR.n}</b>`;setTimeout(()=>{if(B)toast(`Özel kural: ${AR.n}. ${AR.d}`)},700)}
   document.body.classList.add('inb');renderBattle();scrollTo(0,0);
   setTimeout(()=>{if(!B)return;announceAuras('me');announceAuras('foe')},500);setTimeout(()=>{if(!B)return;[0,1,2].forEach(i=>{exEnter('me',i);exEnter('foe',i)})},1600);
@@ -2207,7 +2230,7 @@ async function autoMove(){if(!autoDue()&&!(B&&B.auto&&!B.busy&&!B.over&&B.turn==
   if(!B.lock)for(let m;B&&!B.over&&(m=bestFill(B,'me'));){await placeAnim('me',m.j,m.i);await wait(220)}
   if(!B||B.over)return;
   if(!B.supUsed){const ms=pickSup(B,'me',false);if(ms){await supAnim('me',ms.j,ms.i);if(!B||B.over)return}}
-  let best=null;B.me.board.forEach((a,ai)=>{if(!a||a.frz>0||(B.lock&&a.c.el!==B.lock))return;B.foe.board.forEach((d,di)=>{if(!d)return;const sc=aiScore(a,d,B.me.board,B.foe.board);if(!best||sc>best.sc)best={sc,ai,di}})});
+  let best=null;B.me.board.forEach((a,ai)=>{if(!a||a.frz>0||(B.lock&&a.c.el!==B.lock))return;B.foe.board.forEach((d,di)=>{if(!d||!tauntOk(B,'foe',di))return;const sc=aiScore(a,d,B.me.board,B.foe.board);if(!best||sc>best.sc)best={sc,ai,di}})});
   if(best){if(await strike('me',best.ai,best.di))return}else{B.log='Saldıracak yaratık yok, sıra geçti';renderBattle();await wait(500)}
   if(!B||B.over)return;await foeMove()}
 function clockTick(){if(!B||B.over){if(B&&B.iv)clearInterval(B.iv);return}
@@ -2226,9 +2249,10 @@ function bk(f,s,i){
   const c=f.c,p=Math.max(0,f.hp/mx(f)),my=s==='me'&&B.turn==='me'&&!B.busy&&!B.over,selS=my&&B.selH!==null?B.me.hand[B.selH]:null,tgt=s==='foe'&&B.turn==='me'&&B.sel!==null&&!B.busy&&!B.over;
   const supOk=s==='me'&&selS&&canSup(selS.k,f,true)===true;
   let hint='';if(tgt){const A=B.me.board[B.sel],fx=curAtk(A).fx,h=calc(A,f,B.me.board,B.foe.board,atkOf(A));hint=`<div class="bkhint${h.k==='w'?' x':h.k?' w':''}">${h.k==='i'?'Bağışık':'−'+h.d+(fx==='coin'?'+':'')}</div>`}
+  const kwi=B.kw&&!f.tok&&MR.kwOf(c)&&!(MR.kwOf(c)==='kalkan'&&f.shield>0)?`<span class="bkkw">${MR.KW[MR.kwOf(c)].i}</span>`:'',shd=f.shield>0?'<span class="bksh">🛡️</span>':'';
   const a=curAtk(f),big=f.ch&&c.atks[1],SH=c.ex||(s==='me'&&shownShiny(c.id)),src=SH&&SHART.has(c.id)?`img/s/${c.id}.jpg`:`img/t/${c.id}.webp`;
   return `<div class="bk${big?' ch':c.atks[1]&&!f.justIn&&!f.didAtk?' half':''}${s==='me'&&B.sel===i?' sel':''}${my&&!selS?' bpk':''}${tgt?' tg':''}${supOk?' sup':''}${SH?' holo':''}${c.ex?' ex':''}${c.ez?' ez':''}" data-s="${s}" data-i="${i}" data-u="${f.uid}" style="--ec:${AUC[c.el]}">
-  <div class="bka" style="background-image:url(${src})${portArt(c)?`;background-position:50% ${focY(c)}%`:''}"></div>${c.lv>=10?LV10(c).replace('lv10f','lv10f bk10f'):''}<div class="bkn${c.lv?' bknl':''}"${nmS(c.name+(c.lv?'+10':'')+(c.ex?'EX ':''),9)}>${c.lv?`<span>${c.name}</span>${lvN(c)}`:c.name}</div><img class="bke" src="img/ic/${c.el}.webp" alt="">
+  <div class="bka" style="background-image:url(${src})${portArt(c)?`;background-position:50% ${focY(c)}%`:''}"></div>${c.lv>=10?LV10(c).replace('lv10f','lv10f bk10f'):''}${kwi}${shd}${f.tok?'<span class="bktok">kopya</span>':''}<div class="bkn${c.lv?' bknl':''}"${nmS(c.name+(c.lv?'+10':'')+(c.ex?'EX ':''),9)}>${c.lv?`<span>${c.name}</span>${lvN(c)}`:c.name}</div><img class="bke" src="img/ic/${c.el}.webp" alt="">
   ${c.ez?'':c.ex?'<span class="bkx">'+KDI+'</span>':''}${f.evo?'<span class="bkev">EVRİM TAŞI</span>':''}${f.st?`<span class="bkst"><img src="img/ic/${f.st}.webp" alt="">+10</span>`:''}${f.burn?`<span class="bkb"><img src="img/ic/burn.webp" alt="">${f.burn}</span>`:''}${f.poiT>0?`<span class="bkv bkp"><img src="img/ic/poison.webp" alt="">${f.poi}</span>`:''}${f.bldT>0?`<span class="bkv bkl"><img src="img/ic/blood.webp" alt="">${f.bld}</span>`:''}${f.ampT>0?`<span class="bkv bka2">${icon('shadow')}×${f.amp}</span>`:''}${f.frz>0?'<span class="bkfz">❄ Donmuş</span>':''}${f.mute>0?'<span class="bkmu">Yetenek kapalı</span>':''}
   <div class="bkhp"><i class="${p<.35?'lo':''}" style="width:${p*100}%"></i><span>${f.hp} / ${mx(f)}</span></div>
   <div class="bkat${big?' big':''}"><span>${a.name}${a.fx?`<em>${FXS[a.fx]}</em>`:''}</span><b>${atkOf(f)}${a.fx==='coin'?'+':''}</b></div>${hint}</div>`}
@@ -2405,7 +2429,7 @@ async function sweep(){
   dead.forEach(([s,i,f])=>{const n=koN(f);B[s].lives=Math.max(0,B[s].lives-n);B[s].board[i]=null;
     if(f.c.exa==='harvest'&&!f.revd&&B.lastKO[s]&&B[s].lives>0){const c=B.lastKO[s],g=mk(c);g.hp=Math.max(10,Math.round(mx(g)/2/5)*5);g.revd=1;B[s].board[i]=g;rev.push([s,i,c])}
     if(!f.c.ez)B.lastKO[s]=f.c});
-  B.log=dead.map(([s,i,f])=>`<b>${f.c.name}</b> yenildi · ${s==='me'?'sen':'rakip'} ${koN(f)} can kaybetti${f.ko2?' (Feda: tek vuruş!)':''}`).join('<br>');
+  B.log=dead.map(([s,i,f])=>f.tok?`<b>${f.c.name}</b> (kopya) yenildi`:`<b>${f.c.name}</b> yenildi · ${s==='me'?'sen':'rakip'} ${koN(f)} can kaybetti${f.ko2?' (Feda: tek vuruş!)':''}`).join('<br>');
   if(hv.length)B.log+='<br>'+hv.map(([s,i,n])=>`<b>Ruh Hasadı</b>: Ölüağaç +${40*n} can`).join('<br>');if(rev.length)B.log+='<br>'+rev.map(([s,i,c])=>`<b>Ölüağaç</b> son ruhu geri çağırdı: <b>${c.name}</b> sahada!`).join('<br>');
   renderBattle();hv.forEach(([s,i,n])=>{ringFx(elOf(s,i),'shadow','Ruh Hasadı +'+40*n)});rev.forEach(([s,i])=>ringFx(elOf(s,i),'light','Geri döndü!'));
   dead.forEach(([s])=>{const hs=document.querySelectorAll(`[data-lv="${s}"] img`),h=hs[B[s].lives];if(h)h.animate([{transform:'scale(2)',filter:'none'},{transform:'scale(.8)'}],{duration:550})});
@@ -2493,6 +2517,7 @@ async function strike(s,ai,ti){
   renderBattle();const ne=elOf(o,ti),na=elOf(s,ai);
   if(s==='me'){dq('hit',A.c.el);if(k==='w')dq('weak')}SFX.hit(A.c.el,k);if(ev.stood)setTimeout(()=>{ringFx(ne,'light','Ayağa kalktı! 50 can');SFX.heal()},500);bshake(k==='w'?1.4:.7);bnum(ne,k==='i'?'Bağışık':'−'+ev.d,k==='w'?'x':k?'w':'');if(ne&&ev.d)ne.classList.add('hit');
   if(ev.coin!==undefined)setTimeout(()=>bnum(na,ev.coin?'Tura! +'+FXV.coin:'Yazı','x'),150);
+  if(ev.shield)setTimeout(()=>ringFx(ne,'earth','Kalkan!'),200);if(ev.sn!=null)setTimeout(()=>{const e=elOf(s,ev.sn);if(e){bnum(e,'−40','x');ringFx(e,'blood','Son Nefes')}},500);if(ev.bag)setTimeout(()=>ringFx(na,A.c.el,'Bağ +%15'),120);
   if(ev.leech)setTimeout(()=>{ringFx(na,'water','+'+ev.leech+' can'+(ev.leechUp?' · kalıcı +50':''));SFX.heal()},450);if(ev.mill)setTimeout(()=>ringFx(ne,'shadow','Bir kart desteye döndü'),450);
   if(ev.burned)setTimeout(()=>{SFX.burn();bnum(elOf(o,ti),'Yandı!','')},350);
   if(ev.amp)setTimeout(()=>ringFx(elOf(o,ti),'shadow','Kötü etkiler ×'+ev.amp),500);
@@ -2531,6 +2556,7 @@ async function tap(s,i){
     B.busy=true;const j=B.selH;B.selH=null;await supAnim('me',j,i);if(B&&!B.over){B.busy=false;renderBattle()}return}
   if(s==='me'){if(!B.me.board[i])return;if(B.me.board[i].frz>0){toast('Boşgöz bu yaratığı dondurdu: bu tur saldıramaz');return}if(B.lock&&B.me.board[i].c.el!==B.lock){toast('İrade: bu tur sadece Işık yaratığın saldırabilir');return}B.sel=B.sel===i?null:i;SFX.select();renderBattle();return}
   if(B.sel===null||!B.foe.board[i]||!B.me.board[B.sel])return;
+  if(!tauntOk(B,'foe',i)){toast('🏰 Nöbetçi: önce rakibin Nöbetçi yaratığına saldırmalısın');return}
   B.busy=true;const ai=B.sel;B.sel=null;tutHit();
   if(await strike('me',ai,i))return;
   await foeMove();
@@ -2547,8 +2573,8 @@ async function foeMove(){
   if(!B||B.over)return;
   const ms=pickSup(B,'foe',false);if(ms){await supAnim('foe',ms.j,ms.i);if(!B||B.over)return}}
   let best=null;
-  B.foe.board.forEach((a,ai2)=>{if(!a||a.frz>0||(lk&&a.c.el!==lk))return;B.me.board.forEach((d,di)=>{if(!d)return;const sc=aiScore(a,d,B.foe.board,B.me.board);if(!best||sc>best.sc)best={sc,ai:ai2,di}})});
-  if(Math.random()<(B.mis??LEAGUES[lgOf(S.trophy||0)].mis)){const as=B.foe.board.map((f,i)=>f&&!(f.frz>0)&&(!lk||f.c.el===lk)?i:-1).filter(i=>i>=0),ds=B.me.board.map((f,i)=>f?i:-1).filter(i=>i>=0);if(as.length&&ds.length)best={ai:as[Math.floor(Math.random()*as.length)],di:ds[Math.floor(Math.random()*ds.length)]}}
+  B.foe.board.forEach((a,ai2)=>{if(!a||a.frz>0||(lk&&a.c.el!==lk))return;B.me.board.forEach((d,di)=>{if(!d||!tauntOk(B,'me',di))return;const sc=aiScore(a,d,B.foe.board,B.me.board);if(!best||sc>best.sc)best={sc,ai:ai2,di}})});
+  if(Math.random()<(B.mis??LEAGUES[lgOf(S.trophy||0)].mis)){const as=B.foe.board.map((f,i)=>f&&!(f.frz>0)&&(!lk||f.c.el===lk)?i:-1).filter(i=>i>=0),ds=B.me.board.map((f,i)=>f&&tauntOk(B,'me',i)?i:-1).filter(i=>i>=0);if(as.length&&ds.length)best={ai:as[Math.floor(Math.random()*as.length)],di:ds[Math.floor(Math.random()*ds.length)]}}
   if(best){if(await strike('foe',best.ai,best.di))return}else{B.log='Rakip saldıramadı';renderBattle();await wait(600)}
   if(!B||B.over)return;
   await meTurn(false);
@@ -2654,7 +2680,7 @@ function renderRules(){
   <p><b>Arena rakipleri:</b> Bronz ve Gümüş ligde rakipler sadece Yaygın kart kullanır; lig yükseldikçe rakipler güçlenir. Üst üste 3 yenilgiden sonra bir sonraki rakip daha kolay olur.</p>
   <p><b>Otomatik oynama:</b> Sıra sendeyken 15 saniye hamle yapmazsan oyun senin yerine oynar. Savaştaki <b>Otomatik</b> düğmesiyle savaşın tamamını otomatik oynatabilirsin.</p>
   <p><b>Ödüller:</b> Arena galibiyeti ${ECON.win} altın (+lig bonusu) ve kupa verir. Dostluk maçları ödülsüzdür. Ödül için savaş en az 30 saniye sürmeli.</p></div>
-  <h3>Özel kural</h3><p>Arenada 3 günde bir değişen, isteğe bağlı bir kural modu vardır (saat 03:00'te yenilenir). Normal SAVAŞ düğmesi kuralsız oynar; Arena ekranındaki <b>Bu kuralla savaş</b> düğmesi o dönemin kuralıyla oynar: bir türün %20 güçlendiği dönem, sadece Yaygın ve Nadir yaratıkların oynandığı dönem, canların %30 fazla olduğu dönem, herkesin dolu saldırıyla başladığı dönem ya da Efsanevi, Kadim ve Ezeli kartların oynanmadığı dönem. Kupa ve ödüller normal arenayla aynıdır. Macera, kule ve arkadaş maçları etkilenmez.</p><h3>Ligler</h3><div class="box scroll"><table><tr><th>Lig</th><th>Kupa</th><th>Ek altın</th><th>Rakip güçlenme</th><th>İlk ulaşma ödülü</th></tr>${LEAGUES.map(l=>`<tr><td>${l.n}</td><td>${l.min}+</td><td>+${l.gold}</td><td>%${Math.round(l.up*100)}</td><td>${l.reward?l.reward+' paket':'-'}</td></tr>`).join('')}</table><p>Galibiyet <code>+${TROPHY.win}</code>, mağlubiyet <code>${TROPHY.loss}</code> kupa. Bir lige ulaştıktan sonra o ligin tabanının altına düşülmez. Rakip güçlenme: rakibin her kartının bir üst nadirlikten gelme ihtimali.</p></div>
+  <h3>Yetenek Arenası</h3><p>Arena ekranındaki Yetenek Arenası modunda bazı kartların anahtar kelimeleri çalışır: 🛡️ Kalkan, 🏰 Nöbetçi, 🐾 Pusu, 💀 Son Nefes, 🥚 Çağırma, 🔗 Bağ, 🤫 Sessizlik. Bir kartın kelimesi kart detayında yazar ve evrimleşince de kalır. Bu modda kelimeli kartların canı ya da hasarı %10 düşüktür. Ödüller normal arenayla aynıdır.</p><h3>Özel kural</h3><p>Arenada 3 günde bir değişen, isteğe bağlı bir kural modu vardır (saat 03:00'te yenilenir). Normal SAVAŞ düğmesi kuralsız oynar; Arena ekranındaki <b>Bu kuralla savaş</b> düğmesi o dönemin kuralıyla oynar: bir türün %20 güçlendiği dönem, sadece Yaygın ve Nadir yaratıkların oynandığı dönem, canların %30 fazla olduğu dönem, herkesin dolu saldırıyla başladığı dönem ya da Efsanevi, Kadim ve Ezeli kartların oynanmadığı dönem. Kupa ve ödüller normal arenayla aynıdır. Macera, kule ve arkadaş maçları etkilenmez.</p><h3>Ligler</h3><div class="box scroll"><table><tr><th>Lig</th><th>Kupa</th><th>Ek altın</th><th>Rakip güçlenme</th><th>İlk ulaşma ödülü</th></tr>${LEAGUES.map(l=>`<tr><td>${l.n}</td><td>${l.min}+</td><td>+${l.gold}</td><td>%${Math.round(l.up*100)}</td><td>${l.reward?l.reward+' paket':'-'}</td></tr>`).join('')}</table><p>Galibiyet <code>+${TROPHY.win}</code>, mağlubiyet <code>${TROPHY.loss}</code> kupa. Bir lige ulaştıktan sonra o ligin tabanının altına düşülmez. Rakip güçlenme: rakibin her kartının bir üst nadirlikten gelme ihtimali.</p></div>
   <h3>4. Ekonomi</h3>
   <div class="box scroll"><table><tr><th></th>${RAR.map(r=>`<th>${r.n}</th>`).join('')}</tr><tr><td>Kopya → toz</td>${RAR.map(r=>`<td>${r.dust}</td>`).join('')}</tr><tr><td>Üretim bedeli</td>${RAR.map(r=>`<td>${r.craft}</td>`).join('')}</tr><tr><td>Setteki adet</td>${POOL.map(p=>`<td>${p.length}</td>`).join('')}</tr></table>
   <p>Paket fiyatları: Seri 1 <code>${MR.packCost(1)}</code>, Seri 2 <code>${MR.packCost(2)}</code>, Seri 3 <code>${MR.packCost(3)}</code> altın. Galibiyet <code>${ECON.win}</code>, mağlubiyet <code>${ECON.loss}</code> altın. Başlangıçta ${ECON.startGold} altın ve ${ECON.freePacks} ücretsiz paket verilir. Her <code>6 saatte</code> 1 hediye paketi birikir (en fazla ${GIFT.max}); Paketler ekranından alınır. Her 3 arena galibiyetinde bir zafer sandığı açılır. <b>Kadim kartlar:</b> her Efsanevi'nin bir Kadim hali vardır. Bölgenin macerasını bitirip Kadim boss'u yenince, Efsanevi'nin kart detayından 3 kopya ve 1500 tozla açılır. Kadim kartlar 7 puan tutar, özel yetenekleri vardır; yenilince sahibi 1 kart daha kaybeder. Her gün 3 <b>günlük görev</b> gelir (gece yarısı yenilenir); üçünü de bitirince +1 paket. <b>Macera</b> modunda 6 bölge ve 30 bölüm var; her bölgenin 5. bölümü boss'tur, ilk geçişte altın, toz ve boss'larda paket verir.</p></div>
@@ -2777,7 +2803,7 @@ document.addEventListener('pointerdown',e=>{if(e.target.closest('.btn,.tgo,nav b
 // dosyaları telefonda saklayan servis: içeriği değişen bir görsel/ses olursa ASSET_V artırılır
 // SÜRÜM KONTROLÜ: yeni sürüm yayınlanınca APP_V ve version.txt birlikte artırılır.
 // İnternet varken oyun arada bir version.txt'ye bakar; farklıysa üstte 'Yeni sürüm hazır · Yenile' çıkar (savaş sırasında beklenir).
-const APP_V='2026.11.28-5';
+const APP_V='2026.11.28-6';
 function verCheck(){if(window.claude||!navigator.onLine)return;
   fetch('version.txt?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{t=(t||'').trim();if(/^[\w.-]{3,40}$/.test(t)&&t!==APP_V){window.__upd=t;updShow()}}).catch(()=>{})}
 function updShow(){if(!window.__upd||document.getElementById('updb'))return;if(B&&!B.over){window.__updLater=1;return}
