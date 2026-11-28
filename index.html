@@ -1377,7 +1377,7 @@ body.nui .frp{animation:popin .25s ease}
 @keyframes hsel{0%,100%{transform:rotate(0) scale(1.08) translateY(0)}25%{transform:rotate(-1.2deg) scale(1.09) translateY(-6px)}50%{transform:rotate(0) scale(1.08) translateY(-3px)}75%{transform:rotate(1.2deg) scale(1.09) translateY(-7px)}}
 .endb .pzh{margin:6px auto 4px;max-width:92%;padding:8px 10px;border-radius:10px;background:#ffd76a1f;border:1px solid #ffd76a66;font:600 13px/1.35 Rubik,sans-serif!important;color:#ffeab0;text-shadow:none;-webkit-text-stroke:0}
 /* savaş sonu paneli her zaman en üstte (+10 çerçeveleri 3B katmanda kalıyordu) */
-.endb{z-index:60!important;transform:translateZ(80px)}
+.endb{z-index:15!important;transform:translateZ(80px)}
 </style>
 </head>
 <body>
@@ -2547,9 +2547,9 @@ function renderBattle(){if(!B)return;document.body.dataset.fld=B.fld?B.fld.k:'';
   {const pr=$('#pzre');if(pr)pr.onclick=()=>startPuzzle();const po=$('#pzout');if(po)po.onclick=()=>{B=null;document.body.classList.remove('inb');tab='pack';render();scrollTo(0,0)}}
   {const dn=$('#drnext');if(dn)dn.onclick=()=>{B=null;document.body.classList.remove('inb');tab='arena';render();scrollTo(0,0);openDraft()}}
   {const cb=$('#cbback');if(cb)cb.onclick=()=>{B=null;document.body.classList.remove('inb');tab='clan';window.__clView='boss';render();scrollTo(0,0)}}
-  if(B.tw){const tw=B.tw,go=k=>{B=null;document.body.classList.remove('inb');advView='tw';twSel=tw.el;if(k==null){renderAdv();scrollTo(0,0)}else towerInfo(tw.el,k)};
+  if(B.tw){const tw=B.tw,go=k=>{B=null;document.body.classList.remove('inb');advView='tw';twSel=tw.el;renderAdv();scrollTo(0,0);if(k!=null)towerInfo(tw.el,k)};
    const n2=$('#tnext');if(n2)n2.onclick=()=>go(tw.f+1);const r2=$('#tretry');if(r2)r2.onclick=()=>go(tw.f);const m2=$('#tmap');if(m2)m2.onclick=()=>go(null)}
-  {const ai=B.adv,go=k=>{B=null;document.body.classList.remove('inb');if(k==null){renderAdv();scrollTo(0,0)}else advInfo(k)};
+  {const ai=B.adv,go=k=>{B=null;document.body.classList.remove('inb');renderAdv();scrollTo(0,0);if(k!=null)advInfo(k)};
    const n1=$('#anext');if(n1)n1.onclick=()=>go(ai+1);const r1=$('#aretry');if(r1)r1.onclick=()=>go(ai);const m1=$('#amap');if(m1)m1.onclick=()=>go(null)}
   const l=$('#leave');if(l)l.onclick=()=>{B=null;document.body.classList.remove('inb');renderArena();scrollTo(0,0)};
 }
@@ -3069,7 +3069,7 @@ document.addEventListener('pointerdown',e=>{if(e.target.closest('.btn,.tgo,nav b
 // dosyaları telefonda saklayan servis: içeriği değişen bir görsel/ses olursa ASSET_V artırılır
 // SÜRÜM KONTROLÜ: yeni sürüm yayınlanınca APP_V ve version.txt birlikte artırılır.
 // İnternet varken oyun arada bir version.txt'ye bakar; farklıysa üstte 'Yeni sürüm hazır · Yenile' çıkar (savaş sırasında beklenir).
-const APP_V='2026.11.28-20';
+const APP_V='2026.11.28-21';
 function verCheck(){if(window.claude||!navigator.onLine)return;
   fetch('version.txt?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{t=(t||'').trim();if(/^[\w.-]{3,40}$/.test(t)&&t!==APP_V){window.__upd=t;updShow()}}).catch(()=>{})}
 function updShow(){if(!window.__upd||document.getElementById('updb'))return;if(B&&!B.over){window.__updLater=1;return}
