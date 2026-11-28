@@ -1373,6 +1373,7 @@ body.nui .frp{animation:popin .25s ease}
 .bkat .pwc.c0 i{animation:none;--cp:0%}.bkat .pwc.c0 svg{animation:none;opacity:.35;fill:#c9a24a}
 .bkat .pwc.c5 i{animation:none;--cp:50%}.bkat .pwc.c5 svg{animation:none;opacity:.6}
 .bkat.big .pwc{filter:drop-shadow(0 0 4px #ffd84a)}
+.adbk{margin-top:14px;padding:12px;border-radius:12px;background:#ffffff0d;border:1px solid #ffffff22;display:flex;flex-direction:column;gap:6px}.adbk small{color:#ffffffa8;font-size:12px;line-height:1.35}
 </style>
 </head>
 <body>
@@ -3055,7 +3056,7 @@ document.addEventListener('pointerdown',e=>{if(e.target.closest('.btn,.tgo,nav b
 // dosyaları telefonda saklayan servis: içeriği değişen bir görsel/ses olursa ASSET_V artırılır
 // SÜRÜM KONTROLÜ: yeni sürüm yayınlanınca APP_V ve version.txt birlikte artırılır.
 // İnternet varken oyun arada bir version.txt'ye bakar; farklıysa üstte 'Yeni sürüm hazır · Yenile' çıkar (savaş sırasında beklenir).
-const APP_V='2026.11.28-14';
+const APP_V='2026.11.28-15';
 function verCheck(){if(window.claude||!navigator.onLine)return;
   fetch('version.txt?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{t=(t||'').trim();if(/^[\w.-]{3,40}$/.test(t)&&t!==APP_V){window.__upd=t;updShow()}}).catch(()=>{})}
 function updShow(){if(!window.__upd||document.getElementById('updb'))return;if(B&&!B.over){window.__updLater=1;return}
@@ -3366,8 +3367,10 @@ const giftTxt=P=>[P.gold&&`${P.gold} altın`,P.dust&&`${P.dust} toz`,P.free&&`${
 async function openAdmin(who){const ov=$('#ov');ov.className='ov on';const A=window.__adm=window.__adm||{u:null,cards:{}};if(who)A.u=who;
   const shell=body=>{ov.innerHTML=`<div class="fp setp frp admp"><div class="sth"><b>🛠️ Yönetici paneli</b><button class="stx" id="adclose" aria-label="Kapat">✕</button></div>
     <div class="adsr"><input class="accin" id="adq" placeholder="Oyuncu ara (kullanıcı adı)" autocapitalize="off" spellcheck="false" maxlength="16" value="${escH(A.q||'')}"><button class="btn" id="adgo">Ara</button></div>
-    <div id="adres"></div>${body}</div>`;
+    <div id="adres"></div>${body}<div class="adbk"><b>💾 Yedek</b><small>Tüm oyuncu verilerini (hesaplar, kartlar, klanlar, maçlar) tek dosya olarak indirir. Dosyada şifre özetleri de var; kimseyle paylaşma.</small><button class="btn alt" id="adbk">Veritabanını indir</button></div></div>`;
     $('#adclose').onclick=()=>{ov.className='ov';ov.innerHTML=''};
+    $('#adbk').onclick=async()=>{const b=$('#adbk');b.disabled=true;b.textContent='Hazırlanıyor…';try{const a=accGet(),r=await fetch('/api/admin/backup',{headers:{authorization:'Bearer '+a.tok}});if(!r.ok)throw new Error((await r.json().catch(()=>({}))).error||'İndirilemedi');
+      const bl=await r.blob(),u=URL.createObjectURL(bl),l=document.createElement('a');l.href=u;l.download=`mythbeast-yedek-${new Date().toISOString().slice(0,10)}.json`;document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(u),5000);toast(`Yedek indirildi (${Math.round(bl.size/1024)} KB)`)}catch(e){toast(e.message)}b.disabled=false;b.textContent='Veritabanını indir'};
     const go=async()=>{A.q=$('#adq').value.trim();try{const j=await api('/api/admin/find?q='+encodeURIComponent(A.q));
       $('#adres').innerHTML=j.users.length?`<div class="adul">${j.users.map(u=>`<button class="adu${u.banned?' ban':''}" data-adu="${escH(u.name)}">${escH(u.name)}${u.banned?' ⛔':''}</button>`).join('')}</div>`:'<p class="frem">Bulunamadı.</p>';
       $('#adres').querySelectorAll('[data-adu]').forEach(b=>b.onclick=()=>openAdmin(b.dataset.adu))}catch(e){toast(e.message)}};

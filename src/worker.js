@@ -961,6 +961,13 @@ const payloadTxt = P => [P.gold && `${P.gold} altın`, P.dust && `${P.dust} toz`
 async function adminApi(req, env, db, path, method, me) {
   const target = async u => { const o = await db.prepare('SELECT id, name, banned, created FROM users WHERE ukey = ?').bind(ukeyOf(String(u || ''))).first(); if (!o) throw uerr('Oyuncu bulunamadı.', 404); return o; };
   try {
+    // tüm veritabanının yedeği (oturum anahtarları hariç); sahip ara sıra indirip saklar
+    if (path === '/api/admin/backup' && method === 'GET') {
+      const tabs = ((await db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_cf_%' AND name NOT LIKE 'd1_%' AND name <> 'sessions' ORDER BY name").all()).results || []).map(r => r.name);
+      const out = { v: 1, app: 'mythbeast-realm', t: Date.now(), tables: {} };
+      for (const t of tabs) { const rows = []; for (let off = 0; ; off += 1000) { const r = (await db.prepare(`SELECT * FROM "${t}" LIMIT 1000 OFFSET ${off}`).all()).results || []; rows.push(...r); if (r.length < 1000) break; } out.tables[t] = rows; }
+      return new Response(JSON.stringify(out), { headers: { 'content-type': 'application/json; charset=utf-8', 'content-disposition': `attachment; filename="mythbeast-yedek-${new Date().toISOString().slice(0, 10)}.json"`, 'cache-control': 'no-store' } });
+    }
     if (path === '/api/admin/find' && method === 'GET') {
       const q = ukeyOf(String(new URL(req.url).searchParams.get('q') || '')).replace(/[%_]/g, '').slice(0, 16);
       const rows = (await db.prepare('SELECT name, banned FROM users WHERE ukey LIKE ? ORDER BY ukey LIMIT 20').bind(q + '%').all()).results || [];
