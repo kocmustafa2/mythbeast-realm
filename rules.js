@@ -385,7 +385,7 @@ const fresh=()=>({gold:ECON.startGold,dust:0,free:ECON.freePacks,owned:{},pity:0
 // Sunucunun sahip olduğu alanlar: istemcinin kaydetme isteği bunları DEĞİŞTİREMEZ.
 const ECON_KEYS=['gold','dust','free','owned','shiny','sup','supV','supV2','pity','xp','lvl','opened','trophy','bestLg','wins','losses',
   'streak','lstreak','chest','chests','hist','gift','gt','advC','advV','exB','rqT','dn','dq','rare','tp','uidN','tut','bt','bl',
-  'av','bestStk','dnTot','evoN','awkN','ssBest','ach','achC','rq','lgn','lv','ss','ks','tw','twd'];
+  'av','bestStk','dnTot','evoN','awkN','ssBest','ach','achC','rq','lgn','lv','ss','ks','tw','twd','dr','drN','drBest','ev','pz','pzN','cbd'];
 // İstemcinin değiştirebildiği zararsız alanlar (ayarlar, deste seçimi, ipuçları).
 const CLIENT_KEYS=['mv','sv','snd','deck','deck2','decks','dA','dM','dT','shOff','pset','th','sid','t'];
 const TUT_CLIENT_MAX=2;            // istemci öğreticiyi en fazla bu adıma kendisi ilerletebilir (hoş geldin → paket aç)
