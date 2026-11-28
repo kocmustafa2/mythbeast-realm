@@ -930,7 +930,7 @@ body.inb main{padding:0 10px 16px}
 .b2bar{display:flex;align-items:center;gap:10px;background:#0b1020e6;border:1px solid #ffd84a88;border-radius:99px;padding:4px 14px;box-shadow:0 4px 14px #000a}
 .b2bar .b2t{font:15px 'MRDisplay',sans-serif;letter-spacing:1px}.b2bar.foe .b2t{color:#ff8a7a}.b2bar.end .b2t{color:var(--gold)}
 .b2clk{font:21px 'MRDisplay',sans-serif;color:#ffd84a;min-width:52px;text-align:center}.b2clk.low{color:#ff6a5a;animation:pz .5s infinite alternate}@keyframes pz{to{transform:scale(1.12)}}
-.b2log{max-width:96%;min-height:20px;text-align:center;font:600 12px/1.3 Rubik,sans-serif;background:#000a;border-radius:10px;padding:3px 10px}.b2log .b2w{color:#ffe14a}
+.b2log{max-width:96%;min-height:20px;height:38px;display:flex;align-items:center;justify-content:center;overflow:hidden;text-align:center;font:600 12px/1.3 Rubik,sans-serif;background:#000a;border-radius:10px;padding:3px 10px}.b2log .b2w{color:#ffe14a}
 .b2pass{padding:6px 18px;font-size:14px}
 .b2hand{position:relative;height:132px;margin-top:2px}
 .hk{position:absolute;bottom:0;width:84px;height:122px;border-radius:10px;overflow:hidden;background:#141a26;box-shadow:0 4px 12px #000c,0 0 0 2px var(--ec);transform:rotate(var(--rot,0deg));transform-origin:50% 120%;transition:bottom .25s,filter .25s;cursor:pointer;animation:hfl 3.2s ease-in-out infinite}
@@ -1369,6 +1369,12 @@ body.nui .frp{animation:popin .25s ease}
 .bk.ch::after{box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--ec) 30%,#fff),inset 0 0 14px 4px color-mix(in srgb,var(--ec) 75%,transparent);animation:chin 1.8s ease-in-out infinite}
 @keyframes chin{50%{box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--ec) 20%,#fff),inset 0 0 18px 6px color-mix(in srgb,var(--ec) 85%,transparent)}}
 .bk.ch .bkat{background:linear-gradient(90deg,color-mix(in srgb,var(--ec) 45%,#000),#0a0f18);box-shadow:inset 0 0 0 1px var(--ec)}
+.b2log>span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+/* seçilen kart süzülür */
+.bk.sel{animation:selfl 1.6s ease-in-out infinite}
+@keyframes selfl{0%,100%{transform:translateY(-10px) scale(1.04) rotate(0)}25%{transform:translateY(-15px) scale(1.05) rotate(-.8deg)}50%{transform:translateY(-12px) scale(1.04) rotate(0)}75%{transform:translateY(-16px) scale(1.05) rotate(.8deg)}}
+.hk.sel{animation:hsel 1.6s ease-in-out infinite}
+@keyframes hsel{0%,100%{transform:rotate(0) scale(1.08) translateY(0)}25%{transform:rotate(-1.2deg) scale(1.09) translateY(-6px)}50%{transform:rotate(0) scale(1.08) translateY(-3px)}75%{transform:rotate(1.2deg) scale(1.09) translateY(-7px)}}
 </style>
 </head>
 <body>
@@ -2512,7 +2518,7 @@ function renderBattle(){if(!B)return;document.body.dataset.fld=B.fld?B.fld.k:'';
    <div class="b2top foe"><div class="lv" data-lv="foe">${B.cb?'<b class="cbtag">KLAN BOSS\'U</b>':hearts(fo.lives)}</div><b>${B.fr?escH(B.fr.name).toLocaleUpperCase('tr'):'RAKİP'}</b>${auraChips(fo.board)}<div class="b2pile"><img src="img/back.webp" alt=""><span>${fo.deck.length}</span></div></div>
    <div class="b2fh">${fo.hand.map(x=>`<img src="img/${x.t==='c'&&setOf(x.c)===2?'back2':'back'}.webp" alt="">`).join('')}</div>
    <div class="b2row foe${B.cb?' cbrow':''}">${B.cb?bk(fo.board[1],'foe',1):fo.board.map((f,i)=>bk(f,'foe',i)).join('')}</div>
-   <div class="b2mid"><div class="b2bar ${B.turn}${B.over?' end':''}"><span class="b2t">${TI(t)}</span><span class="b2clk${clockLeft()<=15&&!B.over?' low':''}" id="clk">${clockTxt()}</span></div>${B.fld?`<button class="b2fld" id="bfld" style="--fc:${AUC[B.fld.el]}"><img src="${FLDI(B.fld)}" alt="">${B.fld.n}</button>`:''}<div class="b2log">${info}</div>${pass?'<button class="btn alt b2pass" id="bpass">Pas geç</button>':''}${!B.over&&!B.tut&&!B.pz?`<button class="b2auto${B.auto?' on':''}" id="bauto"><img src="img/ic/auto.webp" alt="">Otomatik${B.auto?' · açık':''}</button>`:''}</div>
+   <div class="b2mid"><div class="b2bar ${B.turn}${B.over?' end':''}"><span class="b2t">${TI(t)}</span><span class="b2clk${clockLeft()<=15&&!B.over?' low':''}" id="clk">${clockTxt()}</span></div>${B.fld?`<button class="b2fld" id="bfld" style="--fc:${AUC[B.fld.el]}"><img src="${FLDI(B.fld)}" alt="">${B.fld.n}</button>`:''}<div class="b2log"><span>${info}</span></div>${pass?'<button class="btn alt b2pass" id="bpass">Pas geç</button>':''}${!B.over&&!B.tut&&!B.pz?`<button class="b2auto${B.auto?' on':''}" id="bauto"><img src="img/ic/auto.webp" alt="">Otomatik${B.auto?' · açık':''}</button>`:''}</div>
    <div class="b2row me">${me.board.map((f,i)=>bk(f,'me',i)).join('')}</div>
    <div class="b2top me"><div class="lv" data-lv="me">${hearts(me.lives)}</div><b>SEN</b>${auraChips(me.board)}<div class="b2pile"><img src="img/back.webp" alt=""><span>${me.deck.length}</span></div></div>
    <div class="b2hand" id="b2hand">${(P=>me.hand.map((x,j)=>hk(x,j,P(j))).join(''))(handPos(me.hand.length))}</div>
@@ -3051,7 +3057,7 @@ document.addEventListener('pointerdown',e=>{if(e.target.closest('.btn,.tgo,nav b
 // dosyaları telefonda saklayan servis: içeriği değişen bir görsel/ses olursa ASSET_V artırılır
 // SÜRÜM KONTROLÜ: yeni sürüm yayınlanınca APP_V ve version.txt birlikte artırılır.
 // İnternet varken oyun arada bir version.txt'ye bakar; farklıysa üstte 'Yeni sürüm hazır · Yenile' çıkar (savaş sırasında beklenir).
-const APP_V='2026.11.28-17';
+const APP_V='2026.11.28-18';
 function verCheck(){if(window.claude||!navigator.onLine)return;
   fetch('version.txt?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{t=(t||'').trim();if(/^[\w.-]{3,40}$/.test(t)&&t!==APP_V){window.__upd=t;updShow()}}).catch(()=>{})}
 function updShow(){if(!window.__upd||document.getElementById('updb'))return;if(B&&!B.over){window.__updLater=1;return}
