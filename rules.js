@@ -370,6 +370,7 @@ function advStage(i){if(i>=100)return advStageX(i);const ch=Math.floor(i/ADV_P),
   const pool=CARDS.filter(c=>c.el===el&&c.r<3&&setOf(c)<3),pk=rr=>{const L=pool.filter(c=>c.r===rr);return (L.length?L:pool)[Math.floor(r()*(L.length||pool.length))]};
   const w=[Math.max(.1,.85-1.1*d),.15+.45*d,Math.max(0,.6*d-.05)];
   const deck=[];for(let k=0;k<7;k++){let x=r()*(w[0]+w[1]+w[2]),rr=x<w[0]?0:x<w[0]+w[1]?1:2;if(p===0&&ch===0)rr=0;deck.push(pk(rr))}
+  {const n={};deck.forEach((c,k)=>{if((n[c.id]||0)>=2){const free=x=>(n[x.id]||0)<1;let alt=[];for(const rr of [c.r,c.r+1,c.r-1])if(!alt.length)alt=pool.filter(x=>x.r===rr&&free(x));if(alt.length)deck[k]=c=alt[Math.floor(r()*alt.length)]}n[c.id]=(n[c.id]||0)+1})}   // bir kart en fazla 2 kez
   let boss=null;if(last){boss=CARDS.find(c=>c.el===el&&c.r===3)||pool.sort((a,b)=>b.hp-a.hp)[0];deck[1]=boss}
   // ilk geçiş altını 200'den ~1000'e çıkar; diyar ortasında ve sonunda (boss) 1 paket
   return{i,ch,p,el,cn,name:last?`${boss.name}`:`${cn} ${p+1}`,rule,deck,boss,fld:!last&&p%3===2?fldOf(el):null,mis:Math.max(.05,.45-.42*d)-(last?.05:0),gold:Math.round((200+800*d)/10)*10,dust:10+i,pack:last||p===4?1:0}}
@@ -478,6 +479,8 @@ function battleEnd(st,p,ctx){const bt=st.bt,now=ctx.now;
     if(R.first){R.du=sc(st0.dust);st.dust+=R.du;if(st0.x){st.exB=st.exB||{};st.exB[st0.ch]=1}else st.advC=bt.adv+1;if(st0.pack){R.pk=Math.floor(st0.pack*rf+.5);st.free+=R.pk}if(rf>=.5){R.sup=st0.x||st0.p===ADV_P-1?'evo':st0.el;giveSup(st,R.sup)}}
     if(win)dqInc(st,'adv',null,1,now);return R}
   const R={mode:'arena',win,rf},lg0=lgOf(st.trophy||0),floor=LEAGUES[lg0].min;R.lg0=lg0;R.g=sc(win?ECON.win+LEAGUES[lg0].gold:ECON.loss);st.gold+=R.g;
+  // Özel Kural / Yetenek Arenası: sadece altın; kupa, seri, sandık ve sezon puanı değişmez
+  if(bt.sp){Object.assign(R,{sp:bt.sp,dt:0,sb:null,chest:0,lost:0,lg1:lg0,reward:0,trophy:st.trophy||0,streak:st.streak||0,chestP:st.chest||0});return R}
   R.dt=win?TROPHY.win:Math.max(TROPHY.loss,floor-(st.trophy||0));R.sb=null;R.chest=0;R.lost=0;
   if(win){st.streak=(st.streak||0)+1;if(st.streak>(st.bestStk||0))st.bestStk=st.streak;const sb=strkB(st.streak);if(sb.tr||sb.g){const sg=sc(sb.g);R.sb={n:st.streak,tr:sb.tr,g:sg};R.dt+=sb.tr;R.g+=sg;st.gold+=sg}
     if(rf>=1||Math.random()<rf)st.chest=(st.chest||0)+1;if(st.chest>=CHEST.need){st.chest-=CHEST.need;st.chests=(st.chests||0)+1;R.chest=1}}
@@ -490,7 +493,7 @@ function battleEnd(st,p,ctx){const bt=st.bt,now=ctx.now;
   R.trophy=st.trophy;R.streak=st.streak||0;R.chestP=st.chest||0;return R}
 
 // Bitmeden terk edilen arena savaşı yenilgi sayılır (kaybedeceğini görünce sayfayı yenileyip kaçmayı önler).
-function forfeit(st,now){const bt=st.bt;st.bt=null;if(!bt||bt.mode!=='arena'||bt.tut)return null;
+function forfeit(st,now){const bt=st.bt;st.bt=null;if(!bt||bt.mode!=='arena'||bt.tut||bt.sp)return null;
   const lg0=lgOf(st.trophy||0),floor=LEAGUES[lg0].min,dt=Math.max(TROPHY.loss,floor-(st.trophy||0));
   st.trophy=Math.max(0,(st.trophy||0)+dt);st.losses++;st.streak=0;st.lstreak=(st.lstreak||0)+1;st.hist=[...(st.hist||[]),{w:0,dt}].slice(-5);return{dt}}
 
@@ -555,7 +558,7 @@ function towerStage(el,f){const d=f/(TOWER.floors-1),r=srnd(7000+ELS.indexOf(el)
     deck[1]=boss;ext.forEach((c,k)=>{if(k+2<7)deck[(k+2)%7===1?6:(k+2)%7]=c});if(tier>=2)for(let k=0;k<7;k++)if(deck[k].r<2)deck[k]=pk(2)}
   else if(bs){kind='mini';boss=mini[Math.floor(f/TOWER.boss)%mini.length];deck[1]=boss}
   else if(f>=40&&leg&&r()<.35)deck[3]=leg;
-  {const seen=new Set();deck.forEach((c,k)=>{if(seen.has(c.id)){const alt=pool.filter(x=>x.r===c.r&&!seen.has(x.id)&&!deck.includes(x));if(alt.length)deck[k]=c=alt[Math.floor(r()*alt.length)]}seen.add(c.id)})}
+  {const seen=new Set();deck.forEach((c,k)=>{if(seen.has(c.id)){const free=x=>!seen.has(x.id)&&!deck.includes(x);let alt=[];for(const rr of [c.r,c.r+1,c.r-1,c.r+2])if(!alt.length)alt=pool.filter(x=>x.r===rr&&free(x));if(!alt.length)alt=pool.filter(free);if(alt.length)deck[k]=c=alt[Math.floor(r()*alt.length)]}seen.add(c.id)})}   // aynı kart tekrar etmesin; o nadirlikte kart kalmadıysa yakın nadirlikten
   const rule=bs?'boss':['none','first',el==='fire'||el==='poison'?'burn':'charged','none','first','charged','none','burn'][f%8];
   const ss=3+Math.floor(f/6),gold=Math.round((100+10*f)/10)*10;
   const nm=big?(last?'Kule Zirvesi · ':'Güçlü Boss · ')+boss.name:bs?'Mini Boss · '+boss.name:`${T_N[el]} Kulesi ${f+1}`;
@@ -651,7 +654,7 @@ function act(st,a,p,ctx){p=p||{};const rng=ctx.rng,now=ctx.now;normalize(st,ctx)
       const ok=adv>=0&&(adv<ADV_N?adv<=c:(adv>=100&&adv<100+ADV_CH.length&&c>=(adv-99)*ADV_P));if(!ok)throw uerr('Bu bölüm henüz açılmadı.')}
     if(mode==='friend'&&!ctx.friendOk)throw uerr('Sadece arkadaşlarının ya da klan üyelerinin destesiyle savaşabilirsin.');
     const fo=forfeit(st,now);
-    const id=Math.floor(rng()*2**52).toString(36);st.bt={id,mode,adv,t0:now,tut:mode==='arena'&&st.tut===6?1:0};if(mode==='cboss'){const d=dayKey(now);st.cbd={day:d,n:(st.cbd&&st.cbd.day===d?st.cbd.n:0)+1};st.bt.cw=cbWeek(now)}if(tw)st.bt.tw=tw;if(mode==='friend'&&typeof p.fr==='string')st.bt.fr=p.fr.slice(0,16);
+    const id=Math.floor(rng()*2**52).toString(36);st.bt={id,mode,adv,t0:now,tut:mode==='arena'&&st.tut===6?1:0};if(mode==='cboss'){const d=dayKey(now);st.cbd={day:d,n:(st.cbd&&st.cbd.day===d?st.cbd.n:0)+1};st.bt.cw=cbWeek(now)}if(tw)st.bt.tw=tw;if(mode==='arena'&&(p.sp==='aw'||p.sp==='kw')&&!st.bt.tut)st.bt.sp=p.sp;if(mode==='friend'&&typeof p.fr==='string')st.bt.fr=p.fr.slice(0,16);
     return{id,forfeit:fo}}
   case 'battle_end':return battleEnd(st,p,ctx);
   case 'cboss_claim':{const o=ctx.cbOk;if(!o)throw uerr('Bu ödül alınamaz.');const boss=cbBoss(o.w),R={g:CB.rw.g+(o.top?CB.top.g:0),free:CB.rw.free+(o.top?CB.top.free:0),ks:CB.rw.ks,el:boss.el,top:!!o.top};st.gold+=R.g;st.free+=R.free;giveKS(st,boss.el,R.ks);return R}

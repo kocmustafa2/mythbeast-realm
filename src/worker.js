@@ -425,7 +425,7 @@ async function handleApi(req, env, path) {
       // sezon puanı: sadece arena (bitirilen ya da terk edilip yenilgi sayılan savaşlar)
       const sAdd = (pts, w, l) => db.prepare('INSERT INTO season_stats (user_id, season, pts, wins, losses) VALUES (?, ?, ?, ?, ?) ON CONFLICT(user_id, season) DO UPDATE SET pts = pts + excluded.pts, wins = wins + excluded.wins, losses = losses + excluded.losses')
         .bind(user.id, MR.seasonOf(Date.now()), pts, w, l).run();
-      if (a === 'battle_end' && r && r.mode === 'arena') await sAdd(r.dt || 0, r.win ? 1 : 0, r.win ? 0 : 1);
+      if (a === 'battle_end' && r && r.mode === 'arena' && !r.sp) await sAdd(r.dt || 0, r.win ? 1 : 0, r.win ? 0 : 1);
       if (a === 'battle_start' && r && r.forfeit) await sAdd(r.forfeit.dt || 0, 0, 1);
       if (a === 'cboss_claim' && cbOk) await db.prepare('INSERT OR IGNORE INTO clan_boss_claims (clan_id, week, user_id, t) VALUES (?, ?, ?, ?)').bind(cbClan, cbOk.w, user.id, Date.now()).run();
       if (a === 'battle_end' && r && r.mode === 'cboss' && r.dmg > 0) {   // klan boss'una hasar
