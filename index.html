@@ -1279,6 +1279,12 @@ body.nui .frp{animation:popin .25s ease}
 .bksh{position:absolute;left:4px;top:21px;z-index:30;transform:translateZ(8px);font-size:16px;line-height:1;background:#3fa0ffcc;border-radius:8px;padding:2px 3px;box-shadow:0 0 8px #3fa0ff}
 .bktok{position:absolute;right:4px;top:21px;z-index:30;transform:translateZ(8px);font:800 9px Rubik,sans-serif;background:#000b;border-radius:6px;padding:1px 4px}
 .kwinf{background:linear-gradient(135deg,#123b3a,#0f1e33);border:1px solid #3fd1b688;border-radius:14px;padding:9px 11px;margin:0 0 10px}.kwinf b{font:16px 'MRDisplay',sans-serif}.kwinf p{margin:3px 0;font:500 12.5px/1.35 Rubik,sans-serif;color:#d8f2ec}.kwinf small{font:700 11px Rubik,sans-serif;color:#7ff0d3}
+.kwim{width:1.25em;height:1.25em;vertical-align:-.28em;display:inline-block}
+.bkkw,.bksh{background:none!important;box-shadow:none!important;padding:0!important}.bkkw .kwim,.bksh .kwim{width:24px;height:24px;filter:drop-shadow(0 1px 3px #000)}
+.bksh .kwim{filter:drop-shadow(0 0 6px #3fa0ff) drop-shadow(0 1px 2px #000)}
+.kwl .kwim{width:18px;height:18px;vertical-align:-4px}.kwinf .kwim{width:26px;height:26px;vertical-align:-7px}
+.kwmode{width:40px;height:40px;animation:floaty 3s ease-in-out infinite;filter:drop-shadow(0 0 8px #3fd1b6aa)}
+.awi b img{width:38px!important;height:38px!important}
 </style>
 </head>
 <body>
@@ -1422,6 +1428,7 @@ const EZOWN='u_gCZR5eBoOHaN6bC0V8kJwQ';
 const exaTxt=c=>(c.ez?EZA:EXA)[c.exa];
 const koL=c=>c.ez?3:c.ex?2:1;   // yenilince giden can
 const koN=f=>f.tok?0:f.ko2?Math.max(2,koL(f.c)):koL(f.c);
+const KWIMG=new Set(['kalkan','nobet','pusu','sonnefes','cagir','bag']);const kwI=k=>KWIMG.has(k)?`<img class="kwim" src="img/kw/${k}.webp" alt="">`:MR.KW[k].i;   // anahtar kelime simgesi
 const kwX=(X,f)=>X&&X.kw&&f?MR.kwOf(f.c):null;   // Yetenek Arenası anahtar kelimesi
 const tauntOk=(X,o,di)=>{if(!X||!X.kw)return true;const t=X[o].board.some(f=>f&&f.hp>0&&MR.kwOf(f.c)==='nobet');return !t||(X[o].board[di]&&MR.kwOf(X[o].board[di].c)==='nobet')};   // Feda alan yaratık tek vuruşta yenerse en az 2 can
 const ALLC=()=>[...CARDS,...EXC,...EZC.filter(c=>owned(c.id)),...PRL.filter(c=>owned(c.id))];   // yapay zekâ görseli olan kartlar: img/<no>.jpg
@@ -1846,7 +1853,7 @@ function showCard(c,allowCraft){
   const evoRows=allowCraft&&chain.length?`<div class="evo"><b>Evrim</b><p class="evh">${root.name} kopyası: <b>${copies(root)}</b></p>${chain.map(t=>{const need=EVO_NEED[t.stage],pc=Math.min(100,copies(t)/need*100),lock=t.stage===2&&!owned(t.from);
     return `<div class="evr"><div class="evt"><span>${t.name}${owned(t.id)?' ✓':''}</span><small>${need} ${root.name}${lock?` · önce ${BY[t.from].name}`:''}</small><div class="evbar"><i style="width:${pc}%"></i></div></div><button class="btn evbtn" data-t="${t.id}" ${canEvo(t)?'':'disabled'}>Evrimleştir</button></div>`}).join('')}</div>`:'';
   ov.innerHTML=`<div class="detail">${cardHTML(c,{big:1,miss:!have,w:c.ez?'min(90vw,400px)':'min(70vw,300px)'})}
-  ${MR.kwOf(c)?`<div class="kwinf"><b>${MR.KW[MR.kwOf(c)].i} ${MR.KW[MR.kwOf(c)].n}</b><p>${MR.KW[MR.kwOf(c)].d}</p><small>Yetenek Arenası\'nda çalışır</small></div>`:''}  <div class="info"><p><span>Nadirlik</span><b>${c.ez?"Ezeli":R.n}</b></p><p><span>Sahip olunan</span><b>${have}</b></p>${hasShiny(c.id)?`<p class="shrow"><span class="shtxt">✦ Holo sürüm</span><b>${S.shiny[c.id]} tane <button class="tgl sm ${shownShiny(c.id)?'on':''}" id="shtg" aria-label="Holo göster"><i></i></button></b></p>`:''}
+  ${MR.kwOf(c)?`<div class="kwinf"><b>${kwI(MR.kwOf(c))} ${MR.KW[MR.kwOf(c)].n}</b><p>${MR.KW[MR.kwOf(c)].d}</p><small>Yetenek Arenası\'nda çalışır</small></div>`:''}  <div class="info"><p><span>Nadirlik</span><b>${c.ez?"Ezeli":R.n}</b></p><p><span>Sahip olunan</span><b>${have}</b></p>${hasShiny(c.id)?`<p class="shrow"><span class="shtxt">✦ Holo sürüm</span><b>${S.shiny[c.id]} tane <button class="tgl sm ${shownShiny(c.id)?'on':''}" id="shtg" aria-label="Holo göster"><i></i></button></b></p>`:''}
   ${c.from?`<p><span>Evrimleştiği kart</span><b>${BY[c.from].name}</b></p>`:''}${c.ex?`<p><span>${c.ez?'Ezeli':'Kadim'} yeteneği</span><b>${exaTxt(c)}</b></p><p><span>Deste puanı</span><b>${ptsOf(c)}</b></p>${c.base?`<p><span>Kökeni</span><b>${BY[c.base].name}</b></p>`:`<p><span>Tür</span><b>${T[c.el].n}</b></p><p><span>Yenilince</span><b>${koL(c)} can götürür</b></p>`}`:''}</div>${evoRows}${allowCraft&&MR.lvable(c)&&have?lvBox(c):''}${allowCraft&&c.r===3&&!c.ex?awakenBox(c):''}
   <div class="ovb">${allowCraft&&!have&&c.stage===0&&!c.ex?`<button class="btn" id="craft" ${S.dust>=R.craft?'':'disabled'}>Üret · ${R.craft} toz</button>`:''}${allowCraft&&extra&&!c.ex?`<button class="btn alt" id="todust">${extra} kopya → ${extra*R.dust} toz</button>`:''}<button class="btn alt" id="close">Kapat</button></div></div>`;
   ov.classList.add('on');
@@ -1979,10 +1986,10 @@ const tileK=(k,o)=>isS(k)?supTile(k.slice(2),o):deckTile(BY[k],o);
 // YENİ ARAYÜZ (deneme): sadece oyunun sahibinde, Ayarlar'dan açılır
 const NUI=()=>true;   // yeni arayüz herkese açık (2026-11-28)
 function kwCard(){if(!uniq())return '';const ks=Object.keys(MR.KW);
-  return `<div class="kwc"><div class="kwh"><b>Yetenek Arenası</b><span>Yeni mod</span></div><p>Bazı kartların anahtar kelimeleri bu modda canlanır. Ödüller normal arenayla aynı.</p>
-   <div class="kwl">${ks.map(k=>`<span title="${MR.KW[k].d}">${MR.KW[k].i} ${MR.KW[k].n}</span>`).join('')}</div><button class="kwgo" id="kwgo">Yetenek Arenası'nda savaş</button></div>`}
+  return `<div class="kwc"><div class="kwh"><img class="kwmode" src="img/kw/mode.webp" alt=""><b>Yetenek Arenası</b><span>Yeni mod</span></div><p>Bazı kartların anahtar kelimeleri bu modda canlanır. Ödüller normal arenayla aynı.</p>
+   <div class="kwl">${ks.map(k=>`<span title="${MR.KW[k].d}">${kwI(k)} ${MR.KW[k].n}</span>`).join('')}</div><button class="kwgo" id="kwgo">Yetenek Arenası'nda savaş</button></div>`}
 function awCard(){const R=MR.arenaRule(),ms=R.ends-Date.now(),d=Math.floor(ms/AW_DAY_C),h=Math.floor(ms%AW_DAY_C/3600000),m=Math.floor(ms%3600000/60000);
-  const ic={tboost:R.el?`<img src="img/ic/${R.el}.webp" alt="">`:'⚔️',lowr:'🃏',hp:'🛡️',charge:'⚡',noleg:'🚫'}[R.k];
+  const ic={tboost:R.el?`<img src="img/ic/${R.el}.webp" alt="">`:'⚔️',lowr:'<img src="img/kw/aw_lowr.webp" alt="">',hp:'<img src="img/kw/aw_hp.webp" alt="">',charge:'<img src="img/kw/aw_charge.webp" alt="">',noleg:'🚫'}[R.k];
   return `<div class="awr"${R.el?` style="--ac:${AUC[R.el]}"`:''}><div class="awt"><span class="awrib">✦ ÖZEL KURAL</span><span class="awtm">⏳ ${d?d+'g ':''}${h}sa${d?'':' '+m+'dk'}</span></div>
     <div class="awm"><span class="awi"><i></i><b>${ic}</b></span><div><b>${R.n}</b><p>${R.d}</p></div></div>
     ${uniq()?'<button class="awgo" id="awgo">Bu kuralla savaş</button>':''}</div>`}
@@ -2249,7 +2256,7 @@ function bk(f,s,i){
   const c=f.c,p=Math.max(0,f.hp/mx(f)),my=s==='me'&&B.turn==='me'&&!B.busy&&!B.over,selS=my&&B.selH!==null?B.me.hand[B.selH]:null,tgt=s==='foe'&&B.turn==='me'&&B.sel!==null&&!B.busy&&!B.over;
   const supOk=s==='me'&&selS&&canSup(selS.k,f,true)===true;
   let hint='';if(tgt){const A=B.me.board[B.sel],fx=curAtk(A).fx,h=calc(A,f,B.me.board,B.foe.board,atkOf(A));hint=`<div class="bkhint${h.k==='w'?' x':h.k?' w':''}">${h.k==='i'?'Bağışık':'−'+h.d+(fx==='coin'?'+':'')}</div>`}
-  const kwi=B.kw&&!f.tok&&MR.kwOf(c)&&!(MR.kwOf(c)==='kalkan'&&f.shield>0)?`<span class="bkkw">${MR.KW[MR.kwOf(c)].i}</span>`:'',shd=f.shield>0?'<span class="bksh">🛡️</span>':'';
+  const kwi=B.kw&&!f.tok&&MR.kwOf(c)&&!(MR.kwOf(c)==='kalkan'&&f.shield>0)?`<span class="bkkw">${kwI(MR.kwOf(c))}</span>`:'',shd=f.shield>0?'<span class="bksh"><img class="kwim" src="img/kw/kalkan.webp" alt=""></span>':'';
   const a=curAtk(f),big=f.ch&&c.atks[1],SH=c.ex||(s==='me'&&shownShiny(c.id)),src=SH&&SHART.has(c.id)?`img/s/${c.id}.jpg`:`img/t/${c.id}.webp`;
   return `<div class="bk${big?' ch':c.atks[1]&&!f.justIn&&!f.didAtk?' half':''}${s==='me'&&B.sel===i?' sel':''}${my&&!selS?' bpk':''}${tgt?' tg':''}${supOk?' sup':''}${SH?' holo':''}${c.ex?' ex':''}${c.ez?' ez':''}" data-s="${s}" data-i="${i}" data-u="${f.uid}" style="--ec:${AUC[c.el]}">
   <div class="bka" style="background-image:url(${src})${portArt(c)?`;background-position:50% ${focY(c)}%`:''}"></div>${c.lv>=10?LV10(c).replace('lv10f','lv10f bk10f'):''}${kwi}${shd}${f.tok?'<span class="bktok">kopya</span>':''}<div class="bkn${c.lv?' bknl':''}"${nmS(c.name+(c.lv?'+10':'')+(c.ex?'EX ':''),9)}>${c.lv?`<span>${c.name}</span>${lvN(c)}`:c.name}</div><img class="bke" src="img/ic/${c.el}.webp" alt="">
