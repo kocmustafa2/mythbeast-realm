@@ -1360,19 +1360,6 @@ body.nui .frp{animation:popin .25s ease}
 .bk.cbbk .bkn{font-size:16px!important;letter-spacing:.02em}
 .bk.cbbk .bkhp{height:16px}.bk.cbbk .bkhp span{font-size:11.5px}
 .bk.cbbk .bkat{font-size:13px}.bk.cbbk .bkat b{font-size:22px}
-@property --cp{syntax:'<percentage>';inherits:false;initial-value:100%}
-.pwc{--cp:100%;position:relative;display:inline-block;width:.5em;height:.5em;flex:none;vertical-align:middle;filter:drop-shadow(0 0 .06em #ffb800)}
-.pwc i{position:absolute;inset:0;border-radius:50%;background:conic-gradient(from -90deg,#fff6c0,#ffd84a 40%,#ff9d00 var(--cp),#3a2400aa 0);-webkit-mask:radial-gradient(circle,transparent 52%,#000 54%);mask:radial-gradient(circle,transparent 52%,#000 54%);animation:pwcfill 2.4s cubic-bezier(.5,0,.3,1) infinite}
-.pwc::before{content:"";position:absolute;inset:14%;border-radius:50%;background:radial-gradient(circle at 40% 35%,#6a4400,#2a1800);box-shadow:inset 0 0 .05em #000}
-.pwc svg{position:absolute;left:19%;top:19%;width:62%;height:62%;fill:#ffe46a;filter:drop-shadow(0 0 .04em #fff);animation:pwcbolt 2.4s ease-in-out infinite}
-@keyframes pwcfill{0%{--cp:0%}55%{--cp:100%}100%{--cp:100%}}
-@keyframes pwcbolt{0%,50%{transform:scale(.85);opacity:.7}60%{transform:scale(1.18);opacity:1;fill:#fff}75%,100%{transform:scale(1);opacity:1}}
-.fak .pwc{width:.44em;height:.44em}
-.scard .pwc{width:13px;height:13px}
-.bk .bkat span.pwc{position:absolute;display:block;right:4px;top:-11px;width:18px;height:18px;z-index:3}.bk .bkat{position:relative}
-.bkat .pwc.c0 i{animation:none;--cp:0%}.bkat .pwc.c0 svg{animation:none;opacity:.35;fill:#c9a24a}
-.bkat .pwc.c5 i{animation:none;--cp:50%}.bkat .pwc.c5 svg{animation:none;opacity:.6}
-.bkat.big .pwc{filter:drop-shadow(0 0 4px #ffd84a)}
 .adbk{margin-top:14px;padding:12px;border-radius:12px;background:#ffffff0d;border:1px solid #ffffff22;display:flex;flex-direction:column;gap:6px}.adbk small{color:#ffffffa8;font-size:12px;line-height:1.35}
 </style>
 </head>
@@ -1586,7 +1573,7 @@ function frameCard(c,o,F){
   <div class="fart" style="${fpos(F.art)}">${o.full||o.big?artFull(c):art(c)}</div><img class="fimg" src="${F.src}" alt="" draggable="false">
   <div class="ft fhd" style="${fpos(F.hd)}"><div class="fnm"><span class="stg">${stageName(c)}</span><span class="n"${nmS(c.name+(c.lv?'+10':''),8)}>${c.name}</span>${lvN(c)}</div><div class="fhp">${ic('heart','hpi')}${lvHp(c)}<i class="ti">${icon(c.el)}</i></div></div>
   <div class="ft frb" style="${fpos(F.rb)}">${icon(c.el)}<span>${auraText(c)}</span></div>
-  <div class="ft fpn" style="${fpos(F.pn)}">${c.atks.map((a,ai)=>`<div class="fak"><div class="cost">${ai?'<span class="pwc" title="Güç dolunca kullanılır"><i></i><svg viewBox="0 0 24 24"><path d="M13.5 2 4.5 13.5h6l-1.5 8.5 9.5-12h-6.2z"/></svg></span>':''}</div><div class="fakn">${a.name}</div><div class="fakd">${lvDm(c,a,ai)}${a.fx==='coin'?'+':''}</div>${a.fx?`<div class="fakt">${ic(FXI[a.fx],'fxi')}${FX[a.fx].t}</div>`:''}</div>`).join('')}
+  <div class="ft fpn" style="${fpos(F.pn)}">${c.atks.map((a,ai)=>`<div class="fak"><div class="cost">${ai?'<span class="dolu">DOLU</span>':''}</div><div class="fakn">${a.name}</div><div class="fakd">${lvDm(c,a,ai)}${a.fx==='coin'?'+':''}</div>${a.fx?`<div class="fakt">${ic(FXI[a.fx],'fxi')}${FX[a.fx].t}</div>`:''}</div>`).join('')}
   <div class="fwr"><span>${ic('weak')}${weaksOf(c.el).map(x=>en(x)).join('')}×${WEAK}</span><span>${ic('shield')}${ressOf(c.el).map(x=>en(x)).join('')}−20${immsOf(c.el).length?` · ${immsOf(c.el).map(x=>en(x)).join('')}0`:''}</span></div><div class="fflv">${c.flv}</div></div>
   <div class="ft fbt" style="${fpos(F.bt)}"><span>${setLbl(c)}</span><span class="sym">${c.r>=2?ic('star','ssym'):RAR[c.r].sym}</span></div>
   <div class="shine"></div>${shCls(c,o)?holoFx:''}${o.isNew?'<div class="new">YENİ</div>':''}</div></div></div>${o.extra||''}</div>`;
@@ -1604,7 +1591,7 @@ function shinyCard(c,o){
   <div class="sart">${big?artFull(c):art(c)}</div>`}
   <div class="shd"><div class="snm"><span class="stg">${stageName(c)}</span><span class="n${c.lv?' nl':''}">${c.lv?`<span class="nt"${nmS(c.name+'+10',15)}>${c.name}</span>${lvN(c)}`:`<span${nmS(c.name,16)}>${c.name}</span>`}</span></div><div class="shp">${ic('heart','hpi')}${lvHp(c)}<i class="ti">${icon(c.el)}</i></div></div>
   ${c.ez?'<img class="ezb" src="img/ic/blood.webp" alt="">':c.ex?'<div class="exb">'+KDI+'KADİM</div>':''}<div class="spn">${c.ex?`<div class="sexa">${c.ez?'☠':'⚡'} ${exaTxt(c)}</div>`:`<div class="srb">${icon(c.el)}<span>${auraText(c)}</span></div>`}
-   ${c.atks.map((a,ai)=>`<div class="sak"><div class="cost">${ai?'<span class="pwc" title="Güç dolunca kullanılır"><i></i><svg viewBox="0 0 24 24"><path d="M13.5 2 4.5 13.5h6l-1.5 8.5 9.5-12h-6.2z"/></svg></span>':''}</div><div class="sakn">${a.name}</div><div class="sakd">${lvDm(c,a,ai)}${a.fx==='coin'?'+':''}</div>${a.fx?`<div class="sakt">${ic(FXI[a.fx],'fxi')}${FX[a.fx].t}</div>`:''}</div>`).join('')}
+   ${c.atks.map((a,ai)=>`<div class="sak"><div class="cost">${ai?'<span class="dolu">DOLU</span>':''}</div><div class="sakn">${a.name}</div><div class="sakd">${lvDm(c,a,ai)}${a.fx==='coin'?'+':''}</div>${a.fx?`<div class="sakt">${ic(FXI[a.fx],'fxi')}${FX[a.fx].t}</div>`:''}</div>`).join('')}
    <div class="swr"><span>${ic('weak')}${weaksOf(c.el).map(x=>en(x)).join('')}×${WEAK}</span><span>${ic('shield')}${ressOf(c.el).map(x=>en(x)).join('')}−20${immsOf(c.el).length?` · ${immsOf(c.el).map(x=>en(x)).join('')}0`:''}</span></div>
    <div class="sbt"><span>${c.ez?'Ezeli · Kıyamet':c.ex?'Kadim · Seri I':c.prl?`${setLbl(BY[c.of])}`:`${setLbl(c)}`}</span><span class="sstar">${c.ez?'☠ EZELİ':c.ex?KDI+'KADİM':c.prl?'✨ PARLAK':'✦ HOLO'}</span></div></div>
   ${c.ez?'<img class="ezfr" src="img/ez/frame.webp" alt="" draggable="false">':''}<div class="sbrd"></div><div class="holo-fx"></div><div class="holo-sp"></div><div class="shine"></div>${o.isNew?'<div class="new">YENİ</div>':''}</div></div></div>${o.extra||''}</div>`;
@@ -1640,7 +1627,7 @@ function cardHTML0(c,o={}){
   <div class="hd"><div class="l"><span class="stg">${stageName(c)}</span><div class="nm"><span${nmS(c.name+(c.lv?'+10':''),8)}>${c.name}</span>${lvN(c)}</div></div><div class="hpv">${ic('heart','hpi')}${lvHp(c)}</div><div class="ti">${icon(c.el)}</div></div>
   <div class="sp"></div>
   <div class="inf">${auraText(c)}</div>
-  <div class="atks">${c.atks.map((a,ai)=>`<div class="ak"><div class="cost">${ai?'<span class="pwc" title="Güç dolunca kullanılır"><i></i><svg viewBox="0 0 24 24"><path d="M13.5 2 4.5 13.5h6l-1.5 8.5 9.5-12h-6.2z"/></svg></span>':''}</div><div class="akn">${a.name}</div><div class="akd">${lvDm(c,a,ai)}${a.fx==='coin'?'+':''}</div>${a.fx?`<div class="akt">${ic(FXI[a.fx],'fxi')}${FX[a.fx].t}</div>`:''}</div>`).join('')}</div>
+  <div class="atks">${c.atks.map((a,ai)=>`<div class="ak"><div class="cost">${ai?'<span class="dolu">DOLU</span>':''}</div><div class="akn">${a.name}</div><div class="akd">${lvDm(c,a,ai)}${a.fx==='coin'?'+':''}</div>${a.fx?`<div class="akt">${ic(FXI[a.fx],'fxi')}${FX[a.fx].t}</div>`:''}</div>`).join('')}</div>
   <div class="ftr"><div class="wr"><span>${ic('weak')}${weaksOf(c.el).map(x=>en(x)).join('')}×${WEAK}</span><span>${ic('shield')}${ressOf(c.el).map(x=>en(x)).join('')}−20</span></div>
   <div class="flv">${c.flv}</div><div class="set"><span>${setLbl(c)}</span><span class="sym">${c.r>=2?ic('star','ssym')+(c.r===3?ic('star','ssym'):''):RAR[c.r].sym}</span></div></div>
   ${c.r===3?`<img class="lgb" src="${LEG_BORDER}" alt="" draggable="false">`:''}<div class="shine"></div>${shCls(c,o)?holoFx:''}${o.isNew?'<div class="new">YENİ</div>':''}</div></div></div>${o.extra||''}</div>`;
@@ -2491,7 +2478,7 @@ function bk(f,s,i){
   <div class="bka" style="background-image:url(${src})${portArt(c)?`;background-position:50% ${focY(c)}%`:''}"></div>${c.lv>=10?LV10(c).replace('lv10f','lv10f bk10f'):''}${kwi}${shd}${f.tok?'<span class="bktok">kopya</span>':''}<div class="bkn${c.lv?' bknl':''}"${nmS(c.name+(c.lv?'+10':'')+(c.ex?'EX ':''),9)}>${c.lv?`<span>${c.name}</span>${lvN(c)}`:c.name}</div><img class="bke" src="img/ic/${c.el}.webp" alt="">
   ${c.ez?'':c.ex?'<span class="bkx">'+KDI+'</span>':''}${f.evo?'<span class="bkev">EVRİM TAŞI</span>':''}${f.st?`<span class="bkst"><img src="img/ic/${f.st}.webp" alt="">+10</span>`:''}${f.burn?`<span class="bkb"><img src="img/ic/burn.webp" alt="">${f.burn}</span>`:''}${f.poiT>0?`<span class="bkv bkp"><img src="img/ic/poison.webp" alt="">${f.poi}</span>`:''}${f.bldT>0?`<span class="bkv bkl"><img src="img/ic/blood.webp" alt="">${f.bld}</span>`:''}${f.ampT>0?`<span class="bkv bka2">${icon('shadow')}×${f.amp}</span>`:''}${f.frz>0?'<span class="bkfz">❄ Donmuş</span>':''}${f.mute>0?'<span class="bkmu">Yetenek kapalı</span>':''}
   <div class="bkhp"><i class="${p<.35?'lo':''}" style="width:${p*100}%"></i><span>${c.cbb?f.hp.toLocaleString('tr')+' / '+mx(f).toLocaleString('tr'):f.hp+' / '+mx(f)}</span></div>
-  <div class="bkat${big?' big':''}"><span>${c.atks[1]?`<span class="pwc${big?'':f.justIn||f.didAtk?' c0':' c5'}"><i></i><svg viewBox="0 0 24 24"><path d="M13.5 2 4.5 13.5h6l-1.5 8.5 9.5-12h-6.2z"/></svg></span>`:''}${a.name}${a.fx?`<em>${FXS[a.fx]}</em>`:''}</span><b>${atkOf(f)}${a.fx==='coin'?'+':''}</b></div>${hint}</div>`}
+  <div class="bkat${big?' big':''}"><span>${a.name}${a.fx?`<em>${FXS[a.fx]}</em>`:''}</span><b>${atkOf(f)}${a.fx==='coin'?'+':''}</b></div>${hint}</div>`}
 let handW=0;
 function handPos(n){const W=(handW||Math.min(innerWidth,480)-8)-14,cw=84,gap=n>1?Math.min(cw+6,(W-cw)/(n-1)):0,x0=7+(W-(cw+gap*(n-1)))/2,t=performance.now()/1000;
   return k=>`left:${(x0+k*gap).toFixed(1)}px;--rot:${((k-(n-1)/2)*3.5).toFixed(1)}deg;animation-delay:${(-(t%3.2)-k*.55).toFixed(2)}s`}
