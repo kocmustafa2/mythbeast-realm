@@ -1285,6 +1285,7 @@ body.nui .frp{animation:popin .25s ease}
 .kwl .kwim{width:18px;height:18px;vertical-align:-4px}.kwinf .kwim{width:26px;height:26px;vertical-align:-7px}
 .kwmode{width:40px;height:40px;animation:floaty 3s ease-in-out infinite;filter:drop-shadow(0 0 8px #3fd1b6aa)}
 .awi b img{width:38px!important;height:38px!important}
+.dmic{width:28px;height:28px;flex:none;filter:drop-shadow(0 2px 4px #0008)}
 </style>
 </head>
 <body>
@@ -1827,7 +1828,7 @@ function renderCol(){
   const groups=ELS.map(e=>({e,cards:list.filter(c=>c.el===e).sort((p,q)=>ord(p)-ord(q))})).filter(g=>g.cards.length);
   const body=groups.map(g=>{const all=SRC.filter(c=>c.el===g.e),hv=all.filter(c=>owned(c.id)).length;
     return `<section class="tgrp t-${g.e}"><div class="tgh">${icon(g.e)}<b>${T[g.e].n}</b><span>${hv} / ${all.length}</span><div class="tgb"><i style="width:${hv/all.length*100}%"></i></div></div><div class="grid">${g.cards.map(one).join('')}</div></section>`}).join('');
-  $('#main').innerHTML=`${NUI()?colRings():''}<div class="colhd"><h2>Koleksiyon</h2><div class="colbt"><button class="btn alt sm" id="colinv"><img class="bico" src="img/ic/bag.webp" alt="">Envanter</button><button class="btn alt sm" id="coldeck">🃏 Destelerim</button></div></div>${colF==='prl'?`<p class="sub"><b>✨ Parlak kartlar</b>: ${PRL.filter(c=>owned(c.id)).length} / ${PRL.length}. Yaratığın kendisi parlar, normal kartından %7 güçlüdür ve ayrı bir evrim çizgisidir. Asıl kaynak kulelerin boss katları; Seri 3 paketinden çok nadiren çıkar.</p>`:''}<p class="sub">${uniq()} / ${N} kart · ${KDI}${EXC.filter(x=>owned(x.id)).length}/${EXC.length} Kadim · <span class="shtxt">✦ ${CARDS.filter(c=>hasShiny(c.id)).length} / ${N} holo</span>. Eksik karta dokunup tozla üretebilirsin.</p>
+  $('#main').innerHTML=`${NUI()?colRings():''}<div class="colhd"><h2>Koleksiyon</h2><div class="colbt"><button class="btn alt sm" id="colinv"><img class="bico" src="img/ic/bag.webp" alt="">Envanter</button><button class="btn alt sm" id="coldeck"><img class="bico" src="img/ic/deck.webp" alt="">Destelerim</button></div></div>${colF==='prl'?`<p class="sub"><b>✨ Parlak kartlar</b>: ${PRL.filter(c=>owned(c.id)).length} / ${PRL.length}. Yaratığın kendisi parlar, normal kartından %7 güçlüdür ve ayrı bir evrim çizgisidir. Asıl kaynak kulelerin boss katları; Seri 3 paketinden çok nadiren çıkar.</p>`:''}<p class="sub">${uniq()} / ${N} kart · ${KDI}${EXC.filter(x=>owned(x.id)).length}/${EXC.length} Kadim · <span class="shtxt">✦ ${CARDS.filter(c=>hasShiny(c.id)).length} / ${N} holo</span>. Eksik karta dokunup tozla üretebilirsin.</p>
   <div class="filters">${[['all','Tümü'],['miss','Eksikler'],['prl','✨ Parlak'],['shiny','✦ Holo'],['sup','Destek'],...ELS.map(e=>[e,T[e].n])].map(([k,n])=>`<button class="chip${colF===k?' on':''}" data-f="${k}">${T[k]?icon(k):k==='sup'?'<img class="cico" src="img/sup/evo.webp" alt="">':''}${n}</button>`).join('')}</div>
   ${colF==='all'&&EZC.some(c=>owned(c.id))?`<section class="tgrp ezg"><div class="tgh"><b>☠ Ezeli</b><span>${EZC.filter(c=>owned(c.id)).length} / ${EZC.length}</span></div><div class="grid">${EZC.filter(c=>owned(c.id)).map(x=>false?thumb(x,{}):cardHTML(x,{noTilt:1})).join('')}</div></section>`:''}${colF==='all'?`<section class="tgrp exg"><div class="tgh"><b>${KDI}Kadim</b><span>${EXC.filter(x=>owned(x.id)).length} / ${EXC.length}</span></div><div class="grid">${EXC.map(x=>false?thumb(x,{miss:!owned(x.id)}):cardHTML(x,{noTilt:1,miss:!owned(x.id),extra:''})).join('')}</div></section>`:''}
   ${colF==='all'&&PRL.some(c=>owned(c.id))?`<section class="tgrp prlg"><div class="tgh"><b>✨ Parlak</b><span>${PRL.filter(c=>owned(c.id)).length} / ${PRL.length}</span></div><div class="grid">${PRL.filter(c=>owned(c.id)).map(x=>false?thumb(x,{n:owned(x.id)}):cardHTML(x,{noTilt:1,extra:`${owned(x.id)>1?`<div class="cntb">×${owned(x.id)}</div>`:''}`})).join('')}</div></section>`:''}
@@ -1995,14 +1996,14 @@ function awCard(){const R=MR.arenaRule(),ms=R.ends-Date.now(),d=Math.floor(ms/AW
     ${uniq()?'<button class="awgo" id="awgo">Bu kuralla savaş</button>':''}</div>`}
 const AW_DAY_C=86400000;
 function deckMini(){const ks=deckKeys('a'),p=deckPts(ks),cr=ks.filter(k=>!isS(k)),dd=ensDecks(),sh=cr.slice(0,4);
-  return `<div class="dmini"><div class="dmh"><b>${escH(dd[S.dA].n)}</b><span>${ks.length}/${BAT.deck} kart · ${p}/${BAT.budget} puan</span><button class="dmb" id="dmedit">Düzenle ›</button></div>
+  return `<div class="dmini"><div class="dmh"><img class="dmic" src="img/ic/deck.webp" alt=""><b>${escH(dd[S.dA].n)}</b><span>${ks.length}/${BAT.deck} kart · ${p}/${BAT.budget} puan</span><button class="dmb" id="dmedit">Düzenle ›</button></div>
   <div class="dmr">${sh.map(k=>{const c=BY[k];return c?`<img src="img/t/${c.id}.webp" alt="" class="r${c.r}${c.ex?' ex':''}">`:''}).join('')}${ks.length>sh.length?`<i>+${ks.length-sh.length}</i>`:''}${!ks.length?'<i class="em">Deste boş · Düzenle</i>':''}</div>
   ${cr.length<DECK_MIN_C?`<small class="dinfo">Savaş için en az ${DECK_MIN_C} yaratık gerekli.</small>`:''}</div>`}
 function deckView(){const ks=deckKeys('a'),p=deckPts(ks),nc=ks.filter(k=>!isS(k)).length,dd=ensDecks();
   return `<div class="dbox"><div class="dhead"><b>${escH(dd[S.dA].n)} <small class="dmk">Arena</small></b><span class="${p>BAT.budget?'over':''}">${ks.length}/${BAT.deck} kart · ${p}/${BAT.budget} puan</span></div>
   <div class="drow d15">${Array.from({length:BAT.deck},(_,i)=>ks[i]!=null?tileK(ks[i]):'<div class="dt empty"></div>').join('')}</div>${deckSummary(ks.filter(k=>!isS(k)))}
   <small class="dinfo">${nc} yaratık · ${ks.length-nc} destek kartı${nc<DECK_MIN_C?` · savaş için en az ${DECK_MIN_C} yaratık gerekli`:ks.length<BAT.deck?' · savaşa sadece bu kartlarla girersin':''}</small>
-  <small class="dinfo">Macera destesi: <b>${escH(dd[S.dM].n)}</b> · Kule destesi: <b>${escH(dd[S.dT].n)}</b><br>Desteleri <b>Koleksiyon → 🃏 Destelerim</b> bölümünden düzenleyebilirsin.</small></div>`}
+  <small class="dinfo">Macera destesi: <b>${escH(dd[S.dM].n)}</b> · Kule destesi: <b>${escH(dd[S.dT].n)}</b><br>Desteleri <b>Koleksiyon → Destelerim</b> bölümünden düzenleyebilirsin.</small></div>`}
 function openDeckEditor(after,start){
   const wk=ensDecks().map(d=>({n:d.n,k:d.k.slice()}));let slot=start!=null?start:S.dA,dA=S.dA,dM=S.dM,dT=S.dT;
   let sel=wk[slot].k.length?validDeck(wk[slot].k):[],flt='all';const ov=$('#ov');
@@ -2012,7 +2013,7 @@ function openDeckEditor(after,start){
     wk[slot].k=sel;
     ov.innerHTML=`<div class="dedit"><div class="dtabs">${wk.map((d,i)=>`<button class="dtab${i===slot?' on':''}" data-s="${i}">${escH(d.n)}${i===dA?'<i class="dmk a">A</i>':''}${i===dM?'<i class="dmk m">M</i>':''}${i===dT?'<i class="dmk t">K</i>':''}</button>`).join('')}</div>
     <div class="dnm"><input id="dname" maxlength="20" value="${escH(wk[slot].n)}" aria-label="Deste adı"><button class="chip${slot===dA?' on':''}" id="useA">${slot===dA?'✓ ':''}Arena için</button><button class="chip${slot===dM?' on':''}" id="useM">${slot===dM?'✓ ':''}Macera için</button><button class="chip${slot===dT?' on':''}" id="useT">${slot===dT?'✓ ':''}Kule için</button></div>
-    <div class="dhead"><b>Deste düzenle</b><span class="${p>BAT.budget?'over':''}">${sel.length}/${BAT.deck} kart · ${p}/${BAT.budget} puan</span></div>
+    <div class="dhead"><b><img class="dmic" src="img/ic/deck.webp" alt="" style="width:24px;height:24px;vertical-align:-6px;margin-right:5px">Deste düzenle</b><span class="${p>BAT.budget?'over':''}">${sel.length}/${BAT.deck} kart · ${p}/${BAT.budget} puan</span></div>
     <div class="dbar"><i style="width:${Math.min(100,p/BAT.budget*100)}%"></i></div>
     <small class="dinfo">${nc} yaratık · ${ns}/${BAT.maxS} destek · aynı karttan en fazla 2, Efsanevi ve Kadim'den 1. Karttan çıkarmak için üstteki kartlara dokun.</small>
     <div class="drow d15">${Array.from({length:BAT.deck},(_,i)=>sel[i]!=null?tileK(sel[i],{sel:1,idx:i}):'<div class="dt empty"></div>').join('')}</div>${deckSummary(sel.filter(k=>!isS(k)))}
