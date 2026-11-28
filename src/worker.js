@@ -435,7 +435,7 @@ async function handleApi(req, env, path) {
             await db.prepare('UPDATE clan_boss SET hp = ?, dmg = ?, killed = ? WHERE clan_id = ? AND week = ?').bind(hp, JSON.stringify(dm), hp <= 0 ? Date.now() : 0, m.clan_id, r.cw).run();
             r.bossHp = hp; r.bossMax = row.max; if (hp <= 0) { r.bossKill = 1; await feedAdd(db, m.clan_id, 'cbkill', user.id, null, MR.cbBoss(r.cw).id); } } } }
       // maç geçmişi
-      if (a === 'battle_end' && r) await logMatch(user.id, r.mode, r.mode === 'arena' ? 'Bot · ' + MR.LEAGUES[r.lg0 || 0].n : r.mode === 'adv' ? MR.advStage(r.adv).name : r.mode === 'tower' ? MR.towerStage(r.el, r.f).name : r.mode === 'cboss' ? 'Klan Boss\'u · ' + r.dmg + ' hasar' : (r.opp || '?'), r.win, r.dt || 0);
+      if (a === 'battle_end' && r) await logMatch(user.id, r.mode, r.mode === 'arena' ? 'Bot · ' + MR.LEAGUES[r.lg0 || 0].n : r.mode === 'adv' ? MR.advStage(r.adv).name : r.mode === 'tower' ? MR.towerStage(r.el, r.f).name : r.mode === 'cboss' ? 'Klan Boss\'u · ' + r.dmg + ' hasar' : r.mode === 'draft' ? 'Draft · ' + (r.w || 0) + 'G ' + (r.l || 0) + 'M' : (r.opp || '?'), r.win, r.dt || 0);
       if (a === 'battle_start' && r && r.forfeit) await logMatch(user.id, 'arena', 'Terk edilen savaş', false, r.forfeit.dt || 0);
       if (a === 'battle_end' || a === 'pack' || a === 'evo' || a === 'awaken' || a === 'craft' || a === 'chest' || a === 'avatar' || a === 'lvup')
         await db.prepare("INSERT INTO pub (user_id, stats, deck, updated) VALUES (?, ?, '[]', ?) ON CONFLICT(user_id) DO UPDATE SET stats = excluded.stats, updated = excluded.updated")

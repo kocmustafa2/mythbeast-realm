@@ -355,7 +355,7 @@ function srnd(seed){let a=seed>>>0;return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.i
 
 const SUPK=['fire','water','earth','air','light','shadow','metal','poison','evo','will','feda','bedel'];   // will = İrade: rakip bir tur oynayamaz
 
-const ADV_CH=[['fire','Kor Dağları'],['water','Mercan Denizi'],['earth','Kadim Orman'],['air','Bulut Zirvesi'],['light','Işık Tapınağı'],['shadow','Gece Diyarı'],['metal','Demir Kale'],['poison','Zehir Bataklığı']];
+const ADV_CH=[['fire','Kor Dağları'],['water','Mercan Denizi'],['earth','Zümrüt Orman'],['air','Bulut Zirvesi'],['light','Işık Tapınağı'],['shadow','Gece Diyarı'],['metal','Demir Kale'],['poison','Zehir Bataklığı']];
 const ADV_RULE={none:['Normal savaş',''],hp:['Dayanıklı rakip','Rakip kartları %20 fazla canla başlar'],first:['Pusu','Rakip ilk saldırır'],charged:['Hazırlıklı rakip','Rakip kartları dolu başlar'],burn:['Kızgın zemin','Senin kartların yanık başlar'],boss:['BOSS','Boss %50 fazla canla ve dolu başlar']};
 const ADV_P=10;                       // her diyardaki bölüm sayısı (son bölüm boss)
 const ADV_N=ADV_CH.length*ADV_P;
@@ -460,7 +460,9 @@ function battleEnd(st,p,ctx){const bt=st.bt,now=ctx.now;
   const wk=Math.max(0,Math.min(STAT_CAP.weak,Math.floor(+S0.weak||0))),ko=Math.max(0,Math.min(STAT_CAP.ko,Math.floor(+S0.ko||0)));
   if(wk)dqInc(st,'weak',null,wk,now);if(ko)dqInc(st,'ko',null,ko,now);
   dqInc(st,'battle',null,1,now);if(win)dqInc(st,'win',null,1,now);
+  if(bt.mode!=='friend'){const hm={};for(const e of ELS)hm[e]=Math.max(0,Math.min(STAT_CAP.hit,Math.floor(+hit[e]||0)));evInc(st,now,hm,win,ko)}
   if(bt.mode==='friend')return{mode:'friend',win,opp:bt.fr||null};
+  if(bt.mode==='draft'){const d=st.dr;if(!d||d.done)return{mode:'draft',win};if(win)d.w++;else d.l++;if(d.w>=DRAFT.maxW||d.l>=DRAFT.maxL)d.done=1;return{mode:'draft',win,w:d.w,l:d.l,done:d.done}}
   if(bt.mode==='cboss'){const dmg=Math.max(0,Math.min(CB.cap,Math.floor(+p.dmg||0))),g=Math.round((30+dmg/20)/5)*5;st.gold+=g;return{mode:'cboss',win,dmg,g,cw:bt.cw}}
   st.bl=(st.bl||[]).filter(t=>now-t<3600e3);
   const nb=st.bl.length,rf=nb<BATTLE_PER_HOUR?1:Math.max(0,Math.round((1-(nb-BATTLE_PER_HOUR+1)/BATTLE_PER_HOUR)*100)/100);
@@ -493,7 +495,7 @@ function battleEnd(st,p,ctx){const bt=st.bt,now=ctx.now;
   R.trophy=st.trophy;R.streak=st.streak||0;R.chestP=st.chest||0;return R}
 
 // Bitmeden terk edilen arena savaşı yenilgi sayılır (kaybedeceğini görünce sayfayı yenileyip kaçmayı önler).
-function forfeit(st,now){const bt=st.bt;st.bt=null;if(!bt||bt.mode!=='arena'||bt.tut||bt.sp)return null;
+function forfeit(st,now){const bt=st.bt;st.bt=null;if(bt&&bt.mode==='draft'&&st.dr&&!st.dr.done){st.dr.l++;if(st.dr.l>=DRAFT.maxL)st.dr.done=1;return{dr:1}}if(!bt||bt.mode!=='arena'||bt.tut||bt.sp)return null;
   const lg0=lgOf(st.trophy||0),floor=LEAGUES[lg0].min,dt=Math.max(TROPHY.loss,floor-(st.trophy||0));
   st.trophy=Math.max(0,(st.trophy||0)+dt);st.losses++;st.streak=0;st.lstreak=(st.lstreak||0)+1;st.hist=[...(st.hist||[]),{w:0,dt}].slice(-5);return{dt}}
 
@@ -567,13 +569,13 @@ const T_N={fire:'Ateş',water:'Su',earth:'Toprak',air:'Hava',light:'Işık',shad
 
 
 // ANAHTAR KELİMELER (sadece Yetenek Arenası'nda çalışır); evrim zincirine bağlı
-const KW={kalkan:{n:'Kalkan',i:'🛡️',d:'Rakibin ilk saldırısının hasarını tamamen engeller (bir kez).'},
+const KW={kalkan:{n:'Kalkan',i:'🛡️',d:'Rakibin ilk saldırısının hasarını yarıya indirir (bir kez).'},
  nobet:{n:'Nöbetçi',i:'🏰',d:'Sahadayken rakip önce ona saldırmak zorunda.'},
  pusu:{n:'Pusu',i:'🐾',d:'Sahaya dolu saldırıyla iner.'},
  sonnefes:{n:'Son Nefes',i:'💀',d:'Saldırıyla yenilince rakibin rastgele bir yaratığına 40 hasar verir.'},
  cagir:{n:'Çağırma',i:'🥚',d:'Sahaya inince boş bir yere zincirinin ilk yaratığından yarım güçte bir kopya getirir (kopya yenilince can kaybettirmez).'},
- bag:{n:'Bağ',i:'🔗',d:'Sahada aynı türden başka bir yaratık varsa %15 daha fazla hasar verir.'},
- sessiz:{n:'Sessizlik',i:'🤫',d:'Vurduğu yaratığın tür yeteneğini 1 tur kapatır.'}};
+ bag:{n:'Bağ',i:'🔗',d:'Sahadaki her dost yaratık için %12 daha fazla hasar verir.'},
+ sessiz:{n:'Sessizlik',i:'🤫',d:'Vurduğu yaratığın tür yeteneğini 2 tur kapatır ve dolu saldırısını boşa çıkarır.'}};
 const KWL={kalkan:[11,12,146,147,148,86,87,88,185,186,187],nobet:[122,123,124,143,144,145,92,93,94,155,156,157],pusu:[188,189,190,110,111,112,134,135,136,104,105,106],
  sonnefes:[116,117,118,107,108,64,82,27,74],cagir:[45,46,47,197,198,199,131,132,133,25,26],bag:[113,114,115,137,138,139,152,153,154,179,180,181],sessiz:[62,63,173,174,175,170,171,172,101,102,103]};
 const KWB={};for(const k in KWL)KWL[k].forEach(id=>KWB[id]=k);
@@ -597,9 +599,27 @@ const FLD={fire:{k:'lava',n:'Lav Akıntısı',d:'Her tur başında Ateş olmayan
  air:{k:'storm',n:'Fırtına',d:'Dolmuş güçlü saldırılar %25 daha fazla hasar verir.'},
  light:{k:'sanct',n:'Kutsal Zemin',d:'Yanık, zehir ve kanama yarı hasar verir.'},
  shadow:{k:'blood',n:'Kan Ayı',d:'Bütün saldırılar %20 daha fazla hasar verir. Su yaratıkları can yenileyemez.'},
- metal:{k:'iron',n:'Çelik Siper',d:'Sahaya çıkan her yaratık ilk darbeyi engelleyen kalkanla gelir.'},
+ metal:{k:'iron',n:'Çelik Siper',d:'Sahaya çıkan her yaratık ilk darbenin hasarını yarıya indiren kalkanla gelir.'},
  poison:{k:'miasma',n:'Zehirli Sis',d:'Her vuruş hedefe 2 tur 10 zehir bırakır. Zehir yaratıkları bundan etkilenmez.'}};
 const fldOf=el=>FLD[el]?{el,...FLD[el]}:null;
+// SINIRLI SÜRELİ ETKİNLİK: her hafta Cuma 00:00 – Pazartesi 00:00 (TSİ), türü her hafta değişir; 3 görev + hepsini bitirme ödülü
+const EV={len:3,start:4,goals:[{t:'hit',n:30,rw:{g:150}},{t:'win',n:8,rw:{free:1}},{t:'ko',n:20,rw:{g:200,ss:3}}],all:{free:1,ks:1}};
+const evDay=t=>Math.floor((t+TZ_OFF)/AW_DAY);
+function evOf(t){const d=evDay(t),wk=Math.floor((d+3)/7),wd=(d+3)%7,el=ELS[((wk%ELS.length)+ELS.length)%ELS.length],on=wd>=EV.start&&wd<EV.start+EV.len;
+  const s0=(wk*7+EV.start-3)*AW_DAY-TZ_OFF;return{id:wk,el,on,n:T_N[el]+' Festivali',start:s0,end:s0+EV.len*AW_DAY,next:on?null:(wd<EV.start?s0:s0+7*AW_DAY)}}
+function evState(st,t){const E=evOf(t);if(!st.ev||st.ev.id!==E.id)st.ev={id:E.id,p:[0,0,0],c:[0,0,0],all:0};return st.ev}
+function evInc(st,now,hit,win,ko){const E=evOf(now);if(!E.on)return;const v=evState(st,now);v.p[0]=Math.min(EV.goals[0].n,v.p[0]+(hit[E.el]||0));if(win)v.p[1]=Math.min(EV.goals[1].n,v.p[1]+1);v.p[2]=Math.min(EV.goals[2].n,v.p[2]+ko)}
+// GÜNLÜK BULMACA: çözüm istemcide doğrulanır (savaş motoru istemcide); sunucu günde bir ödül verir
+const PZ={g:100,streak:7,free:1};
+// DRAFT: koleksiyondan bağımsız; 3 karttan 1 seçerek 10 yaratık, destek kartları otomatik. 3 yenilgi ya da 7 galibiyete kadar sürer.
+const DRAFT={cost:250,picks:10,maxW:7,maxL:3,rw:[{g:60},{g:120},{g:200},{g:280,free:1},{g:360,free:1},{g:450,free:2},{g:560,free:2},{g:700,free:3,ks:1}]};
+const DR_W=[.45,.33,.17,.05];
+const drPool=()=>CARDS.filter(c=>c.hp&&!c.ez&&!c.prl&&c.atks);
+function drOpts(d,rng){const cnt={};d.deck.forEach(i=>cnt[i]=(cnt[i]||0)+1);let x=rng(),r=0;while(r<3&&x>DR_W[r]){x-=DR_W[r];r++}
+  let L=r===3&&rng()<.25?EXC.filter(c=>!c.ez&&!cnt[c.id]):drPool().filter(c=>c.r===r&&(cnt[c.id]||0)<(r>=3?1:2));
+  if(L.length<3)L=drPool().filter(c=>(cnt[c.id]||0)<(c.r>=3?1:2));
+  const out=[];for(let k=0;k<3&&L.length;k++){const j=Math.floor(rng()*L.length);out.push(L[j].id);L.splice(j,1)}return out}
+function drSup(deck){const n={};deck.forEach(i=>{const c=BY[i];if(c)n[c.el]=(n[c.el]||0)+1});const t=Object.entries(n).sort((a,b)=>b[1]-a[1]).map(x=>x[0]);const a=t[0],b=t[1]||a;return[a,a,a,b,b]}
 // ARENA ÖZEL KURALI: 3 günde bir (TSİ 03:00) değişir; isteğe bağlı, sadece arena
 const AWR=[{k:'tboost',n:'{T} Gücü',d:'{T} türü yaratıklar %20 daha fazla hasar verir.'},
  {k:'lowr',n:'Sade Güç',d:'Sadece Yaygın ve Nadir yaratıklar sahaya çıkar. Destendeki diğer yaratıklar bu hafta arenada oynanmaz.'},
@@ -646,7 +666,8 @@ function act(st,a,p,ctx){p=p||{};const rng=ctx.rng,now=ctx.now;normalize(st,ctx)
     if(j==='b'){if(q.bonus||!q.l.every(m=>m.c))throw uerr('Önce üç görevi de tamamla.');q.bonus=1;st.free+=DQB.free;const sk=rndSup(rng);giveSup(st,sk);return{bonus:1,free:DQB.free,sup:sk}}
     const m=q.l[+j];if(!m)throw uerr('Görev bulunamadı.');const D=DQP[m.i];if(m.c)throw uerr('Bu görevin ödülünü zaten aldın.');if(m.p<D.n)throw uerr('Görev henüz tamamlanmadı.');
     m.c=1;st.gold+=D.g;st.dust+=D.d;return{g:D.g,d:D.d}}
-  case 'battle_start':{const mode=p.mode==='adv'?'adv':p.mode==='friend'?'friend':p.mode==='tower'?'tower':p.mode==='cboss'?'cboss':'arena';let adv=null,tw=null;
+  case 'battle_start':{const mode=p.mode==='adv'?'adv':p.mode==='friend'?'friend':p.mode==='tower'?'tower':p.mode==='cboss'?'cboss':p.mode==='draft'?'draft':'arena';let adv=null,tw=null;
+    if(mode==='draft'&&!(st.dr&&!st.dr.done&&st.dr.sup))throw uerr('Önce draft destesini tamamla.');
     if(mode==='cboss'){if(!ctx.clanOk)throw uerr('Klan boss\'una saldırmak için bir klanda olmalısın.');if(cbLeft(st,now)<=0)throw uerr('Bugünkü boss denemelerin bitti. Yarın tekrar gel.');if(tutOn(st))throw uerr('Önce öğreticiyi bitir.')}
     if(mode==='tower'){const el=String(p.el||''),f=Math.floor(+p.f);if(!ELS.includes(el)||!(f>=0&&f<TOWER.floors))throw uerr('Kule katı bulunamadı.');
       if(f>twDone(st,el))throw uerr('Bu kat henüz açılmadı.');if(tutOn(st))throw uerr('Önce öğreticiyi bitir.');tw={el,f}}
@@ -657,6 +678,19 @@ function act(st,a,p,ctx){p=p||{};const rng=ctx.rng,now=ctx.now;normalize(st,ctx)
     const id=Math.floor(rng()*2**52).toString(36);st.bt={id,mode,adv,t0:now,tut:mode==='arena'&&st.tut===6?1:0};if(mode==='cboss'){const d=dayKey(now);st.cbd={day:d,n:(st.cbd&&st.cbd.day===d?st.cbd.n:0)+1};st.bt.cw=cbWeek(now)}if(tw)st.bt.tw=tw;if(mode==='arena'&&(p.sp==='aw'||p.sp==='kw')&&!st.bt.tut)st.bt.sp=p.sp;if(mode==='friend'&&typeof p.fr==='string')st.bt.fr=p.fr.slice(0,16);
     return{id,forfeit:fo}}
   case 'battle_end':return battleEnd(st,p,ctx);
+  case 'ev_claim':{const E=evOf(now),v=evState(st,now);if(!E.on)throw uerr('Etkinlik şu an açık değil.');const j=p.j;
+    if(j==='all'){if(v.all||!v.c.every(Boolean))throw uerr('Önce üç görevi de tamamla.');v.all=1;st.free+=EV.all.free;giveKS(st,E.el,EV.all.ks);return{free:EV.all.free,ks:EV.all.ks,el:E.el}}
+    const k=Math.floor(+j),G=EV.goals[k];if(!G)throw uerr('Görev bulunamadı.');if(v.c[k])throw uerr('Bu ödülü zaten aldın.');if(v.p[k]<G.n)throw uerr('Görev henüz tamamlanmadı.');
+    v.c[k]=1;const rw=G.rw;if(rw.g)st.gold+=rw.g;if(rw.free)st.free+=rw.free;if(rw.ss)giveSS(st,E.el,rw.ss);return{...rw,el:E.el}}
+  case 'pz_claim':{const d=dayKey(now);if(st.pz&&st.pz.day===d)throw uerr('Bugünün bulmacasını zaten çözdün.');const y=dayKey(now-AW_DAY),sk=st.pz&&st.pz.day===y?(st.pz.sk||0)+1:1;
+    st.pz={day:d,sk};st.gold+=PZ.g;const R={g:PZ.g,sk,free:0};if(sk%PZ.streak===0){st.free+=PZ.free;R.free=PZ.free}st.pzN=(st.pzN||0)+1;return R}
+  case 'draft_start':{if(st.dr&&!st.dr.done)throw uerr('Devam eden bir draft var.');if(tutOn(st))throw uerr('Önce öğreticiyi bitir.');if((st.gold||0)<DRAFT.cost)throw uerr('Draft için '+DRAFT.cost+' altın gerekli.');
+    st.gold-=DRAFT.cost;st.dr={deck:[],opts:[],sup:null,w:0,l:0,t:now,done:0};st.dr.opts=drOpts(st.dr,rng);st.drN=(st.drN||0)+1;return{dr:st.dr}}
+  case 'draft_pick':{const d=st.dr;if(!d||!d.opts||!d.opts.length)throw uerr('Seçilecek kart yok.');const i=Math.floor(+p.i);if(!(i>=0&&i<d.opts.length))throw uerr('Geçersiz seçim.');
+    d.deck.push(d.opts[i]);if(d.deck.length<DRAFT.picks)d.opts=drOpts(d,rng);else{d.opts=[];d.sup=drSup(d.deck)}return{dr:d}}
+  case 'draft_claim':{const d=st.dr;if(!d)throw uerr('Aktif draft yok.');if(!d.done&&!p.quit)throw uerr('Draft henüz bitmedi.');if(st.bt&&st.bt.mode==='draft')throw uerr('Önce savaşı bitir.');
+    const w=Math.min(DRAFT.maxW,d.w),rw=DRAFT.rw[w],R={w,l:d.l,g:rw.g,free:rw.free||0,ks:0,el:null};st.gold+=R.g;st.free+=R.free;
+    if(rw.ks){R.el=ELS[Math.floor(rng()*ELS.length)];R.ks=rw.ks;giveKS(st,R.el,rw.ks)}st.drBest=Math.max(st.drBest||0,w);st.dr=null;return R}
   case 'cboss_claim':{const o=ctx.cbOk;if(!o)throw uerr('Bu ödül alınamaz.');const boss=cbBoss(o.w),R={g:CB.rw.g+(o.top?CB.top.g:0),free:CB.rw.free+(o.top?CB.top.free:0),ks:CB.rw.ks,el:boss.el,top:!!o.top};st.gold+=R.g;st.free+=R.free;giveKS(st,boss.el,R.ks);return R}
   case 'ach_claim':{const id=String(p.id||''),rw=ACH_RW[id];
     if(!rw||!(st.ach||[]).includes(id))throw uerr('Bu başarım henüz tamamlanmadı.');
@@ -750,7 +784,7 @@ function achSync(st,x){const have=new Set(st.ach||[]),nw=[];
   if(nw.length)st.ach=[...have];return nw}
 
 const MR={ELS,round5,round10,RAR,TYPE_HP,TYPE_RET,DMG,ATK,FXV,FX,atkDmg,PACK,packCost,XP,ECON,RAW,E1,E2,CARDS,BY,rootOf,N,pad,setOf,setCards,cno,setN,
-  EXA,EXCOST,EXD,EXC,exOf,FLD,fldOf,AWR,arenaRule,awOk,KW,KWL,kwOf,kwRoot,CB,cbWeek,cbEnds,cbBoss,cbHp,cbLeft,cbStage,EZA,EZDR,EZC,POOL,POOLS,EVO_NEED,STAGE_W,cw,SHINY,LEAGUES,lgOf,TROPHY,STREAK,strkB,CHEST,GIFT,DQP,DQB,srnd,SUPK,
+  EXA,EXCOST,EXD,EXC,exOf,FLD,fldOf,DRAFT,drSup,EV,evOf,evState,PZ,dayKey,AWR,arenaRule,awOk,KW,KWL,kwOf,kwRoot,CB,cbWeek,cbEnds,cbBoss,cbHp,cbLeft,cbStage,EZA,EZDR,EZC,POOL,POOLS,EVO_NEED,STAGE_W,cw,SHINY,LEAGUES,lgOf,TROPHY,STREAK,strkB,CHEST,GIFT,DQP,DQB,srnd,SUPK,
   ADV_CH,ADV_RULE,ADV_N,ADV_P,advStage,advStageX,advEX,TUT,fresh,
   PRL,PRL_OFF,PRL_MUL,PRL_PACK,SETS,prlOf,givePrl,ECON_KEYS,CLIENT_KEYS,BATTLE_MIN_MS,BATTLE_PER_HOUR,own,tutOn,roll,drawCard,rollPack,copies,canEvo,canAwaken,giveSup,rndSup,addXp,
   giftTick,dayKey,dqList,dqInc,normalize,mergeClient,act,pubStats,avatarOf,ACH,ACH_RW,achList,achSync,achUnclaimed,
