@@ -1375,6 +1375,7 @@ body.nui .frp{animation:popin .25s ease}
 @keyframes selfl{0%,100%{transform:translateY(-10px) scale(1.04) rotate(0)}25%{transform:translateY(-15px) scale(1.05) rotate(-.8deg)}50%{transform:translateY(-12px) scale(1.04) rotate(0)}75%{transform:translateY(-16px) scale(1.05) rotate(.8deg)}}
 .hk.sel{animation:hsel 1.6s ease-in-out infinite}
 @keyframes hsel{0%,100%{transform:rotate(0) scale(1.08) translateY(0)}25%{transform:rotate(-1.2deg) scale(1.09) translateY(-6px)}50%{transform:rotate(0) scale(1.08) translateY(-3px)}75%{transform:rotate(1.2deg) scale(1.09) translateY(-7px)}}
+.endb .pzh{margin:6px auto 4px;max-width:92%;padding:8px 10px;border-radius:10px;background:#ffd76a1f;border:1px solid #ffd76a66;font:600 13px/1.35 Rubik,sans-serif!important;color:#ffeab0;text-shadow:none;-webkit-text-stroke:0}
 </style>
 </head>
 <body>
@@ -2103,14 +2104,19 @@ function pzSolve(X0){let max=0,win=0,n=0,noSup=0;const sols=[],outs=[];
 let PZC=null;
 function pzToday(){const d=MR.dayKey(Date.now());if(!PZC||PZC.day!==d){const g=pzGen(d);PZC={day:d,g}}return PZC.g}
 const pzDone=()=>S.pz&&S.pz.day===MR.dayKey(Date.now());
-function startPuzzle(){const P=pzToday();if(!P){toast('Bugünün bulmacası hazırlanamadı');return}const X=structuredClone(P.X0);
+let pzTry=0;
+function startPuzzle(){const P=pzToday();if(!P){toast('Bugünün bulmacası hazırlanamadı');return}
+  if(!coachSeen().pz){coachMark('pz');coachBox('img/ic/star.webp','Günlük bulmaca',`<p>Her gün herkes aynı savaş durumuyla karşılaşır. Tek bir hamlen var:</p><p>1. İstersen elindeki <b>bir destek kartını</b> bir yaratığına oyna.<br>2. Sonra <b>bir saldırı</b> yap.</p><p>Bu tek hamlede rakibin <b>kalan bütün canlarını</b> alırsan bulmacayı çözersin. Sıçrayan, yakan ve güçlenen saldırıları birlikte düşün.</p><p class="cono">Deneme sınırı yok. Yanlış yaparsan ipucu gelir. İlk çözüm 100 altın, 7 günlük seri 1 paket verir.</p>`,'Başla').then(()=>startPuzzle());return}const X=structuredClone(P.X0);
   if(B&&B.iv)clearInterval(B.iv);fx2Load();
   B={me:X.me,foe:X.foe,pz:P,fld:null,kw:0,awr:null,turn:'me',sel:null,selH:null,supUsed:false,busy:false,auto:false,lastAct:Date.now(),over:false,win:null,dmg:{me:0,foe:0},stats:{hit:{},weak:0,ko:0},log:`<b>Günlük bulmaca</b> · rakibin ${P.L} canı kaldı, tek hamlede bitir`};
   B.foe.lives=P.L;document.body.classList.add('inb');renderBattle();scrollTo(0,0);
   setTimeout(()=>{if(B&&B.pz&&!B.over)toast(`Tek hamle: en fazla 1 destek kartı oyna, sonra 1 saldırı yap. Rakibin ${P.L} canının hepsini al!`)},500)}
-async function pzResult(win){if(!B||!B.pz)return;B.over=true;B.win=win;B.busy=false;let r=null;
+async function pzResult(win){if(!B||!B.pz)return;B.over=true;B.win=win;B.busy=false;let r=null;if(!win)pzTry++;
   if(win&&!pzDone()){try{r=await act('pz_claim',{});renderTop()}catch(e){toast(e.message)}}if(!B)return;B.pzR=r;renderBattle();if(win)vConfetti()}
-function pzEnd(){const r=B.pzR;return `<div class="endb ${B.win?'w':'l'}"><div class="ent">${B.win?'Bulmaca çözüldü!':'Olmadı'}</div><small class="ewhy">${B.win?(r?`+${r.g} altın · ${r.sk} günlük seri${r.free?` · +${r.free} paket`:''}`:'Bugünün ödülünü zaten aldın'):`Rakibin ${B.pz.L} canını tek hamlede alamadın. Destek kartını ve saldırı sırasını düşün.`}</small>${B.win?'':'<button class="btn" id="pzre">Tekrar dene</button>'}<button class="btn alt" id="pzout">Çık</button></div>`}
+function pzHint(){const P=B.pz,o=P.sol[0];if(!o)return '';const [sp,ai,di]=o,A=P.X0.me.board[ai],D=P.X0.foe.board[di];
+  const h=pzTry<=1?(sp?'Önce bir destek kartı kullanmayı dene.':'Bu sefer destek kartı gerekmeyebilir; doğru yaratık ve hedefi düşün.'):pzTry===2?`Saldıracak yaratık: <b>${A.c.name}</b>${sp?` · destek kartını oyna: <b>${SUPN[P.X0.me.hand[sp[0]].k]||'destek'}</b>`:''}`:`Çözüm: ${sp?`<b>${SUPN[P.X0.me.hand[sp[0]].k]||'destek'}</b> kartını <b>${P.X0.me.board[sp[1]].c.name}</b> üzerine oyna, sonra `:''}<b>${A.c.name}</b> ile <b>${D.c.name}</b> kartına saldır.`;
+  return `<div class="pzh">💡 ${h}</div>`}
+function pzEnd(){const r=B.pzR;return `<div class="endb ${B.win?'w':'l'}"><div class="ent">${B.win?'Bulmaca çözüldü!':'Olmadı'}</div><small class="ewhy">${B.win?(r?`+${r.g} altın · ${r.sk} günlük seri${r.free?` · +${r.free} paket`:''}`:'Bugünün ödülünü zaten aldın'):`Rakibin ${B.pz.L} canını tek hamlede alamadın.`}</small>${B.win?'':pzHint()}${B.win?'':'<button class="btn" id="pzre">Tekrar dene</button>'}<button class="btn alt" id="pzout">Çık</button></div>`}
 function pzCard(){if(!uniq())return '';const E=MR.evOf(Date.now()),v=S.ev&&S.ev.id===E.id?S.ev:null,ec=v?v.c.filter(Boolean).length:0,rdy=!!(E.on&&v&&(EVG().some((G,k)=>!v.c[k]&&v.p[k]>=G.n)||(!v.all&&v.c.every(Boolean))));
   return `<div class="ptiles p2"><button class="ptile${pzDone()?'':' rdy'}" id="pzbtn"><img src="img/ic/star.webp" alt=""><span><b>Günlük bulmaca</b><small>${pzDone()?'Çözüldü ✓':`Seri: ${S.pz&&S.pz.day===MR.dayKey(Date.now()-864e5)?S.pz.sk:0} gün`}</small></span>${pzDone()?'':'<i></i>'}</button>
    <button class="ptile ev${rdy?' rdy':''}" id="evbtn" style="--ec:${AUC[E.el]}"><img src="img/ic/${E.el}.webp" alt=""><span><b>${E.on?E.n:'Etkinlik'}</b><small>${E.on?`${ec}/3 görev · ${snLeft(E.end-Date.now())}`:`${snLeft(E.next-Date.now())} sonra`}</small></span>${rdy?'<i></i>':''}</button></div>`}
@@ -2157,6 +2163,8 @@ function openDraft(){const ov=$('#ov'),d=S.dr,D=DRF();if(d&&!window.__drPre){win
   else body=`${rec}<div class="drh"><b>${d.w} galibiyet · ${d.l} yenilgi</b><small>Şu an bitirirsen:</small></div><div class="advw drrw">${drRw(d.w)}</div>${mini}<button class="btn" id="drfight">Savaş</button><button class="btn alt" id="drquit">Bitir ve ödülü al</button>`;
   ov.innerHTML=`<div class="fp advi drp0"><div class="sth"><b>Draft</b><button class="stx" id="drx">✕</button></div>${body}</div>`;
   ov.querySelector('#drx').onclick=close;
+  if(d&&!d.sup&&!coachSeen().drp){coachMark('drp');coachBox('img/ic/cards.webp','Draft · Kart seçimi',`<p>Her turda önüne <b>3 kart</b> gelir, birini seçersin. 10 seçimden sonra desten hazır olur.</p><p><b>Destek kartları</b> destendeki türlere göre otomatik eklenir. Seçimlerini <b>1-2 türe</b> toplarsan tür taşları daha çok işe yarar.</p><p class="cono">Canı yüksek ve iki saldırısı olan kartlar genelde iyi seçimdir. Kartlar koleksiyonundan bağımsızdır; draft bitince kaybolurlar.</p>`)}
+  else if(d&&d.sup&&!d.done&&!coachSeen().drf){coachMark('drf');coachBox('img/ic/cards.webp','Draft · Savaşlar',`<p>Desten hazır! Şimdi bu desteyle <b>3 yenilgiye ya da 7 galibiyete</b> kadar savaşırsın.</p><p>Her galibiyet ödülünü büyütür: 3 galibiyetten sonra paket, 7 galibiyette kadim taş da gelir.</p><p class="cono">Kötü gidiyorsa "Bitir ve ödülü al" ile o ana kadarki galibiyetinin ödülünü alabilirsin. Savaşı yarıda kapatmak yenilgi sayılır.</p>`)}
   const go=async(a,p)=>{try{const r=await act(a,p);renderTop();return r}catch(e){toast(e.message);return null}};
   const b1=ov.querySelector('#drstart');if(b1)b1.onclick=async()=>{b1.disabled=true;if(await go('draft_start',{}))openDraft();else b1.disabled=false};
   ov.querySelectorAll('.dro').forEach(b=>b.onclick=()=>drPick(+b.dataset.i));
@@ -2601,6 +2609,8 @@ async function meTurn(first){if(!B||B.over)return;meTurnSetup();B.busy=true;
   else B.skipX=0;
   if(first)B.justCharged=chargeStep(B,'me');else if(await beginTurn('me'))return;
   if(!B||B.over)return;if(rescue(B,'me')){B.log='Elinde yaratık kalmadı · bir destek kartın desteye döndü, yerine yaratık geldi';renderBattle();const h=document.querySelector('#b2hand .hk:last-child');if(h)h.classList.add('newk')}
+  if(!B.tut&&!B.pz&&!coachSeen().glow&&B.me.board.some(f=>f&&f.ch&&f.c.atks[1])){coachMark('glow');const f=B.me.board.find(x=>x&&x.ch&&x.c.atks[1]),t0=Date.now();await wait(350);
+    await coachBox(`img/t/${f.c.id}.webp`,'Güç doldu!',`<p><b>${f.c.name}</b> parlıyor: gücü doldu ve bu tur <b>güçlü saldırısını</b> (${f.c.atks[1].name}, ${f.c.atks[1].dmg} hasar) yapacak.</p><p>Bir yaratık bir tur saldırmazsa gücü dolar. Gücü dolu kartlar kendi türünün renginde daha parlak yanar.</p><p class="cono">İpucu: Güçlü saldırıyı en çok can kaldıran rakibe saklamak işe yarar.</p>`);if(B&&B.t0)B.t0+=Date.now()-t0}
   unbusy()}
 // meşgulken (animasyon) yapılan son dokunuş kaybolmaz: meşguliyet bitince uygulanır
 function unbusy(){if(!B)return;B.busy=false;renderBattle();const q=B.qTap;B.qTap=null;if(q&&B.turn==='me'&&!B.over)q()}
@@ -3057,7 +3067,7 @@ document.addEventListener('pointerdown',e=>{if(e.target.closest('.btn,.tgo,nav b
 // dosyaları telefonda saklayan servis: içeriği değişen bir görsel/ses olursa ASSET_V artırılır
 // SÜRÜM KONTROLÜ: yeni sürüm yayınlanınca APP_V ve version.txt birlikte artırılır.
 // İnternet varken oyun arada bir version.txt'ye bakar; farklıysa üstte 'Yeni sürüm hazır · Yenile' çıkar (savaş sırasında beklenir).
-const APP_V='2026.11.28-18';
+const APP_V='2026.11.28-19';
 function verCheck(){if(window.claude||!navigator.onLine)return;
   fetch('version.txt?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{t=(t||'').trim();if(/^[\w.-]{3,40}$/.test(t)&&t!==APP_V){window.__upd=t;updShow()}}).catch(()=>{})}
 function updShow(){if(!window.__upd||document.getElementById('updb'))return;if(B&&!B.over){window.__updLater=1;return}
