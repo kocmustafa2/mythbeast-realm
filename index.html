@@ -1361,6 +1361,19 @@ body.nui .frp{animation:popin .25s ease}
 .bk.cbbk .bkhp{height:16px}.bk.cbbk .bkhp span{font-size:11.5px}
 .bk.cbbk .bkat{font-size:13px}.bk.cbbk .bkat b{font-size:22px}
 .adbk{margin-top:14px;padding:12px;border-radius:12px;background:#ffffff0d;border:1px solid #ffffff22;display:flex;flex-direction:column;gap:6px}.adbk small{color:#ffffffa8;font-size:12px;line-height:1.35}
+/* savaş kartı: tür renginde parlayan çerçeve; şimşek jetonu güç durumunu gösterir; güç dolunca altın çerçeve + çapraz kılıçlar */
+.bk{box-shadow:0 4px 12px #000b,0 0 0 3px var(--ec),0 0 14px color-mix(in srgb,var(--ec) 65%,transparent)}
+.bk .bkbolt{position:absolute;right:2px;top:calc(62% - 4px);width:22px;height:22px;border-radius:50%;z-index:3;display:grid;place-items:center;background:radial-gradient(circle at 40% 35%,#5a4a2a,#2a2010);box-shadow:0 0 0 2px #8a6a2a,0 2px 4px #000c}
+.bk .bkbolt svg{width:14px;height:14px;fill:#9a8a6a}
+.bk .bkbolt.half{box-shadow:0 0 0 2px #c9952a,0 0 6px #ffc83a88,0 2px 4px #000c}.bk .bkbolt.half svg{fill:#e8c060}
+.bk .bkbolt.on{background:radial-gradient(circle at 40% 35%,#ffe9a0,#d08a00);box-shadow:0 0 0 2px #fff3c0,0 0 12px #ffc83a,0 2px 4px #000c;animation:boltp 1.2s ease-in-out infinite}.bk .bkbolt.on svg{fill:#fff}
+@keyframes boltp{50%{transform:scale(1.15);box-shadow:0 0 0 2px #fff,0 0 18px #ffd84a,0 2px 4px #000c}}
+.bk.ch{box-shadow:0 4px 12px #000b,0 0 0 4px #ffd84a,0 0 22px #ffc83a,0 0 40px #ff9d0066;animation:chglow 1.6s ease-in-out infinite}
+@keyframes chglow{50%{box-shadow:0 4px 12px #000b,0 0 0 4px #fff0a0,0 0 30px #ffd84a,0 0 56px #ff9d0088}}
+.bkw{position:relative}
+.bksw{position:absolute;left:50%;top:-30px;width:44px;height:44px;transform:translateX(-50%);z-index:6;filter:drop-shadow(0 0 6px #ffc83a) drop-shadow(0 2px 2px #000a);animation:swb 1.6s ease-in-out infinite;pointer-events:none}
+.bksw svg{width:100%;height:100%}
+@keyframes swb{50%{transform:translateX(-50%) translateY(-3px) scale(1.08)}}
 </style>
 </head>
 <body>
@@ -2474,11 +2487,12 @@ function bk(f,s,i){
   let hint='';if(tgt){const A=B.me.board[B.sel],fx=curAtk(A).fx,h=calc(A,f,B.me.board,B.foe.board,fldAtk(B,A,atkOf(A)));h.d=fldDef(B,h.d);hint=`<div class="bkhint${h.k==='w'?' x':h.k?' w':''}">${h.k==='i'?'Bağışık':'−'+h.d+(fx==='coin'?'+':'')}</div>`}
   const kwi=B.kw&&!f.tok&&MR.kwOf(c)&&!(MR.kwOf(c)==='kalkan'&&f.shield>0)?`<span class="bkkw">${kwI(MR.kwOf(c))}</span>`:'',shd=f.shield>0?'<span class="bksh"><img class="kwim" src="img/kw/kalkan.webp" alt=""></span>':'';
   const a=curAtk(f),big=f.ch&&c.atks[1],SH=c.ex||(s==='me'&&shownShiny(c.id)),src=c.cbb?`img/${c.id}.jpg`:SH&&SHART.has(c.id)?`img/s/${c.id}.jpg`:`img/t/${c.id}.webp`;
-  return `<div class="bk${c.cbb?' cbbk':''}${big?' ch':c.atks[1]&&!f.justIn&&!f.didAtk?' half':''}${s==='me'&&B.sel===i?' sel':''}${my&&!selS?' bpk':''}${tgt?' tg':''}${supOk?' sup':''}${SH?' holo':''}${c.ex?' ex':''}${c.ez?' ez':''}" data-s="${s}" data-i="${i}" data-u="${f.uid}" style="--ec:${AUC[c.el]}">
+  const sw=big?'<span class="bksw"><svg viewBox="0 0 64 64"><g fill="#ffe27a" stroke="#7a4a00" stroke-width="2.5" stroke-linejoin="round"><path d="M8 6l6-2 30 30-4 4z"/><path d="M56 6l-6-2-30 30 4 4z"/><path d="M18 40l6 6-8 8-6-6z"/><path d="M46 40l-6 6 8 8 6-6z"/></g></svg></span>':'';
+  return `${big?'<div class="bkw">':''}<div class="bk${c.cbb?' cbbk':''}${big?' ch':c.atks[1]&&!f.justIn&&!f.didAtk?' half':''}${s==='me'&&B.sel===i?' sel':''}${my&&!selS?' bpk':''}${tgt?' tg':''}${supOk?' sup':''}${SH?' holo':''}${c.ex?' ex':''}${c.ez?' ez':''}" data-s="${s}" data-i="${i}" data-u="${f.uid}" style="--ec:${AUC[c.el]}">
   <div class="bka" style="background-image:url(${src})${portArt(c)?`;background-position:50% ${focY(c)}%`:''}"></div>${c.lv>=10?LV10(c).replace('lv10f','lv10f bk10f'):''}${kwi}${shd}${f.tok?'<span class="bktok">kopya</span>':''}<div class="bkn${c.lv?' bknl':''}"${nmS(c.name+(c.lv?'+10':'')+(c.ex?'EX ':''),9)}>${c.lv?`<span>${c.name}</span>${lvN(c)}`:c.name}</div><img class="bke" src="img/ic/${c.el}.webp" alt="">
   ${c.ez?'':c.ex?'<span class="bkx">'+KDI+'</span>':''}${f.evo?'<span class="bkev">EVRİM TAŞI</span>':''}${f.st?`<span class="bkst"><img src="img/ic/${f.st}.webp" alt="">+10</span>`:''}${f.burn?`<span class="bkb"><img src="img/ic/burn.webp" alt="">${f.burn}</span>`:''}${f.poiT>0?`<span class="bkv bkp"><img src="img/ic/poison.webp" alt="">${f.poi}</span>`:''}${f.bldT>0?`<span class="bkv bkl"><img src="img/ic/blood.webp" alt="">${f.bld}</span>`:''}${f.ampT>0?`<span class="bkv bka2">${icon('shadow')}×${f.amp}</span>`:''}${f.frz>0?'<span class="bkfz">❄ Donmuş</span>':''}${f.mute>0?'<span class="bkmu">Yetenek kapalı</span>':''}
-  <div class="bkhp"><i class="${p<.35?'lo':''}" style="width:${p*100}%"></i><span>${c.cbb?f.hp.toLocaleString('tr')+' / '+mx(f).toLocaleString('tr'):f.hp+' / '+mx(f)}</span></div>
-  <div class="bkat${big?' big':''}"><span>${a.name}${a.fx?`<em>${FXS[a.fx]}</em>`:''}</span><b>${atkOf(f)}${a.fx==='coin'?'+':''}</b></div>${hint}</div>`}
+  ${c.atks[1]?`<span class="bkbolt${big?' on':f.justIn||f.didAtk?'':' half'}"><svg viewBox="0 0 24 24"><path d="M13.5 2 4.5 13.5h6l-1.5 8.5 9.5-12h-6.2z"/></svg></span>`:''}<div class="bkhp"><i class="${p<.35?'lo':''}" style="width:${p*100}%"></i><span>${c.cbb?f.hp.toLocaleString('tr')+' / '+mx(f).toLocaleString('tr'):f.hp+' / '+mx(f)}</span></div>
+  <div class="bkat${big?' big':''}"><span>${a.name}${a.fx?`<em>${FXS[a.fx]}</em>`:''}</span><b>${atkOf(f)}${a.fx==='coin'?'+':''}</b></div>${hint}</div>${big?sw+'</div>':''}`}
 let handW=0;
 function handPos(n){const W=(handW||Math.min(innerWidth,480)-8)-14,cw=84,gap=n>1?Math.min(cw+6,(W-cw)/(n-1)):0,x0=7+(W-(cw+gap*(n-1)))/2,t=performance.now()/1000;
   return k=>`left:${(x0+k*gap).toFixed(1)}px;--rot:${((k-(n-1)/2)*3.5).toFixed(1)}deg;animation-delay:${(-(t%3.2)-k*.55).toFixed(2)}s`}
@@ -3043,7 +3057,7 @@ document.addEventListener('pointerdown',e=>{if(e.target.closest('.btn,.tgo,nav b
 // dosyaları telefonda saklayan servis: içeriği değişen bir görsel/ses olursa ASSET_V artırılır
 // SÜRÜM KONTROLÜ: yeni sürüm yayınlanınca APP_V ve version.txt birlikte artırılır.
 // İnternet varken oyun arada bir version.txt'ye bakar; farklıysa üstte 'Yeni sürüm hazır · Yenile' çıkar (savaş sırasında beklenir).
-const APP_V='2026.11.28-15';
+const APP_V='2026.11.28-16';
 function verCheck(){if(window.claude||!navigator.onLine)return;
   fetch('version.txt?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{t=(t||'').trim();if(/^[\w.-]{3,40}$/.test(t)&&t!==APP_V){window.__upd=t;updShow()}}).catch(()=>{})}
 function updShow(){if(!window.__upd||document.getElementById('updb'))return;if(B&&!B.over){window.__updLater=1;return}
