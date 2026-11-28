@@ -1362,15 +1362,15 @@ body.nui .frp{animation:popin .25s ease}
 .bk.cbbk .bkat{font-size:13px}.bk.cbbk .bkat b{font-size:22px}
 .adbk{margin-top:14px;padding:12px;border-radius:12px;background:#ffffff0d;border:1px solid #ffffff22;display:flex;flex-direction:column;gap:6px}.adbk small{color:#ffffffa8;font-size:12px;line-height:1.35}
 /* savaş kartı: tür renginde parlayan çerçeve; şimşek jetonu güç durumunu gösterir; güç dolunca altın çerçeve + çapraz kılıçlar */
-.bk{box-shadow:0 4px 12px #000b,0 0 0 2px color-mix(in srgb,var(--ec) 45%,#fff),0 0 0 5px var(--ec),0 0 16px 2px color-mix(in srgb,var(--ec) 75%,transparent),0 0 34px color-mix(in srgb,var(--ec) 40%,transparent)}
-.bk.ch{box-shadow:0 4px 12px #000b,0 0 0 2px #fff6c8,0 0 0 7px #ffc83a,0 0 26px 7px #ffb300dd,0 0 60px 6px #ff9d0099;animation:chglow 1.6s ease-in-out infinite}
-@keyframes chglow{50%{box-shadow:0 4px 12px #000b,0 0 0 2px #fff,0 0 0 6px #ffd84a,0 0 30px 6px #ffc300ee,0 0 70px #ff9d00aa}}
+.bk{box-shadow:0 4px 12px #000b,0 0 0 2px color-mix(in srgb,var(--ec) 45%,#fff),0 0 0 6px var(--ec),0 0 16px 2px color-mix(in srgb,var(--ec) 75%,transparent),0 0 34px color-mix(in srgb,var(--ec) 40%,transparent)}
+.bk.ch{box-shadow:0 4px 12px #000b,0 0 0 3px #fff8d0,0 0 0 9px #ffc21a,0 0 0 11px #ff9d00aa,0 0 30px 12px #ffb300dd,0 0 70px 16px #ff8a0088;animation:chglow 1.6s ease-in-out infinite}
+@keyframes chglow{50%{box-shadow:0 4px 12px #000b,0 0 0 3px #fff,0 0 0 9px #ffd84a,0 0 0 11px #ffb300bb,0 0 38px 16px #ffc300ee,0 0 90px 22px #ff9d00aa}}
 .bkw{position:relative}
-.bksw{position:absolute;left:50%;top:-30px;width:44px;height:44px;transform:translateX(-50%);z-index:6;filter:drop-shadow(0 0 6px #ffc83a) drop-shadow(0 2px 2px #000a);animation:swb 1.6s ease-in-out infinite;pointer-events:none}
-.bksw svg{width:100%;height:100%}
+.bksw{position:absolute;left:50%;top:-44px;width:50px;height:50px;transform:translateX(-50%);z-index:6;filter:drop-shadow(0 0 6px #ffc83a) drop-shadow(0 2px 2px #000a);animation:swb 1.6s ease-in-out infinite;pointer-events:none}
+.bksw img{width:100%;height:100%;object-fit:contain}
 @keyframes swb{50%{transform:translateX(-50%) translateY(-3px) scale(1.08)}}
 .bk:not(.empty)::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:5;box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--ec) 35%,#fff),inset 0 0 12px 2px color-mix(in srgb,var(--ec) 80%,transparent)}
-.bk.ch::after{box-shadow:inset 0 0 0 2px #fff6c8,inset 0 0 18px 5px #ffc300dd;animation:chin 1.6s ease-in-out infinite}
+.bk.ch::after{box-shadow:inset 0 0 0 2px #fff6c8,inset 0 0 22px 8px #ffc300ee;animation:chin 1.6s ease-in-out infinite}
 @keyframes chin{50%{box-shadow:inset 0 0 0 2px #fff,inset 0 0 26px 8px #ffd84aee}}
 </style>
 </head>
@@ -2485,7 +2485,7 @@ function bk(f,s,i){
   let hint='';if(tgt){const A=B.me.board[B.sel],fx=curAtk(A).fx,h=calc(A,f,B.me.board,B.foe.board,fldAtk(B,A,atkOf(A)));h.d=fldDef(B,h.d);hint=`<div class="bkhint${h.k==='w'?' x':h.k?' w':''}">${h.k==='i'?'Bağışık':'−'+h.d+(fx==='coin'?'+':'')}</div>`}
   const kwi=B.kw&&!f.tok&&MR.kwOf(c)&&!(MR.kwOf(c)==='kalkan'&&f.shield>0)?`<span class="bkkw">${kwI(MR.kwOf(c))}</span>`:'',shd=f.shield>0?'<span class="bksh"><img class="kwim" src="img/kw/kalkan.webp" alt=""></span>':'';
   const a=curAtk(f),big=f.ch&&c.atks[1],SH=c.ex||(s==='me'&&shownShiny(c.id)),src=c.cbb?`img/${c.id}.jpg`:SH&&SHART.has(c.id)?`img/s/${c.id}.jpg`:`img/t/${c.id}.webp`;
-  const sw=big?'<span class="bksw"><svg viewBox="0 0 64 64"><g fill="#ffe27a" stroke="#7a4a00" stroke-width="2.5" stroke-linejoin="round"><path d="M8 6l6-2 30 30-4 4z"/><path d="M56 6l-6-2-30 30 4 4z"/><path d="M18 40l6 6-8 8-6-6z"/><path d="M46 40l-6 6 8 8 6-6z"/></g></svg></span>':'';
+  const sw=big?'<span class="bksw"><img src="img/ic/swords.webp" alt=""></span>':'';
   return `${big?'<div class="bkw">':''}<div class="bk${c.cbb?' cbbk':''}${big?' ch':c.atks[1]&&!f.justIn&&!f.didAtk?' half':''}${s==='me'&&B.sel===i?' sel':''}${my&&!selS?' bpk':''}${tgt?' tg':''}${supOk?' sup':''}${SH?' holo':''}${c.ex?' ex':''}${c.ez?' ez':''}" data-s="${s}" data-i="${i}" data-u="${f.uid}" style="--ec:${AUC[c.el]}">
   <div class="bka" style="background-image:url(${src})${portArt(c)?`;background-position:50% ${focY(c)}%`:''}"></div>${c.lv>=10?LV10(c).replace('lv10f','lv10f bk10f'):''}${kwi}${shd}${f.tok?'<span class="bktok">kopya</span>':''}<div class="bkn${c.lv?' bknl':''}"${nmS(c.name+(c.lv?'+10':'')+(c.ex?'EX ':''),9)}>${c.lv?`<span>${c.name}</span>${lvN(c)}`:c.name}</div><img class="bke" src="img/ic/${c.el}.webp" alt="">
   ${c.ez?'':c.ex?'<span class="bkx">'+KDI+'</span>':''}${f.evo?'<span class="bkev">EVRİM TAŞI</span>':''}${f.st?`<span class="bkst"><img src="img/ic/${f.st}.webp" alt="">+10</span>`:''}${f.burn?`<span class="bkb"><img src="img/ic/burn.webp" alt="">${f.burn}</span>`:''}${f.poiT>0?`<span class="bkv bkp"><img src="img/ic/poison.webp" alt="">${f.poi}</span>`:''}${f.bldT>0?`<span class="bkv bkl"><img src="img/ic/blood.webp" alt="">${f.bld}</span>`:''}${f.ampT>0?`<span class="bkv bka2">${icon('shadow')}×${f.amp}</span>`:''}${f.frz>0?'<span class="bkfz">❄ Donmuş</span>':''}${f.mute>0?'<span class="bkmu">Yetenek kapalı</span>':''}
