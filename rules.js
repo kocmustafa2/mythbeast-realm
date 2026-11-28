@@ -389,7 +389,7 @@ const ECON_KEYS=['gold','dust','free','owned','shiny','sup','supV','supV2','pity
 // İstemcinin değiştirebildiği zararsız alanlar (ayarlar, deste seçimi, ipuçları).
 const CLIENT_KEYS=['mv','sv','snd','deck','deck2','decks','dA','dM','dT','shOff','pset','th','sid','t'];
 const TUT_CLIENT_MAX=2;            // istemci öğreticiyi en fazla bu adıma kendisi ilerletebilir (hoş geldin → paket aç)
-const BATTLE_MIN_MS=30000;          // ödül için savaşın en kısa süresi
+const BATTLE_MIN_MS=20000;          // ödül için savaşın en kısa süresi (istemci hızlı biten savaşta sonucu bu süre dolana kadar bekletir)
 const BATTLE_TUT_MIN_MS=8000;
 const BATTLE_PER_HOUR=60;           // saatte tam ödüllü savaş sayısı; sonrası ödül oranlı azalır (120'de sıfır), kupa/ilerleme devam eder
 const STAT_CAP={hit:40,weak:30,ko:20};
