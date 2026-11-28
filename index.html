@@ -1428,7 +1428,7 @@ const EZOWN='u_gCZR5eBoOHaN6bC0V8kJwQ';
 const exaTxt=c=>(c.ez?EZA:EXA)[c.exa];
 const koL=c=>c.ez?3:c.ex?2:1;   // yenilince giden can
 const koN=f=>f.tok?0:f.ko2?Math.max(2,koL(f.c)):koL(f.c);
-const KWIMG=new Set(['kalkan','nobet','pusu','sonnefes','cagir','bag']);const kwI=k=>KWIMG.has(k)?`<img class="kwim" src="img/kw/${k}.webp" alt="">`:MR.KW[k].i;   // anahtar kelime simgesi
+const KWIMG=new Set(['kalkan','nobet','pusu','sonnefes','cagir','bag','sessiz']);const kwI=k=>KWIMG.has(k)?`<img class="kwim" src="img/kw/${k}.webp" alt="">`:MR.KW[k].i;   // anahtar kelime simgesi
 const kwX=(X,f)=>X&&X.kw&&f?MR.kwOf(f.c):null;   // Yetenek Arenası anahtar kelimesi
 const tauntOk=(X,o,di)=>{if(!X||!X.kw)return true;const t=X[o].board.some(f=>f&&f.hp>0&&MR.kwOf(f.c)==='nobet');return !t||(X[o].board[di]&&MR.kwOf(X[o].board[di].c)==='nobet')};   // Feda alan yaratık tek vuruşta yenerse en az 2 can
 const ALLC=()=>[...CARDS,...EXC,...EZC.filter(c=>owned(c.id)),...PRL.filter(c=>owned(c.id))];   // yapay zekâ görseli olan kartlar: img/<no>.jpg
@@ -1989,7 +1989,7 @@ function kwCard(){if(!uniq())return '';const ks=Object.keys(MR.KW);
   return `<div class="kwc"><div class="kwh"><img class="kwmode" src="img/kw/mode.webp" alt=""><b>Yetenek Arenası</b><span>Yeni mod</span></div><p>Bazı kartların anahtar kelimeleri bu modda canlanır. Ödüller normal arenayla aynı.</p>
    <div class="kwl">${ks.map(k=>`<span title="${MR.KW[k].d}">${kwI(k)} ${MR.KW[k].n}</span>`).join('')}</div><button class="kwgo" id="kwgo">Yetenek Arenası'nda savaş</button></div>`}
 function awCard(){const R=MR.arenaRule(),ms=R.ends-Date.now(),d=Math.floor(ms/AW_DAY_C),h=Math.floor(ms%AW_DAY_C/3600000),m=Math.floor(ms%3600000/60000);
-  const ic={tboost:R.el?`<img src="img/ic/${R.el}.webp" alt="">`:'⚔️',lowr:'<img src="img/kw/aw_lowr.webp" alt="">',hp:'<img src="img/kw/aw_hp.webp" alt="">',charge:'<img src="img/kw/aw_charge.webp" alt="">',noleg:'🚫'}[R.k];
+  const ic={tboost:R.el?`<img src="img/ic/${R.el}.webp" alt="">`:'⚔️',lowr:'<img src="img/kw/aw_lowr.webp" alt="">',hp:'<img src="img/kw/aw_hp.webp" alt="">',charge:'<img src="img/kw/aw_charge.webp" alt="">',noleg:'<img src="img/kw/aw_noleg.webp" alt="">'}[R.k];
   return `<div class="awr"${R.el?` style="--ac:${AUC[R.el]}"`:''}><div class="awt"><span class="awrib">✦ ÖZEL KURAL</span><span class="awtm">⏳ ${d?d+'g ':''}${h}sa${d?'':' '+m+'dk'}</span></div>
     <div class="awm"><span class="awi"><i></i><b>${ic}</b></span><div><b>${R.n}</b><p>${R.d}</p></div></div>
     ${uniq()?'<button class="awgo" id="awgo">Bu kuralla savaş</button>':''}</div>`}
