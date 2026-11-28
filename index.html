@@ -1381,7 +1381,7 @@ body.nui .frp{animation:popin .25s ease}
 <div id="title"><div class="tbg"></div><div class="tlogo"><img class="tlimg" src="img/logo.webp" alt="Mythbeast Realm"><span class="t3">Seri 1 · Elementler</span></div>
 <button class="sndb tsnd" id="tsnd" aria-label="Ses"></button><div class="tbtm"><button class="tgo" id="tgo" aria-label="Oyna"><img src="img/btn_play.webp" alt="Oyna"></button><p class="tinfo" id="tinfo"></p></div></div>
 
-<script src="rules.js?v=29"></script>
+<script src="rules.js?v=30"></script>
 <script>
 {
 // Ortak kurallar (rules.js): kart verisi ve ekonomi. Oyun ve sunucu aynı dosyayı kullanır.
@@ -2421,7 +2421,7 @@ async function coachTip(key,ic,title,txt){if(!B||!B.coach||B.over)return;B.cs=B.
 function coachIntro(m){const L=[],kw=k=>`<p class="cokw"><img src="img/kw/${k}.webp" alt=""><span><b>${MR.KW[k].n}:</b> ${MR.KW[k].d}</span></p>`;
   if(m==='kw'){const mine=[...new Set(B.me.deck.concat(B.me.hand,B.me.board.filter(Boolean)).map(x=>x&&x.c&&MR.kwOf(x.c)).filter(Boolean))];
     return['img/kw/mode.webp','Yetenek Arenası',`<p>Bu modda bazı kartların <b>anahtar kelimesi</b> canlanır. Kartın köşesindeki küçük simge hangi yeteneğe sahip olduğunu gösterir.</p>${(mine.length?mine:Object.keys(MR.KW)).map(kw).join('')}<p class="cono">Kalkan, Nöbetçi, Pusu ve Son Nefes kartları dengelemek için %10 daha zayıf. Kupa değişmez, altın kazanırsın. Bu ilk savaş yavaş oynanacak ve her yetenek ilk kez çalıştığında açıklanacak.</p>`]}
-  if(m==='cb')return['img/ic/kadim.webp','Klan Boss\'u',`<p>Karşında tek bir rakip var: Kadim boss. Onun 6 canı yok, canı <b>klanın ortak canıdır</b> (${MR.CB.hpFix.toLocaleString('tr')}). Ona vurduğun her hasar bu ortak candan düşer.</p><p>Senin 6 canın bitince, yaratıkların tükenince ya da süre dolunca saldırı biter. Boss'u sen bitirirsen klanın kazanır.</p><p>Günde ${MR.CB.daily} saldırı hakkın var. Boss yenilince hasar veren herkes ödül alır, en çok hasar veren 3 kişi ek ödül alır.</p><p class="cono">Boss her tur güçlü saldırısıyla vurur. Dayanıklı ve çok vuran yaratıklar işe yarar; boss'a bağışık türler hasar veremez.</p>`];
+  if(m==='cb')return[B.cbBoss?`img/st/${B.cbBoss.c.id}.webp`:'img/ic/kadim.webp','Klan Boss\'u',`<p>Karşında tek bir rakip var: <b>${B.cbBoss?B.cbBoss.c.name:'boss'}</b>. Onun 6 canı yok, canı <b>klanın ortak canıdır</b> (${MR.CB.hpFix.toLocaleString('tr')}). Ona vurduğun her hasar bu ortak candan düşer.</p><p>Senin 6 canın bitince, yaratıkların tükenince ya da süre dolunca saldırı biter. Boss'u sen bitirirsen klanın kazanır.</p><p>Günde ${MR.CB.daily} saldırı hakkın var. Boss yenilince hasar veren herkes ödül alır, en çok hasar veren 3 kişi ek ödül alır.</p><p class="cono">Boss her tur güçlü saldırısıyla vurur. Dayanıklı ve çok vuran yaratıklar işe yarar; boss'a bağışık türler hasar veremez.</p>`];
   const F=B.fld,AR=B.awr?MR.arenaRule():null;
   if(AR&&AR.k!=='field')return[AR.k==='tboost'?`img/ic/${AR.el}.webp`:`img/kw/aw_${AR.k}.webp`,'Özel Kural · '+AR.n,`<p>${AR.d}</p><p>Özel Kural 3 günde bir değişir. Bu maç <b>kupayı etkilemez</b>, sadece altın kazanırsın.</p><p class="cono">Kurala göre deste kur: bu kuralda hangi kartların güçlendiğini ya da oynanamadığını düşün.</p>`];
   if(F)return[FLDI(F),'Savaş alanı · '+F.n,`<p>${F.d}</p><p>Savaş alanı <b>iki taraf için de</b> geçerlidir. Ortadaki etikete dokunarak açıklamasını istediğin zaman görebilirsin.</p><p class="cono">Alanın türündeki yaratıklar genelde avantajlıdır. ${AR?'Bu maç kupayı etkilemez.':'Macera ve Kule\'de bazı bölümlerde çıkar.'}</p>`];
@@ -3035,7 +3035,7 @@ document.addEventListener('pointerdown',e=>{if(e.target.closest('.btn,.tgo,nav b
 // dosyaları telefonda saklayan servis: içeriği değişen bir görsel/ses olursa ASSET_V artırılır
 // SÜRÜM KONTROLÜ: yeni sürüm yayınlanınca APP_V ve version.txt birlikte artırılır.
 // İnternet varken oyun arada bir version.txt'ye bakar; farklıysa üstte 'Yeni sürüm hazır · Yenile' çıkar (savaş sırasında beklenir).
-const APP_V='2026.11.28-12';
+const APP_V='2026.11.28-13';
 function verCheck(){if(window.claude||!navigator.onLine)return;
   fetch('version.txt?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{t=(t||'').trim();if(/^[\w.-]{3,40}$/.test(t)&&t!==APP_V){window.__upd=t;updShow()}}).catch(()=>{})}
 function updShow(){if(!window.__upd||document.getElementById('updb'))return;if(B&&!B.over){window.__updLater=1;return}
@@ -3807,16 +3807,16 @@ async function cbView(el){if(!el)return;let j;try{j=await api('/api/clan/boss')}
   el.innerHTML=`${j.prevClaim?`<div class="cbprev"><b>Geçen haftanın boss'u yenildi!</b><span>${escH(BY[j.prevClaim.boss].name)} · ödülün seni bekliyor</span><button class="btn" data-cbc="${j.prevClaim.w}">Ödülü al</button></div>`:''}
   <div class="cbx${j.killed?' dead':''}" style="--ac:${AUC[c.el]}"><div class="cbbg" style="background-image:url(img/s/${c.id}.jpg)"></div>
    <div class="cbtop"><span class="awrib">✦ KLAN BOSS'U</span><span class="awtm">⏳ ${d?d+'g ':''}${h}sa</span></div>
-   <div class="cbnm"><b>Kadim ${escH(c.name)}</b><small>${icon(c.el)} ${MR.T_N?MR.T_N[c.el]:''} · klanın ortak canı</small></div>
+   <div class="cbnm"><b>${c.cbb?'':'Kadim '}${escH(c.name)}</b><small>${icon(c.el)} ${MR.T_N?MR.T_N[c.el]:''} · klanın ortak canı</small></div>
    <div class="cbhp"><i style="width:${p*100}%"></i><span>${j.hp.toLocaleString('tr')} / ${j.max.toLocaleString('tr')}</span></div>
    ${j.killed?`<div class="cbkill">🏆 Boss yenildi!</div>${j.list.some(x=>x.me)?(j.claimed?'<p class="cbnote">Ödülünü aldın ✓</p>':`<button class="btn cbgo" data-cbc="${j.w}">Ödülü al</button>`):'<p class="cbnote">Bu boss\'a hasar vermediğin için ödül yok.</p>'}`
     :`<button class="btn cbgo" id="cbgo"${j.left>0?'':' disabled'}>${j.left>0?`Saldır · ${j.left}/${MR.CB.daily} deneme`:'Bugünkü denemeler bitti'}</button><p class="cbnote">Her deneme bir savaş: verdiğin hasar klanın ortak canından düşer (en fazla ${MR.CB.cap}). Arena desteni kullanırsın.</p>`}
   </div>
-  <div class="cbrw"><b>Boss yenilince</b><span>Hasar veren herkese: ${R.g} altın · ${R.free} paket · 1 kadim taş</span><span>En çok hasar veren 3 kişiye ek: ${T.g} altın · ${T.free} paket</span></div>
+  <div class="cbrw"><b>Boss yenilince</b><span>Hasar veren herkese: ${R.g.toLocaleString('tr')} altın · ${R.free} paket · ${R.ks} kadim taş</span><span>🥇 1. ek: ${T[0].g.toLocaleString('tr')} altın · ${T[0].free} paket</span><span>🥈🥉 2. ve 3. ek: ${T[1].g} altın · ${T[1].free} paket</span></div>
   <p class="frh">Hasar sıralaması</p>
   ${j.list.length?`<div class="frl">${j.list.map((x,i)=>`<div class="frr${x.me?' me':''}"><span class="rk">${i+1}</span><div class="nm"><b>${escH(x.name)}</b><small>${Math.round(x.dmg/j.max*100)}% boss canı</small></div><b class="cbd">${x.dmg.toLocaleString('tr')}</b></div>`).join('')}</div>`:'<p class="frem">Henüz kimse saldırmadı. İlk darbeyi sen vur!</p>'}`;
   const g=$('#cbgo');if(g)g.onclick=async()=>{g.disabled=true;try{await startBattle(null,null,null,'cb')}finally{if(!B)g.disabled=false}};
-  el.querySelectorAll('[data-cbc]').forEach(b=>b.onclick=async()=>{b.disabled=true;try{const r=await act('cboss_claim',{w:+b.dataset.cbc});renderTop();toast(`Boss ödülü: +${r.g} altın · +${r.free} paket · +${r.ks} kadim taş${r.top?' (ilk 3 bonusu!)':''}`);vConfetti()}catch(e){toast(e.message)}cbView(el)})}
+  el.querySelectorAll('[data-cbc]').forEach(b=>b.onclick=async()=>{b.disabled=true;try{const r=await act('cboss_claim',{w:+b.dataset.cbc});renderTop();toast(`Boss ödülü: +${r.g.toLocaleString('tr')} altın · +${r.free} paket · +${r.ks} kadim taş${r.rank?` (${r.rank}. sıra bonusu!)`:''}`);vConfetti()}catch(e){toast(e.message)}cbView(el)})}
 function cbEnd(){return `<div class="endb ${B.dmgSent>0?'w':'l'}"><div class="ent">${B.bossKill?'Boss yenildi!':'Boss\'a '+(B.dmgSent||0)+' hasar'}</div>${B.why?`<small class="ewhy">${B.why}</small>`:''}
   <div class="enr"><span><img src="img/ic/gold.webp" alt="">+${B.g||0}</span></div>${B.bossHp!=null?`<div class="cbhp sm"><i style="width:${B.bossHp/B.bossMax*100}%"></i><span>Klan boss'u: ${B.bossHp.toLocaleString('tr')} / ${B.bossMax.toLocaleString('tr')}</span></div>`:''}
   <button class="btn" id="cbback">Klana dön</button></div>`}

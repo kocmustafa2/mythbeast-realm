@@ -397,8 +397,8 @@ async function handleApi(req, env, path) {
       if (!row || !row.killed) return err('Boss henüz yenilmedi.', 400);
       const dm = JSON.parse(row.dmg || '{}'); if (!(dm[user.id] > 0)) return err('Bu boss\'a hasar vermediğin için ödül alamazsın.', 400);
       if (await db.prepare('SELECT 1 FROM clan_boss_claims WHERE clan_id = ? AND week = ? AND user_id = ?').bind(m.clan_id, wk, user.id).first()) return err('Bu ödülü zaten aldın.', 400);
-      const top = Object.entries(dm).sort((x, y) => y[1] - x[1]).slice(0, 3).some(([u]) => +u === user.id);
-      cbOk = { w: wk, top }; cbClan = m.clan_id;
+      const rank = Object.entries(dm).sort((x, y) => y[1] - x[1]).findIndex(([u]) => +u === user.id) + 1;
+      cbOk = { w: wk, top: rank >= 1 && rank <= 3, rank: rank <= 3 ? rank : 0 }; cbClan = m.clan_id;
     }
     // İstek kimliği (rid): bağlantı kopup istemci aynı isteği yeniden gönderirse işlem ikinci kez uygulanmaz,
     // ilk sonucun aynısı döner (Safari'de yanıtı kaybolan POST'lar için).

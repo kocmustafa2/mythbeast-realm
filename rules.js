@@ -453,7 +453,7 @@ function mergeClient(st,data){for(const k of CLIENT_KEYS)if(data[k]!==undefined)
 function battleEnd(st,p,ctx){const bt=st.bt,now=ctx.now;
   if(!bt||bt.id!==p.id)throw uerr('Bu savaş sunucuda bulunamadı. Yeni bir savaş başlat.');
   st.bt=null;const win=!!p.win,el=now-bt.t0;
-  if(el<(bt.tut?BATTLE_TUT_MIN_MS:BATTLE_MIN_MS))throw uerr('Savaş çok kısa sürdü, sonuç kaydedilmedi.');
+  if(bt.mode!=='cboss'&&el<(bt.tut?BATTLE_TUT_MIN_MS:BATTLE_MIN_MS))throw uerr('Savaş çok kısa sürdü, sonuç kaydedilmedi.');
   // vuruş / zayıf vuruş / KO sayıları oyundan gelir: makul sınırla kırpılır
   const S0=p.stats||{},hit=S0.hit&&typeof S0.hit==='object'?S0.hit:{};let ht=0;
   for(const e of Object.keys(hit)){if(!ELS.includes(e)&&e!=='blood')continue;const n=Math.max(0,Math.min(STAT_CAP.hit-ht,Math.floor(+hit[e]||0)));ht+=n;if(n)dqInc(st,'hit',e,n,now)}
@@ -463,7 +463,7 @@ function battleEnd(st,p,ctx){const bt=st.bt,now=ctx.now;
   if(bt.mode!=='friend'){const hm={};for(const e of ELS)hm[e]=Math.max(0,Math.min(STAT_CAP.hit,Math.floor(+hit[e]||0)));evInc(st,now,hm,win,ko)}
   if(bt.mode==='friend')return{mode:'friend',win,opp:bt.fr||null};
   if(bt.mode==='draft'){const d=st.dr;if(!d||d.done)return{mode:'draft',win};if(win)d.w++;else d.l++;if(d.w>=DRAFT.maxW||d.l>=DRAFT.maxL)d.done=1;return{mode:'draft',win,w:d.w,l:d.l,done:d.done}}
-  if(bt.mode==='cboss'){const dmg=Math.max(0,Math.min(CB.cap,Math.floor(+p.dmg||0))),g=Math.round((30+dmg/20)/5)*5;st.gold+=g;return{mode:'cboss',win,dmg,g,cw:bt.cw}}
+  if(bt.mode==='cboss'){const dmg=Math.max(0,Math.min(CB.cap,300+Math.floor(el*.12),Math.floor(+p.dmg||0))),g=Math.round((30+dmg/20)/5)*5;st.gold+=g;return{mode:'cboss',win,dmg,g,cw:bt.cw}}
   st.bl=(st.bl||[]).filter(t=>now-t<3600e3);
   const nb=st.bl.length,rf=nb<BATTLE_PER_HOUR?1:Math.max(0,Math.round((1-(nb-BATTLE_PER_HOUR+1)/BATTLE_PER_HOUR)*100)/100);
   st.bl.push(now);if(st.bl.length>3*BATTLE_PER_HOUR)st.bl=st.bl.slice(-3*BATTLE_PER_HOUR);
@@ -583,9 +583,14 @@ const kwOf=c=>c?(KWB[c.id]||(c.prl&&c.of?KWB[c.of]:null)||null):null;
 const kwRoot=c=>{let x=BY[c.prl&&c.of?c.of:c.id];while(x&&x.from&&BY[x.from])x=BY[x.from];return x};
 
 // KLAN BOSS'U: her pazartesi 03:00 (TSİ) yeni boss; klanın ortak canı; günde 2 deneme; hasar sunucuda toplanır
-const CB={daily:2,cap:6000,hpFix:30000,hp0:4000,hpM:2500,bossHp:4,rw:{g:400,free:1,ks:1},top:{g:300,free:1}};
+const CB={daily:2,cap:6000,hpFix:30000,hp0:4000,hpM:2500,bossHp:4,rw:{g:1500,free:3,ks:3},top:[{g:1500,free:3},{g:800,free:2},{g:800,free:2}]};
+// Klan boss'una özel yaratıklar (koleksiyonda ve paketlerde yok); haftalar arasında sırayla gelir
+const CBB=[{id:225,name:'Zincirli Kıyamet',el:'fire',flv:'Yerin altında zincirlerle bağlıydı; ay kızıla döndüğü gece zincirlerini kırdı.',atks:[{e:3,name:'Zincir Savuruşu',dmg:100},{e:4,name:'Kıyamet Alevi',fx:'burn',dmg:175}]},
+ {id:226,name:'Ruhkemik',el:'poison',flv:'Göğüs kafesinde yuttuğu savaşçıların ruhları hâlâ çığlık atar.',atks:[{e:3,name:'Ruh Pençesi',dmg:95},{e:4,name:'Hapsolmuş Çığlıklar',fx:'splash',dmg:165}]}]
+ .map(c=>({...c,cbb:1,ex:0,r:3,stage:0,from:0,b:0,f:'wkct',ret:2,hp:400}));
+CBB.forEach(c=>BY[c.id]=c);
 const cbWeek=t=>Math.floor((t/AW_DAY+3)/7),cbEnds=w=>(w*7+4)*AW_DAY;
-const cbBoss=w=>{const L=EXC.filter(c=>!c.ez);return L[((w%L.length)+L.length)%L.length]};
+const cbBoss=w=>CBB[((w%CBB.length)+CBB.length)%CBB.length];
 const cbHp=n=>CB.hpFix;   // sabit ortak can (üye sayısından bağımsız)
 const cbLeft=(st,now)=>{const d=dayKey(now);return CB.daily-(st.cbd&&st.cbd.day===d?st.cbd.n:0)};
 function cbStage(w){const boss=cbBoss(w),el=boss.el,r=srnd(9100+w*37),pool=CARDS.filter(c=>c.el===el&&c.r===2),pool1=CARDS.filter(c=>c.el===el&&c.r===1);
@@ -692,7 +697,7 @@ function act(st,a,p,ctx){p=p||{};const rng=ctx.rng,now=ctx.now;normalize(st,ctx)
   case 'draft_claim':{const d=st.dr;if(!d)throw uerr('Aktif draft yok.');if(!d.done&&!p.quit)throw uerr('Draft henüz bitmedi.');if(st.bt&&st.bt.mode==='draft')throw uerr('Önce savaşı bitir.');
     const w=Math.min(DRAFT.maxW,d.w),rw=DRAFT.rw[w],R={w,l:d.l,g:rw.g,free:rw.free||0,ks:0,el:null};st.gold+=R.g;st.free+=R.free;
     if(rw.ks){R.el=ELS[Math.floor(rng()*ELS.length)];R.ks=rw.ks;giveKS(st,R.el,rw.ks)}st.drBest=Math.max(st.drBest||0,w);st.dr=null;return R}
-  case 'cboss_claim':{const o=ctx.cbOk;if(!o)throw uerr('Bu ödül alınamaz.');const boss=cbBoss(o.w),R={g:CB.rw.g+(o.top?CB.top.g:0),free:CB.rw.free+(o.top?CB.top.free:0),ks:CB.rw.ks,el:boss.el,top:!!o.top};st.gold+=R.g;st.free+=R.free;giveKS(st,boss.el,R.ks);return R}
+  case 'cboss_claim':{const o=ctx.cbOk;if(!o)throw uerr('Bu ödül alınamaz.');const boss=cbBoss(o.w),T=o.rank>=1&&o.rank<=3?CB.top[o.rank-1]:null,R={g:CB.rw.g+(T?T.g:0),free:CB.rw.free+(T?T.free:0),ks:CB.rw.ks,el:boss.el,top:!!T,rank:o.rank||0};st.gold+=R.g;st.free+=R.free;giveKS(st,boss.el,R.ks);return R}
   case 'ach_claim':{const id=String(p.id||''),rw=ACH_RW[id];
     if(!rw||!(st.ach||[]).includes(id))throw uerr('Bu başarım henüz tamamlanmadı.');
     if((st.achC||[]).includes(id))throw uerr('Bu ödülü zaten aldın.');
