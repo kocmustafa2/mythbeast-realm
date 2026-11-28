@@ -2502,8 +2502,8 @@ function renderBattle(){if(!B)return;document.body.dataset.fld=B.fld?B.fld.k:'';
    <div class="b2hand" id="b2hand">${(P=>me.hand.map((x,j)=>hk(x,j,P(j))).join(''))(handPos(me.hand.length))}</div>
    ${B.over&&B.pz?pzEnd():B.over&&B.dr?drEnd():B.over&&B.cb?cbEnd():B.over&&B.tw?towerEnd():B.over&&B.adv!=null?`<div class="endb ${B.win?'w':'l'}"><div class="ent">${B.win?(B.first?'Bölüm geçildi!':'Zafer!'):'Yenilgi'}</div>${B.why?`<small class="ewhy">${B.why}</small>`:''}<div class="enr"><span><img src="img/ic/gold.webp" alt="">+${B.g}</span>${B.du?`<span><img src="img/ic/dust.webp" alt="">+${B.du}</span>`:''}${B.pk?`<span><img src="img/ic/pack.webp" alt="">+${B.pk}</span>`:''}${B.sup?`<span><img src="${supArt(B.sup)}" alt="" style="border-radius:4px">+1 ${SUPN[B.sup]}</span>`:''}</div>${B.first&&B.adv>=100?`<div class="lgup"><b>Kadim kart açıldı!</b><small>${BY[EXC[B.adv-100].base].name} kartını koleksiyondan uyandırabilirsin</small></div>`:''}${B.first&&B.adv<100&&B.adv+1<ADV_N&&B.adv%ADV_P===ADV_P-1?`<div class="lgup"><b>Yeni bölge açıldı!</b><small>${ADV_CH[(B.adv+1)/ADV_P][1]}</small></div>`:''}${B.first&&B.adv<100&&B.adv+1>=ADV_N?`<div class="lgup"><b>Macera tamamlandı!</b></div>`:''}${B.win&&B.adv<100&&B.adv+1<ADV_N?`<button class="btn" id="anext">Sonraki bölüm</button>`:`<button class="btn" id="aretry">Tekrar dene</button>`}<button class="btn alt" id="amap">Haritaya dön</button></div>`:B.over&&B.fr?`<div class="endb ${B.win?'w':'l'}"><div class="ent">${B.win?'Zafer!':'Yenilgi'}</div><small class="ewhy">Dostluk maçı · ${escH(B.fr.name)} destesine karşı<br>Kupa ve altın değişmez. Sonucu ${escH(B.fr.name)} de görecek.</small><button class="btn" id="fagain">Tekrar savaş</button><button class="btn alt" id="fleave">Arkadaşlara dön</button></div>`:B.over?`<div class="endb ${B.win?'w':'l'}"><div class="ent">${B.win?'Zafer!':'Yenilgi'}</div>${B.why?`<small class="ewhy">${B.why}</small>`:''}<div class="enr"><span><img src="img/ic/gold.webp" alt="">+${B.g}</span>${B.sp?'':`<span>${trophyIcon()}${B.dt>=0?'+':''}${B.dt}</span>`}</div>${B.sp?`<div class="ensb off">${B.sp==='kw'?'Yetenek Arenası':'Özel Kural'} maçı · kupa ve sezon puanı değişmez</div>`:''}${B.sb?`<div class="ensb">${flameSvg()}${B.sb.n} galibiyet serisi · +${B.sb.tr} kupa, +${B.sb.g} altın dahil</div>`:''}${B.lost>=2?`<div class="ensb off">${B.lost} galibiyetlik seri bitti</div>`:''}${B.chest?`<div class="ench">${chestSvg()}<b>Zafer sandığı kazandın!</b><small>Arena ekranından aç</small></div>`:B.win?!B.sp&&`<div class="ensb">Sandığa ${CHEST.need-(S.chest||0)} galibiyet kaldı</div>`:''}${B.lg1>B.lg0?`<div class="lgup">${lgBadge(B.lg1,1)}<b>${LEAGUES[B.lg1].n} Ligi!</b>${B.reward?`<small>+${B.reward} ücretsiz paket</small>`:''}</div>`:''}<div class="lgline">${lgBadge(B.lg1)}${LEAGUES[B.lg1].n} · ${S.trophy} kupa</div>${B.tutEnd?`<div class="tend"><b>Öğretici tamamlandı!</b><small>Hediye: +1 ücretsiz paket. Şimdi paket aç, koleksiyonunu tamamla, liglerde yüksel.</small></div>`:''}<button class="btn" id="again">Tekrar savaş</button><button class="btn alt" id="leave">Arenadan çık</button></div>`:''}
   </div>`;
-  document.querySelectorAll('.bk[data-s]').forEach(el=>el.onclick=()=>tap(el.dataset.s,+el.dataset.i));
-  document.querySelectorAll('.hk').forEach(el=>el.onclick=()=>tapHand(+el.dataset.h));
+  document.querySelectorAll('.bk[data-s]').forEach(el=>el.onpointerdown=e=>{if(e.button>0)return;tap(el.dataset.s,+el.dataset.i)});
+  document.querySelectorAll('.hk').forEach(el=>el.onpointerdown=e=>{if(e.button>0)return;tapHand(+el.dataset.h)});
   {const h=$('#b2hand');if(h&&h.clientWidth&&h.clientWidth!==handW){handW=h.clientWidth;const P=handPos(h.children.length);[...h.children].forEach((e,k)=>{const m=P(k).match(/left:([\d.]+)px;--rot:([-\d.]+)deg/);e.style.left=m[1]+'px';e.style.setProperty('--rot',m[2]+'deg')})}}
   {const bp=$('#bpass');if(bp)bp.onclick=async()=>{if(!B||B.busy)return;B.busy=true;B.log='Pas geçtin';await foeMove()};
   const bf=$('#bfld');if(bf)bf.onclick=()=>toast(`Savaş alanı · ${B.fld.n}: ${B.fld.d}`);
@@ -2546,8 +2546,8 @@ async function supAnim(s,j,i,r){const src=s==='me'?document.querySelector(`.hk[d
   else if(r.k==='feda'){B.log=`${who}: <b>${r.name}</b> feda edildi · güç +${r.pw}, can +${r.hp} aktarıldı · 1 kalp gitti`;renderBattle();const e3=elOf(s,r.r);ringFx(e3,'fire','Feda! +'+r.pw+' güç');bnum(e3,'+'+r.hp,'h');SFX.ko()}
   else{ringFx(e,r.k,'+30 can · +10 hasar');bnum(e,'+30','h');SFX.newCard()}
   await wait(600)}
-async function tapHand(j){if(!B||B.busy||B.over||B.turn!=='me')return;B.lastAct=Date.now();if(B.lock){toast('İrade: bu tur kart oynayamazsın, sadece Işık yaratığınla saldırabilirsin');return}const x=B.me.hand[j];if(!x)return;
-  if(x.t==='c'){const i=B.me.board.findIndex(f=>!f);if(i<0){toast('Sahada boş yer yok');return}B.busy=true;B.sel=null;B.selH=null;await placeAnim('me',j,i);if(B){B.busy=false;renderBattle()}return}
+async function tapHand(j){if(B&&B.busy&&!B.over&&!B.auto){B.qTap=()=>tapHand(j);return}if(!B||B.busy||B.over||B.turn!=='me')return;B.lastAct=Date.now();if(B.lock){toast('İrade: bu tur kart oynayamazsın, sadece Işık yaratığınla saldırabilirsin');return}const x=B.me.hand[j];if(!x)return;
+  if(x.t==='c'){const i=B.me.board.findIndex(f=>!f);if(i<0){toast('Sahada boş yer yok');return}B.busy=true;B.sel=null;B.selH=null;await placeAnim('me',j,i);if(B)unbusy();return}
   if(B.supUsed){toast('Bu tur destek kartı kullandın');return}
   if(!B.me.board.some(f=>f&&canSup(x.k,f,true)===true)){const f0=B.me.board.find(Boolean);toast(f0?canSup(x.k,B.me.board.find(f=>f&&canSup(x.k,f,true)!==true)||f0,true):'Sahada yaratığın yok');return}
   B.selH=B.selH===j?null:j;B.sel=null;SFX.select();renderBattle()}
@@ -2579,7 +2579,9 @@ async function meTurn(first){if(!B||B.over)return;meTurnSetup();B.busy=true;
   else B.skipX=0;
   if(first)B.justCharged=chargeStep(B,'me');else if(await beginTurn('me'))return;
   if(!B||B.over)return;if(rescue(B,'me')){B.log='Elinde yaratık kalmadı · bir destek kartın desteye döndü, yerine yaratık geldi';renderBattle();const h=document.querySelector('#b2hand .hk:last-child');if(h)h.classList.add('newk')}
-  B.busy=false;renderBattle()}
+  unbusy()}
+// meşgulken (animasyon) yapılan son dokunuş kaybolmaz: meşguliyet bitince uygulanır
+function unbusy(){if(!B)return;B.busy=false;renderBattle();const q=B.qTap;B.qTap=null;if(q&&B.turn==='me'&&!B.over)q()}
 const elOf=(s,i)=>document.querySelector(`.bk[data-s="${s}"][data-i="${i}"]`);
 // Işık ve Gölge'nin kendi vuruş efekti gelene kadar geçici: mevcut efektlerden renk değiştirilmiş hali
 const FX_ALIAS={light:['energy','brightness(1.15)'],shadow:['air','hue-rotate(35deg) saturate(2.2) brightness(.75) contrast(1.2)']};
@@ -2776,12 +2778,13 @@ function aiScore(a,d,atkB,defB){
   return sc+Math.random()*5;
 }
 async function tap(s,i){
+  if(B&&B.busy&&!B.over&&!B.auto&&!B.pz){B.qTap=()=>tap(s,i);return}
   if(!B||B.busy||B.over||B.turn!=='me')return;B.lastAct=Date.now();
   if(s==='me'&&B.selH!==null){const x=B.me.hand[B.selH],f=B.me.board[i];if(!f)return;
     if(x.k==='feda'&&B.fedaI!=null){if(i===B.fedaI){B.fedaI=null;toast('Feda iptal');renderBattle();return}const fi=B.fedaI;B.fedaI=null;B.busy=true;const j=B.selH;B.selH=null;await supAnim('me',j,fi,i);if(B&&!B.over){B.busy=false;renderBattle()}return}
     const ok=canSup(x.k,f,true);if(ok!==true){toast(ok);return}
     if(x.k==='feda'){B.fedaI=i;B.log=`<b>${f.c.name}</b> feda edilecek · şimdi gücün aktarılacağı yaratığa dokun`;renderBattle();return}
-    B.busy=true;const j=B.selH;B.selH=null;await supAnim('me',j,i);if(B&&!B.over){B.busy=false;renderBattle()}return}
+    B.busy=true;const j=B.selH;B.selH=null;await supAnim('me',j,i);if(B&&!B.over)unbusy();return}
   if(s==='me'){if(!B.me.board[i])return;if(B.me.board[i].frz>0){toast('Boşgöz bu yaratığı dondurdu: bu tur saldıramaz');return}if(B.lock&&B.me.board[i].c.el!==B.lock){toast('İrade: bu tur sadece Işık yaratığın saldırabilir');return}B.sel=B.sel===i?null:i;SFX.select();renderBattle();return}
   if(B.sel===null||!B.foe.board[i]||!B.me.board[B.sel])return;
   if(!tauntOk(B,'foe',i)){toast('🏰 Nöbetçi: önce rakibin Nöbetçi yaratığına saldırmalısın');return}
