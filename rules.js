@@ -460,6 +460,7 @@ function battleEnd(st,p,ctx){const bt=st.bt,now=ctx.now;
   if(wk)dqInc(st,'weak',null,wk,now);if(ko)dqInc(st,'ko',null,ko,now);
   dqInc(st,'battle',null,1,now);if(win)dqInc(st,'win',null,1,now);
   if(bt.mode==='friend')return{mode:'friend',win,opp:bt.fr||null};
+  if(bt.mode==='cboss'){const dmg=Math.max(0,Math.min(CB.cap,Math.floor(+p.dmg||0))),g=Math.round((30+dmg/20)/5)*5;st.gold+=g;return{mode:'cboss',win,dmg,g,cw:bt.cw}}
   st.bl=(st.bl||[]).filter(t=>now-t<3600e3);
   const nb=st.bl.length,rf=nb<BATTLE_PER_HOUR?1:Math.max(0,Math.round((1-(nb-BATTLE_PER_HOUR+1)/BATTLE_PER_HOUR)*100)/100);
   st.bl.push(now);if(st.bl.length>3*BATTLE_PER_HOUR)st.bl=st.bl.slice(-3*BATTLE_PER_HOUR);
@@ -575,6 +576,17 @@ const KWL={kalkan:[11,12,146,147,148,86,87,88,185,186,187],nobet:[122,123,124,14
 const KWB={};for(const k in KWL)KWL[k].forEach(id=>KWB[id]=k);
 const kwOf=c=>c?(KWB[c.id]||(c.prl&&c.of?KWB[c.of]:null)||null):null;
 const kwRoot=c=>{let x=BY[c.prl&&c.of?c.of:c.id];while(x&&x.from&&BY[x.from])x=BY[x.from];return x};
+
+// KLAN BOSS'U: her pazartesi 03:00 (TSİ) yeni boss; klanın ortak canı; günde 2 deneme; hasar sunucuda toplanır
+const CB={daily:2,cap:3000,hp0:4000,hpM:2500,bossHp:4,rw:{g:400,free:1,ks:1},top:{g:300,free:1}};
+const cbWeek=t=>Math.floor((t/AW_DAY+3)/7),cbEnds=w=>(w*7+4)*AW_DAY;
+const cbBoss=w=>{const L=EXC.filter(c=>!c.ez);return L[((w%L.length)+L.length)%L.length]};
+const cbHp=n=>CB.hp0+CB.hpM*Math.max(1,Math.min(30,n|0));
+const cbLeft=(st,now)=>{const d=dayKey(now);return CB.daily-(st.cbd&&st.cbd.day===d?st.cbd.n:0)};
+function cbStage(w){const boss=cbBoss(w),el=boss.el,r=srnd(9100+w*37),pool=CARDS.filter(c=>c.el===el&&c.r===2),pool1=CARDS.filter(c=>c.el===el&&c.r===1);
+  const B={...boss,hp:boss.hp*CB.bossHp},base=BY[boss.base]||CARDS.find(c=>c.el===el&&c.r===3);
+  const deck=[B,base,...[0,1,2].map(()=>pool[Math.floor(r()*pool.length)]||base),...[0,1].map(()=>pool1[Math.floor(r()*pool1.length)]||base)];
+  return{cb:1,w,el,boss:B,deck,name:'Klan Boss\'u · '+boss.name,rule:'boss',mis:.02,gold:0}}
 // ARENA ÖZEL KURALI: 3 günde bir (TSİ 03:00) değişir; isteğe bağlı, sadece arena
 const AWR=[{k:'tboost',n:'{T} Gücü',d:'{T} türü yaratıklar %20 daha fazla hasar verir.'},
  {k:'lowr',n:'Sade Güç',d:'Sadece Yaygın ve Nadir yaratıklar sahaya çıkar. Destendeki diğer yaratıklar bu hafta arenada oynanmaz.'},
@@ -619,16 +631,18 @@ function act(st,a,p,ctx){p=p||{};const rng=ctx.rng,now=ctx.now;normalize(st,ctx)
     if(j==='b'){if(q.bonus||!q.l.every(m=>m.c))throw uerr('Önce üç görevi de tamamla.');q.bonus=1;st.free+=DQB.free;const sk=rndSup(rng);giveSup(st,sk);return{bonus:1,free:DQB.free,sup:sk}}
     const m=q.l[+j];if(!m)throw uerr('Görev bulunamadı.');const D=DQP[m.i];if(m.c)throw uerr('Bu görevin ödülünü zaten aldın.');if(m.p<D.n)throw uerr('Görev henüz tamamlanmadı.');
     m.c=1;st.gold+=D.g;st.dust+=D.d;return{g:D.g,d:D.d}}
-  case 'battle_start':{const mode=p.mode==='adv'?'adv':p.mode==='friend'?'friend':p.mode==='tower'?'tower':'arena';let adv=null,tw=null;
+  case 'battle_start':{const mode=p.mode==='adv'?'adv':p.mode==='friend'?'friend':p.mode==='tower'?'tower':p.mode==='cboss'?'cboss':'arena';let adv=null,tw=null;
+    if(mode==='cboss'){if(!ctx.clanOk)throw uerr('Klan boss\'una saldırmak için bir klanda olmalısın.');if(cbLeft(st,now)<=0)throw uerr('Bugünkü boss denemelerin bitti. Yarın tekrar gel.');if(tutOn(st))throw uerr('Önce öğreticiyi bitir.')}
     if(mode==='tower'){const el=String(p.el||''),f=Math.floor(+p.f);if(!ELS.includes(el)||!(f>=0&&f<TOWER.floors))throw uerr('Kule katı bulunamadı.');
       if(f>twDone(st,el))throw uerr('Bu kat henüz açılmadı.');if(tutOn(st))throw uerr('Önce öğreticiyi bitir.');tw={el,f}}
     if(mode==='adv'){adv=Math.floor(+p.adv);const c=st.advC||0;
       const ok=adv>=0&&(adv<ADV_N?adv<=c:(adv>=100&&adv<100+ADV_CH.length&&c>=(adv-99)*ADV_P));if(!ok)throw uerr('Bu bölüm henüz açılmadı.')}
     if(mode==='friend'&&!ctx.friendOk)throw uerr('Sadece arkadaşlarının ya da klan üyelerinin destesiyle savaşabilirsin.');
     const fo=forfeit(st,now);
-    const id=Math.floor(rng()*2**52).toString(36);st.bt={id,mode,adv,t0:now,tut:mode==='arena'&&st.tut===6?1:0};if(tw)st.bt.tw=tw;if(mode==='friend'&&typeof p.fr==='string')st.bt.fr=p.fr.slice(0,16);
+    const id=Math.floor(rng()*2**52).toString(36);st.bt={id,mode,adv,t0:now,tut:mode==='arena'&&st.tut===6?1:0};if(mode==='cboss'){const d=dayKey(now);st.cbd={day:d,n:(st.cbd&&st.cbd.day===d?st.cbd.n:0)+1};st.bt.cw=cbWeek(now)}if(tw)st.bt.tw=tw;if(mode==='friend'&&typeof p.fr==='string')st.bt.fr=p.fr.slice(0,16);
     return{id,forfeit:fo}}
   case 'battle_end':return battleEnd(st,p,ctx);
+  case 'cboss_claim':{const o=ctx.cbOk;if(!o)throw uerr('Bu ödül alınamaz.');const boss=cbBoss(o.w),R={g:CB.rw.g+(o.top?CB.top.g:0),free:CB.rw.free+(o.top?CB.top.free:0),ks:CB.rw.ks,el:boss.el,top:!!o.top};st.gold+=R.g;st.free+=R.free;giveKS(st,boss.el,R.ks);return R}
   case 'ach_claim':{const id=String(p.id||''),rw=ACH_RW[id];
     if(!rw||!(st.ach||[]).includes(id))throw uerr('Bu başarım henüz tamamlanmadı.');
     if((st.achC||[]).includes(id))throw uerr('Bu ödülü zaten aldın.');
@@ -721,7 +735,7 @@ function achSync(st,x){const have=new Set(st.ach||[]),nw=[];
   if(nw.length)st.ach=[...have];return nw}
 
 const MR={ELS,round5,round10,RAR,TYPE_HP,TYPE_RET,DMG,ATK,FXV,FX,atkDmg,PACK,packCost,XP,ECON,RAW,E1,E2,CARDS,BY,rootOf,N,pad,setOf,setCards,cno,setN,
-  EXA,EXCOST,EXD,EXC,exOf,AWR,arenaRule,awOk,KW,KWL,kwOf,kwRoot,EZA,EZDR,EZC,POOL,POOLS,EVO_NEED,STAGE_W,cw,SHINY,LEAGUES,lgOf,TROPHY,STREAK,strkB,CHEST,GIFT,DQP,DQB,srnd,SUPK,
+  EXA,EXCOST,EXD,EXC,exOf,AWR,arenaRule,awOk,KW,KWL,kwOf,kwRoot,CB,cbWeek,cbEnds,cbBoss,cbHp,cbLeft,cbStage,EZA,EZDR,EZC,POOL,POOLS,EVO_NEED,STAGE_W,cw,SHINY,LEAGUES,lgOf,TROPHY,STREAK,strkB,CHEST,GIFT,DQP,DQB,srnd,SUPK,
   ADV_CH,ADV_RULE,ADV_N,ADV_P,advStage,advStageX,advEX,TUT,fresh,
   PRL,PRL_OFF,PRL_MUL,PRL_PACK,SETS,prlOf,givePrl,ECON_KEYS,CLIENT_KEYS,BATTLE_MIN_MS,BATTLE_PER_HOUR,own,tutOn,roll,drawCard,rollPack,copies,canEvo,canAwaken,giveSup,rndSup,addXp,
   giftTick,dayKey,dqList,dqInc,normalize,mergeClient,act,pubStats,avatarOf,ACH,ACH_RW,achList,achSync,achUnclaimed,

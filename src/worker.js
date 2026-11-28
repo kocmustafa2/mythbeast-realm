@@ -65,6 +65,8 @@ function ensureSchema(db) {
     db.prepare(`CREATE INDEX IF NOT EXISTS match_log_u ON match_log (user_id, t)`),
     db.prepare(`CREATE TABLE IF NOT EXISTS season_stats (user_id INTEGER NOT NULL, season INTEGER NOT NULL, pts INTEGER NOT NULL DEFAULT 0, wins INTEGER NOT NULL DEFAULT 0, losses INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (user_id, season))`),
     db.prepare(`CREATE TABLE IF NOT EXISTS season_claims (user_id INTEGER NOT NULL, season INTEGER NOT NULL, t INTEGER NOT NULL, PRIMARY KEY (user_id, season))`),
+    db.prepare(`CREATE TABLE IF NOT EXISTS clan_boss (clan_id INTEGER NOT NULL, week INTEGER NOT NULL, hp INTEGER NOT NULL, max INTEGER NOT NULL, dmg TEXT NOT NULL DEFAULT '{}', killed INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (clan_id, week))`),
+    db.prepare(`CREATE TABLE IF NOT EXISTS clan_boss_claims (clan_id INTEGER NOT NULL, week INTEGER NOT NULL, user_id INTEGER NOT NULL, t INTEGER NOT NULL, PRIMARY KEY (clan_id, week, user_id))`),
     db.prepare(`CREATE TABLE IF NOT EXISTS clan_invites (user_id INTEGER NOT NULL, clan_id INTEGER NOT NULL, by_id INTEGER NOT NULL, t INTEGER NOT NULL, PRIMARY KEY (user_id, clan_id))`),
     db.prepare(`CREATE INDEX IF NOT EXISTS clan_invites_c ON clan_invites (clan_id)`),
     // kart istekleri
@@ -193,6 +195,14 @@ async function canDuel(db, x, y) { return (await areFriends(db, x, y)) || !!(awa
 const feedAdd = (db, clan, kind, a, b = null, card = null, win = null) =>
   db.prepare('INSERT INTO feed (clan_id, kind, a, b, card, win, t) VALUES (?, ?, ?, ?, ?, ?, ?)').bind(clan, kind, a, b, card, win, Date.now()).run();
 
+// klan boss'u: haftalık satır yoksa üye sayısına göre oluşturulur
+async function cbRow(db, clanId, week) {
+  let r = await db.prepare('SELECT * FROM clan_boss WHERE clan_id = ? AND week = ?').bind(clanId, week).first();
+  if (!r) { const n = (await db.prepare('SELECT COUNT(*) AS n FROM clan_members WHERE clan_id = ?').bind(clanId).first()).n || 1, mx = MR.cbHp(n);
+    await db.prepare('INSERT OR IGNORE INTO clan_boss (clan_id, week, hp, max, dmg, killed) VALUES (?, ?, ?, ?, ?, 0)').bind(clanId, week, mx, mx, '{}').run();
+    r = await db.prepare('SELECT * FROM clan_boss WHERE clan_id = ? AND week = ?').bind(clanId, week).first(); }
+  return r;
+}
 // kriptografik rastgele sayı (0-1): paketleri ve sandıkları sunucu açar
 function cryptoRng() { const a = new Uint32Array(2); crypto.getRandomValues(a); return (a[0] * 2 ** 21 + (a[1] >>> 11)) / 2 ** 53; }
 async function loadState(db, uid) {
@@ -377,13 +387,23 @@ async function handleApi(req, env, path) {
       const o = await userByName(db, body.fr);
       friendOk = !!o && await canDuel(db, user.id, o.id);
     }
+    let cbOk = null, cbClan = null;
+    if (a === 'cboss_claim') {
+      const m = await myClan(db, user.id); if (!m) return err('Bir klanda değilsin.', 400);
+      const wk = Math.floor(+body.w); const row = await db.prepare('SELECT * FROM clan_boss WHERE clan_id = ? AND week = ?').bind(m.clan_id, wk).first();
+      if (!row || !row.killed) return err('Boss henüz yenilmedi.', 400);
+      const dm = JSON.parse(row.dmg || '{}'); if (!(dm[user.id] > 0)) return err('Bu boss\'a hasar vermediğin için ödül alamazsın.', 400);
+      if (await db.prepare('SELECT 1 FROM clan_boss_claims WHERE clan_id = ? AND week = ? AND user_id = ?').bind(m.clan_id, wk, user.id).first()) return err('Bu ödülü zaten aldın.', 400);
+      const top = Object.entries(dm).sort((x, y) => y[1] - x[1]).slice(0, 3).some(([u]) => +u === user.id);
+      cbOk = { w: wk, top }; cbClan = m.clan_id;
+    }
     // İstek kimliği (rid): bağlantı kopup istemci aynı isteği yeniden gönderirse işlem ikinci kez uygulanmaz,
     // ilk sonucun aynısı döner (Safari'de yanıtı kaybolan POST'lar için).
     const rid = typeof body.rid === 'string' && /^[A-Za-z0-9_-]{8,40}$/.test(body.rid) ? body.rid : null;
     for (let tries = 0; tries < 4; tries++) {
       const cur = await loadState(db, user.id);
       const st = cur.st;
-      const ctx = ctxOf(user.id, { friendOk });
+      const ctx = ctxOf(user.id, { friendOk, clanOk: inClan, cbOk });
       const seen = rid && Array.isArray(st.rq) ? st.rq.find(x => x && x.id === rid) : null;
       if (seen) {
         MR.normalize(st, ctx); fixEz(st, owner);
@@ -407,8 +427,15 @@ async function handleApi(req, env, path) {
         .bind(user.id, MR.seasonOf(Date.now()), pts, w, l).run();
       if (a === 'battle_end' && r && r.mode === 'arena') await sAdd(r.dt || 0, r.win ? 1 : 0, r.win ? 0 : 1);
       if (a === 'battle_start' && r && r.forfeit) await sAdd(r.forfeit.dt || 0, 0, 1);
+      if (a === 'cboss_claim' && cbOk) await db.prepare('INSERT OR IGNORE INTO clan_boss_claims (clan_id, week, user_id, t) VALUES (?, ?, ?, ?)').bind(cbClan, cbOk.w, user.id, Date.now()).run();
+      if (a === 'battle_end' && r && r.mode === 'cboss' && r.dmg > 0) {   // klan boss'una hasar
+        const m = await myClan(db, user.id);
+        if (m && r.cw === MR.cbWeek(Date.now())) { const row = await cbRow(db, m.clan_id, r.cw);
+          if (!row.killed) { const dm = JSON.parse(row.dmg || '{}'); dm[user.id] = (dm[user.id] || 0) + r.dmg; const hp = Math.max(0, row.hp - r.dmg);
+            await db.prepare('UPDATE clan_boss SET hp = ?, dmg = ?, killed = ? WHERE clan_id = ? AND week = ?').bind(hp, JSON.stringify(dm), hp <= 0 ? Date.now() : 0, m.clan_id, r.cw).run();
+            r.bossHp = hp; r.bossMax = row.max; if (hp <= 0) { r.bossKill = 1; await feedAdd(db, m.clan_id, 'cbkill', user.id, null, MR.cbBoss(r.cw).id); } } } }
       // maç geçmişi
-      if (a === 'battle_end' && r) await logMatch(user.id, r.mode, r.mode === 'arena' ? 'Bot · ' + MR.LEAGUES[r.lg0 || 0].n : r.mode === 'adv' ? MR.advStage(r.adv).name : r.mode === 'tower' ? MR.towerStage(r.el, r.f).name : (r.opp || '?'), r.win, r.dt || 0);
+      if (a === 'battle_end' && r) await logMatch(user.id, r.mode, r.mode === 'arena' ? 'Bot · ' + MR.LEAGUES[r.lg0 || 0].n : r.mode === 'adv' ? MR.advStage(r.adv).name : r.mode === 'tower' ? MR.towerStage(r.el, r.f).name : r.mode === 'cboss' ? 'Klan Boss\'u · ' + r.dmg + ' hasar' : (r.opp || '?'), r.win, r.dt || 0);
       if (a === 'battle_start' && r && r.forfeit) await logMatch(user.id, 'arena', 'Terk edilen savaş', false, r.forfeit.dt || 0);
       if (a === 'battle_end' || a === 'pack' || a === 'evo' || a === 'awaken' || a === 'craft' || a === 'chest' || a === 'avatar' || a === 'lvup')
         await db.prepare("INSERT INTO pub (user_id, stats, deck, updated) VALUES (?, ?, '[]', ?) ON CONFLICT(user_id) DO UPDATE SET stats = excluded.stats, updated = excluded.updated")
@@ -520,6 +547,18 @@ async function handleApi(req, env, path) {
       .map(r => ({ name: r.name, invited: !!r.inv })) : [];
     return json({ invitable, clan: { name: c.name, descr: c.descr, created: c.created, max: CL.max, total: members.reduce((t, x) => t + ((x.stats || {}).tr || 0), 0) },
       role: m.role, members, joins, feed });
+  }
+  if (path === '/api/clan/boss' && method === 'GET') {
+    const m = await myClan(db, user.id); if (!m) return err('Bir klanda değilsin.', 400);
+    const wk = MR.cbWeek(Date.now()), row = await cbRow(db, m.clan_id, wk), dm = JSON.parse(row.dmg || '{}');
+    const prev = await db.prepare('SELECT * FROM clan_boss WHERE clan_id = ? AND week = ?').bind(m.clan_id, wk - 1).first();
+    const ids = [...new Set([...Object.keys(dm), ...Object.keys(prev ? JSON.parse(prev.dmg || '{}') : {})])].map(Number);
+    const names = {}; for (const id of ids) { const u = await db.prepare('SELECT name FROM users WHERE id = ?').bind(id).first(); if (u) names[id] = u.name; }
+    const list = d => Object.entries(d).map(([u, v]) => ({ name: names[u] || '?', dmg: v, me: +u === user.id })).sort((x, y) => y.dmg - x.dmg);
+    const claimed = async w => !!(await db.prepare('SELECT 1 FROM clan_boss_claims WHERE clan_id = ? AND week = ? AND user_id = ?').bind(m.clan_id, w, user.id).first());
+    const st = (await loadState(db, user.id)).st;
+    let pv = null; if (prev && prev.killed) { const pd = JSON.parse(prev.dmg || '{}'); if (pd[user.id] > 0 && !(await claimed(wk - 1))) pv = { w: wk - 1, boss: MR.cbBoss(wk - 1).id }; }
+    return json({ w: wk, boss: MR.cbBoss(wk).id, hp: row.hp, max: row.max, killed: row.killed, ends: MR.cbEnds(wk), list: list(dm), left: MR.cbLeft(st, Date.now()), claimed: row.killed ? await claimed(wk) : false, prevClaim: pv });
   }
   if (path === '/api/clan/search' && method === 'GET') {
     const q = (new URL(req.url).searchParams.get('q') || '').trim().toLocaleLowerCase('tr').slice(0, 20).replace(/[%_]/g, '');
