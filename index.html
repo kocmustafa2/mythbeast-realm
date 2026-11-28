@@ -1353,6 +1353,13 @@ body.nui .frp{animation:popin .25s ease}
 .evr{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;max-width:46%}.evr span{display:inline-flex;align-items:center;gap:2px;font-size:12px;font-weight:700}.evr span img,.evr span svg{width:16px;height:16px}.evr em{font-style:normal;color:#7dff9a;font-weight:800}
 .btn.sm{padding:5px 12px;font-size:12px;width:auto;margin:0}
 .cbtag{font-size:11px;letter-spacing:.06em;color:#ffcf6a;background:#3a1a10cc;border:1px solid #ffcf6a66;border-radius:99px;padding:2px 8px}
+.b2row.cbrow{grid-template-columns:1fr;padding:0 6px}
+.bk.cbbk{aspect-ratio:16/10;box-shadow:0 6px 22px #000c,0 0 0 2.5px var(--ec),0 0 26px color-mix(in srgb,var(--ec) 55%,transparent);animation:cbpulse 3s ease-in-out infinite}
+@keyframes cbpulse{50%{box-shadow:0 6px 22px #000c,0 0 0 2.5px var(--ec),0 0 40px color-mix(in srgb,var(--ec) 80%,transparent)}}
+.bk.cbbk .bka{background-position:50% 35%!important}
+.bk.cbbk .bkn{font-size:16px!important;letter-spacing:.02em}
+.bk.cbbk .bkhp{height:16px}.bk.cbbk .bkhp span{font-size:11.5px}
+.bk.cbbk .bkat{font-size:13px}.bk.cbbk .bkat b{font-size:22px}
 </style>
 </head>
 <body>
@@ -2465,11 +2472,11 @@ function bk(f,s,i){
   const supOk=s==='me'&&selS&&canSup(selS.k,f,true)===true;
   let hint='';if(tgt){const A=B.me.board[B.sel],fx=curAtk(A).fx,h=calc(A,f,B.me.board,B.foe.board,fldAtk(B,A,atkOf(A)));h.d=fldDef(B,h.d);hint=`<div class="bkhint${h.k==='w'?' x':h.k?' w':''}">${h.k==='i'?'Bağışık':'−'+h.d+(fx==='coin'?'+':'')}</div>`}
   const kwi=B.kw&&!f.tok&&MR.kwOf(c)&&!(MR.kwOf(c)==='kalkan'&&f.shield>0)?`<span class="bkkw">${kwI(MR.kwOf(c))}</span>`:'',shd=f.shield>0?'<span class="bksh"><img class="kwim" src="img/kw/kalkan.webp" alt=""></span>':'';
-  const a=curAtk(f),big=f.ch&&c.atks[1],SH=c.ex||(s==='me'&&shownShiny(c.id)),src=SH&&SHART.has(c.id)?`img/s/${c.id}.jpg`:`img/t/${c.id}.webp`;
-  return `<div class="bk${big?' ch':c.atks[1]&&!f.justIn&&!f.didAtk?' half':''}${s==='me'&&B.sel===i?' sel':''}${my&&!selS?' bpk':''}${tgt?' tg':''}${supOk?' sup':''}${SH?' holo':''}${c.ex?' ex':''}${c.ez?' ez':''}" data-s="${s}" data-i="${i}" data-u="${f.uid}" style="--ec:${AUC[c.el]}">
+  const a=curAtk(f),big=f.ch&&c.atks[1],SH=c.ex||(s==='me'&&shownShiny(c.id)),src=c.cbb?`img/${c.id}.jpg`:SH&&SHART.has(c.id)?`img/s/${c.id}.jpg`:`img/t/${c.id}.webp`;
+  return `<div class="bk${c.cbb?' cbbk':''}${big?' ch':c.atks[1]&&!f.justIn&&!f.didAtk?' half':''}${s==='me'&&B.sel===i?' sel':''}${my&&!selS?' bpk':''}${tgt?' tg':''}${supOk?' sup':''}${SH?' holo':''}${c.ex?' ex':''}${c.ez?' ez':''}" data-s="${s}" data-i="${i}" data-u="${f.uid}" style="--ec:${AUC[c.el]}">
   <div class="bka" style="background-image:url(${src})${portArt(c)?`;background-position:50% ${focY(c)}%`:''}"></div>${c.lv>=10?LV10(c).replace('lv10f','lv10f bk10f'):''}${kwi}${shd}${f.tok?'<span class="bktok">kopya</span>':''}<div class="bkn${c.lv?' bknl':''}"${nmS(c.name+(c.lv?'+10':'')+(c.ex?'EX ':''),9)}>${c.lv?`<span>${c.name}</span>${lvN(c)}`:c.name}</div><img class="bke" src="img/ic/${c.el}.webp" alt="">
   ${c.ez?'':c.ex?'<span class="bkx">'+KDI+'</span>':''}${f.evo?'<span class="bkev">EVRİM TAŞI</span>':''}${f.st?`<span class="bkst"><img src="img/ic/${f.st}.webp" alt="">+10</span>`:''}${f.burn?`<span class="bkb"><img src="img/ic/burn.webp" alt="">${f.burn}</span>`:''}${f.poiT>0?`<span class="bkv bkp"><img src="img/ic/poison.webp" alt="">${f.poi}</span>`:''}${f.bldT>0?`<span class="bkv bkl"><img src="img/ic/blood.webp" alt="">${f.bld}</span>`:''}${f.ampT>0?`<span class="bkv bka2">${icon('shadow')}×${f.amp}</span>`:''}${f.frz>0?'<span class="bkfz">❄ Donmuş</span>':''}${f.mute>0?'<span class="bkmu">Yetenek kapalı</span>':''}
-  <div class="bkhp"><i class="${p<.35?'lo':''}" style="width:${p*100}%"></i><span>${f.hp} / ${mx(f)}</span></div>
+  <div class="bkhp"><i class="${p<.35?'lo':''}" style="width:${p*100}%"></i><span>${c.cbb?f.hp.toLocaleString('tr')+' / '+mx(f).toLocaleString('tr'):f.hp+' / '+mx(f)}</span></div>
   <div class="bkat${big?' big':''}"><span>${a.name}${a.fx?`<em>${FXS[a.fx]}</em>`:''}</span><b>${atkOf(f)}${a.fx==='coin'?'+':''}</b></div>${hint}</div>`}
 let handW=0;
 function handPos(n){const W=(handW||Math.min(innerWidth,480)-8)-14,cw=84,gap=n>1?Math.min(cw+6,(W-cw)/(n-1)):0,x0=7+(W-(cw+gap*(n-1)))/2,t=performance.now()/1000;
@@ -2495,7 +2502,7 @@ function renderBattle(){if(!B)return;document.body.dataset.fld=B.fld?B.fld.k:'';
   $('#main').innerHTML=`<div class="ar2${B.fld?' fl-'+B.fld.k:''}">
    <div class="b2top foe"><div class="lv" data-lv="foe">${B.cb?'<b class="cbtag">KLAN BOSS\'U</b>':hearts(fo.lives)}</div><b>${B.fr?escH(B.fr.name).toLocaleUpperCase('tr'):'RAKİP'}</b>${auraChips(fo.board)}<div class="b2pile"><img src="img/back.webp" alt=""><span>${fo.deck.length}</span></div></div>
    <div class="b2fh">${fo.hand.map(x=>`<img src="img/${x.t==='c'&&setOf(x.c)===2?'back2':'back'}.webp" alt="">`).join('')}</div>
-   <div class="b2row foe">${fo.board.map((f,i)=>bk(f,'foe',i)).join('')}</div>
+   <div class="b2row foe${B.cb?' cbrow':''}">${B.cb?bk(fo.board[1],'foe',1):fo.board.map((f,i)=>bk(f,'foe',i)).join('')}</div>
    <div class="b2mid"><div class="b2bar ${B.turn}${B.over?' end':''}"><span class="b2t">${TI(t)}</span><span class="b2clk${clockLeft()<=15&&!B.over?' low':''}" id="clk">${clockTxt()}</span></div>${B.fld?`<button class="b2fld" id="bfld" style="--fc:${AUC[B.fld.el]}"><img src="${FLDI(B.fld)}" alt="">${B.fld.n}</button>`:''}<div class="b2log">${info}</div>${pass?'<button class="btn alt b2pass" id="bpass">Pas geç</button>':''}${!B.over&&!B.tut&&!B.pz?`<button class="b2auto${B.auto?' on':''}" id="bauto"><img src="img/ic/auto.webp" alt="">Otomatik${B.auto?' · açık':''}</button>`:''}</div>
    <div class="b2row me">${me.board.map((f,i)=>bk(f,'me',i)).join('')}</div>
    <div class="b2top me"><div class="lv" data-lv="me">${hearts(me.lives)}</div><b>SEN</b>${auraChips(me.board)}<div class="b2pile"><img src="img/back.webp" alt=""><span>${me.deck.length}</span></div></div>
